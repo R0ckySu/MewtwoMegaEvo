@@ -10,7 +10,8 @@ add_library(
         VonNeumannSolver.cpp VonNeumannSolver.h
         Gate.cpp Gate.h
         Sequence.cpp Sequence.h
-        TimingBasic.cpp TimingBasic.h)
+        TimingBasic.cpp TimingBasic.h
+        Utils.h Utils.cpp)
 
 target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 target_link_libraries(QSimCoreLib PRIVATE omp)

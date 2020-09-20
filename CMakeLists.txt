@@ -4,7 +4,7 @@ project(MewtwoMegaEvo)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(MewtwoMegaEvo
-        main.cpp QSimCoreLib/Hamiltonian.cpp QSimCoreLib/Hamiltonian.h QSimCoreLib/QSimLibTest.cpp)
+                main.cpp)
 
 add_subdirectory(QSimCoreLib)
 

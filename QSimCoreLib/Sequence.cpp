@@ -3,6 +3,7 @@
 //
 
 #include "Sequence.h"
+#include "Hamiltonian.h"
 
 Sequence::Sequence() {
     sequential_gate_list = std::vector<Gate>();
@@ -46,6 +47,15 @@ void Sequence::test() {
     total_num_steps = 200;
     step_size = 1e-7;
 
+    MW_Hamiltonian X1 = MW_Hamiltonian();
+    X1.tag = "X1";
+    X1.h_mat = arma::cx_mat(arma::ones(4,4),arma::zeros(4,4));
+    X1.amplitude = 1.5e1;
+    X1.phase = M_PI/2;
+    X1.freq = 1e4;
+    X1.num_of_steps = total_num_steps;
+    X1.step_size = step_size;
+
     Gate gate1 = Gate();
     gate1.tag = "G1";
     gate1.set_pulse_width(1e-6);
@@ -60,6 +70,10 @@ void Sequence::test() {
     append_gate(gate2);
 
     generate_switching_sig();
+
+    X1.switching_signal = gate_switching_map["G1"];
+    X1.load_waveform();
+    std::cout << X1.wave_form << std::endl;
 //    std::cout << "G1 sw:\n" << gate_switching_map["G1"] << std::endl;
 //    std::cout << "G2 sw:\n" << gate_switching_map["G2"] << std::endl;
 }
