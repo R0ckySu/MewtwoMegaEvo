@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 add_executable(MewtwoMegaEvo
                 main.cpp)
 
-add_subdirectory(QSimCoreLib)
 
-target_link_libraries(MewtwoMegaEvo PRIVATE QSimCoreLib)
+add_subdirectory(QSimTask)
+
+target_link_libraries(MewtwoMegaEvo PRIVATE QSimTask)

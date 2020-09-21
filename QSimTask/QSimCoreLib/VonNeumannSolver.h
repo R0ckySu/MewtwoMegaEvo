@@ -26,13 +26,11 @@
 class VonNeumannSolver {
 public:
     bool will_record_unitary = false;
-    int hilberspace_size;
-
-    std::vector<arma::cx_mat> *rho0_multi;
-    std::vector<arma::cx_cube> *rho_t_multi;
     arma::cx_cube propagator;
     arma::cx_cube propagator_dagger;
 
+    std::vector<arma::cx_mat> *rho0_multi;
+    std::vector<arma::cx_cube> *rho_t_multi;
     arma::cx_cube *ctrl_hamiltonian_time_dep;
     arma::cx_cube *noise_hamiltonian_time_dep;
 
@@ -42,6 +40,7 @@ public:
 
 private:
     arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix);
+    bool verify_inputdata();
 };
 
 

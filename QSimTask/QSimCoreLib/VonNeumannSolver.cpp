@@ -18,16 +18,16 @@ VonNeumannSolver::VonNeumannSolver() {
 }
 
 VonNeumannSolver::~VonNeumannSolver() {
-//    arma::cx_cube().swap(propagator);
-//    arma::cx_cube().swap(propagator_dagger);
-//
-//    delete ctrl_hamiltonian_time_dep;
-//    delete noise_hamiltonian_time_dep;
-//    delete rho0_multi;
-//    delete rho_t_multi;
+    arma::cx_cube().swap(propagator);
+    arma::cx_cube().swap(propagator_dagger);
 }
 
 void VonNeumannSolver::calculate_evolution() {
+    if (!verify_inputdata()) {
+        std::cout << "VonNeumannSolver:" << "Check the input data dimensions!" << std::endl;
+        return;
+    }
+
     arma::cx_cube hamiltonian_all = *ctrl_hamiltonian_time_dep + *noise_hamiltonian_time_dep;
     int num_steps = hamiltonian_all.n_slices;
     int h_size = hamiltonian_all.n_rows;
@@ -76,8 +76,7 @@ void VonNeumannSolver::calculate_evolution() {
     };
 }
 
-
-
+/**********************************************************************************************************************/
 
 arma::cx_mat VonNeumannSolver::custom_matrix_exp(arma::cx_mat input_matrix) {
     // ok, but can be more efficient using the pade method.
@@ -112,4 +111,20 @@ arma::cx_mat VonNeumannSolver::custom_matrix_exp(arma::cx_mat input_matrix) {
     for(int i=0; i < s; ++i)  { output_matrix = output_matrix*output_matrix; }
 
     return output_matrix;
+}
+
+bool VonNeumannSolver::verify_inputdata() {
+    bool verified = false;
+
+    bool hamiltonian_size_check = (ctrl_hamiltonian_time_dep->n_slices == noise_hamiltonian_time_dep->n_slices) &&
+                                    (ctrl_hamiltonian_time_dep->n_cols == noise_hamiltonian_time_dep->n_cols) &&
+                                    (ctrl_hamiltonian_time_dep->n_rows == noise_hamiltonian_time_dep->n_rows);
+
+    bool initstate_size_check = rho_t_multi->size() == rho0_multi->size();
+
+    bool length_check = rho_t_multi->at(0).n_slices == (ctrl_hamiltonian_time_dep->n_slices+1);
+
+    verified = hamiltonian_size_check && initstate_size_check && length_check;
+
+    return verified;
 }
