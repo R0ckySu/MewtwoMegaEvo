@@ -11,7 +11,8 @@ Re-developed from DM_Solver
 ##Package Requirements
 1. Armadillo 9.x+
 2. openMP (Embeded in gcc)
-3. Json (nlohmann::json)
+3. Json (nlohmann::json Fetched by CMake)
 4. HDF5
 
 ##Design
+![archetechture](docs/archetechture.png)
