@@ -3,7 +3,7 @@
 //
 
 #include "Hamiltonian.h"
-
+#include "Utils.h"
 
 /*********************************************Hamiltonian Classes******************************************************/
 
@@ -15,7 +15,7 @@ Hamiltonian::Hamiltonian() {
     step_size = 1;
     num_of_steps = 1;
     amplitude = 0.0;
-    h_mat = arma::cx_mat();
+    h_mat = arma::cx_mat().fill(0);
     wave_form = arma::cx_vec();
     times_vec = arma::vec();
     external_waveform_path="";
@@ -28,11 +28,25 @@ Hamiltonian::Hamiltonian(const Hamiltonian &h) {
     num_of_steps = h.num_of_steps;
 }
 
+Hamiltonian::Hamiltonian(nlohmann::json h_config) {
+    amplitude = h_config["amplitude"];
+
+    std::string h_string = h_config["h_pauli_mat"];
+    std::vector<std::string> h_str_splitted = str_split(h_string,':');
+    if (h_str_splitted.at(0) == "symbol") {
+        h_mat = qmt::spinorDecoder(h_str_splitted.at(1));
+    } else if (h_str_splitted.at(0) == "path") {
+        h_mat = arma::cx_mat().load(h_str_splitted.at(1),arma::csv_ascii);
+    }
+
+    external_waveform_path = h_config["waveform_path"];;
+}
+
 Hamiltonian::~Hamiltonian() {
-    arma::cx_mat().swap(h_mat);
-    arma::cx_vec().swap(wave_form);
-    arma::vec().swap(times_vec);
-    arma::vec().swap(switching_signal);
+//    arma::cx_mat().swap(h_mat);
+//    arma::cx_vec().swap(wave_form);
+//    arma::vec().swap(times_vec);
+//    arma::vec().swap(switching_signal);
 }
 
 void Hamiltonian::load_waveform() {
@@ -46,12 +60,28 @@ void Hamiltonian::load_waveform() {
 
 void Hamiltonian::fetch_H(arma::cx_cube *H0) {}
 
+std::string Hamiltonian::description() {
+    return "Hamiltonian";
+}
+
+/**********************************************************************************************************************/
+Static_Hamiltonian::Static_Hamiltonian(nlohmann::json h_config) : Hamiltonian(h_config) {}
+
 /**********************************************************************************************************************/
 
+MW_Hamiltonian::MW_Hamiltonian() {
+    freq = 0;
+    phase = 0;
+}
 
 MW_Hamiltonian::MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m): Hamiltonian(h) {
     freq = m.freq;
     phase = m.phase;
+}
+
+MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config) : Hamiltonian(h_config) {
+    freq = h_config["freq"];
+    phase = h_config["phase"];
 }
 
 //MW_Hamiltonian::~MW_Hamiltonian() {
@@ -89,15 +119,10 @@ double MW_Hamiltonian::get_amplitude(double time) const{
     if (modulation == undef){
         return 1;
     }
-    if (modulation == gaussian){
+    if (modulation == gaussian) {
         return std::exp(-(time - gaussian_mod_param.mu)* (time - gaussian_mod_param.mu)/(2 * gaussian_mod_param.sigma * gaussian_mod_param.sigma));
     }
     return 0;
-}
-
-MW_Hamiltonian::MW_Hamiltonian() {
-    freq = 0;
-    phase = 0;
 }
 
 void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -111,4 +136,17 @@ void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
     }
 }
 
+std::string MW_Hamiltonian::description() {
+    return "Microwave Hamiltonian";
+}
+
 /**********************************************************************************************************************/
+Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {
+
+}
+
+Noise_Hamiltonian::Noise_Hamiltonian(nlohmann::json noise_config) : Hamiltonian(noise_config) {
+
+}
+
+Noise_Hamiltonian::~Noise_Hamiltonian() = default;

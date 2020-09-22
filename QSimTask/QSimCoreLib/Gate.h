@@ -4,6 +4,7 @@
 
 #include <armadillo>
 #include "TimingBasic.h"
+#include "nlohmann/json.hpp"
 
 typedef std::string gate_tag_type;
 
@@ -11,6 +12,7 @@ class Gate: public TimingBasic {
 public:
     //Initialiser
     Gate();
+    explicit Gate(nlohmann::json gate_config);
     //Copy constructor
     Gate(const TimingBasic &t,const Gate &g);
 

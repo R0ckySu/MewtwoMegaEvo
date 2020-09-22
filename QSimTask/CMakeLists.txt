@@ -22,7 +22,7 @@ if(NOT json_POPULATED)
     FetchContent_Populate(json)
     add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
-target_link_libraries(QSimTask PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(QSimTask PUBLIC nlohmann_json::nlohmann_json)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS -g)

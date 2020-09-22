@@ -24,3 +24,14 @@ namespace qmt{
 
     arma::vec generate_filter_func_with_seed_vec(arma::vec seed_vec, int time_steps);
 };
+
+std::vector<std::string> str_split(std::string s, char delimiter);
+
+/* Load matrix from config string:
+ * e.x.
+ * 1 "symbol:XI"
+ *   XI will be decoded by spinorDecoder()
+ * 2 "path:/user/xx/pauli_matrix_X.csv"
+ *   Matrix will be loaded from external file with .csv format.
+ * */
+arma::cx_mat load_matrix_from_config_str(std::string);

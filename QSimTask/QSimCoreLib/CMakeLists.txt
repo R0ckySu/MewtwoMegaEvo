@@ -16,6 +16,7 @@ add_library(
 target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 target_link_libraries(QSimCoreLib PRIVATE omp)
 target_link_libraries(QSimCoreLib PUBLIC armadillo)
+target_link_libraries(QSimCoreLib PRIVATE nlohmann_json::nlohmann_json)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS -g)

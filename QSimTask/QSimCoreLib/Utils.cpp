@@ -120,3 +120,14 @@ namespace qmt{
     }
 
 }
+
+std::vector<std::string> str_split(std::string s, char delimiter) {
+    std::vector<std::string> splits;
+    std::string split;
+    std::istringstream ss(s);
+    while (std::getline(ss, split, delimiter))
+    {
+        splits.push_back(split);
+    }
+    return splits;
+}
