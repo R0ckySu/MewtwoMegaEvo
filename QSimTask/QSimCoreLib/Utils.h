@@ -2,6 +2,7 @@
 // Created by Rocky Su on 20/9/20.
 //
 #include <armadillo>
+#include <cmath>
 
 namespace qmt{
 
@@ -29,9 +30,15 @@ std::vector<std::string> str_split(std::string s, char delimiter);
 
 /* Load matrix from config string:
  * e.x.
- * 1 "symbol:XI"
- *   XI will be decoded by spinorDecoder()
- * 2 "path:/user/xx/pauli_matrix_X.csv"
- *   Matrix will be loaded from external file with .csv format.
+ * 1 "XI"
+ *   XI will be automatically decoded by spinorDecoder()
+ * 2 "user_defined"
+ *   Matrix will be loaded from external file with csv format.
  * */
-arma::cx_mat load_matrix_from_config_str(std::string);
+arma::cx_mat load_matrix_from_config_str(std::string mat_string);
+
+/*
+ * Decode the sequence string to the elementary gate&param pair vector
+ *
+ * */
+std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::string seq_expression);

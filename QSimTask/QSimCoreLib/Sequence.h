@@ -14,14 +14,12 @@ public:
 
     void append_gate(const Gate& g);
     void append_sequence(const Sequence & seq);
-
     void generate_switching_sig();
-
     void test();
+
 private:
     arma::vec time_vec;
-    std::vector<Gate> sequential_gate_list;
+    std::vector<Gate *> sequential_gate_list;
 
     std::map<std::string, arma::vec> hamiltonian_switching_binding_map;
 };
-

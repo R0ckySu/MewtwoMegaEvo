@@ -3,6 +3,7 @@
 //
 
 #include "Utils.h"
+#include <regex>
 
 //
 // Created by Rocky Su on 2019/11/11.
@@ -122,7 +123,7 @@ namespace qmt{
 }
 
 std::vector<std::string> str_split(std::string s, char delimiter) {
-    std::vector<std::string> splits;
+    std::vector<std::string> splits = std::vector<std::string>();
     std::string split;
     std::istringstream ss(s);
     while (std::getline(ss, split, delimiter))
@@ -131,3 +132,41 @@ std::vector<std::string> str_split(std::string s, char delimiter) {
     }
     return splits;
 }
+
+arma::cx_mat load_matrix_from_config_str(std::string mat_string) {
+//    std::regex regPattern = std::regex(std::string("\\w([IXYZ])"));
+//    arma::cx_mat mat = arma::cx_mat().fill(0);
+//    if (std::regex_match(mat_string,regPattern)) {
+//        mat = qmt::spinorDecoder(mat_string);
+//    } else {
+//        mat.load(mat_string,arma::csv_ascii);
+//    }
+    return qmt::spinorDecoder(mat_string);
+};
+
+std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::string seq_expression){
+//    int first_sq_bra = seq_expression.find_first_of('[');
+//    int last_sq_ket = seq_expression.find_last_of(']');
+//    std::string repeatable_sub_seq_str = seq_expression.substr(first_sq_bra+1,last_sq_ket-first_sq_bra-1);
+//    std::cout << repeatable_sub_seq_str << std::endl;
+    std::vector<std::string> symbolic_sequence_vec = str_split(seq_expression,'-');
+
+    auto symbolic_seq_info_pair = std::vector<std::pair<std::string, std::string>>();
+    for (const auto& gate_symbol : symbolic_sequence_vec) {
+        std::string tag;
+        std::string param_str;
+
+        int left_par_idx = gate_symbol.find_first_of('(');
+        int right_par_idx = gate_symbol.find_first_of(')');
+        if ((left_par_idx != std::string::npos) && (right_par_idx != std::string::npos)) {
+            tag = gate_symbol.substr(0,left_par_idx);
+            param_str = gate_symbol.substr(left_par_idx+1,right_par_idx-left_par_idx-1);
+        } else {
+            tag = gate_symbol;
+        }
+        std::cout << tag << ":" << param_str << std::endl;
+        symbolic_seq_info_pair.push_back(std::make_pair(tag,param_str));
+    }
+
+    return symbolic_seq_info_pair;
+};

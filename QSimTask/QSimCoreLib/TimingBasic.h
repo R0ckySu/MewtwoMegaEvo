@@ -3,6 +3,7 @@
 //
 
 #include <istream>
+#include <rttr/rttr_enable.h>
 
 /*
  * TimingBasic Class
@@ -24,9 +25,9 @@ public:
     double start_time = 0;
     double end_time = 0;
     double pulse_width = 0;
-
     double step_size;
-    double total_num_steps;
+
+    int get_total_num_steps();
 
     //Initializer
     TimingBasic();
@@ -45,4 +46,6 @@ public:
 
     //Returns formatted table head and data string in pair. Subclasses are responsible to override this method!
     virtual TimingDesc description();
+    RTTR_ENABLE();
 };
+

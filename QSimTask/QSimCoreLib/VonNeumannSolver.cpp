@@ -3,7 +3,7 @@
 //
 
 #include "VonNeumannSolver.h"
-#include <cmath>
+//#include <cmath>
 #include <string>
 #include <random>
 
@@ -24,7 +24,7 @@ VonNeumannSolver::~VonNeumannSolver() {
 
 void VonNeumannSolver::calculate_evolution() {
     if (!verify_inputdata()) {
-        std::cout << "VonNeumannSolver:" << "Check the input data dimensions!" << std::endl;
+        std::cout << "VonNeumannSolver:" << "Please check the input data dimensions!" << std::endl;
         return;
     }
 
@@ -33,28 +33,28 @@ void VonNeumannSolver::calculate_evolution() {
     int h_size = hamiltonian_all.n_rows;
     int num_rhos = rho0_multi->size();
 
-    arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
     std::vector<arma::cx_cube> rho_t_multi_temp = std::vector<arma::cx_cube>(num_rhos);
     for (int i = 0; i < num_rhos; ++i) {
         rho_t_multi_temp.at(i) = arma::cx_cube(h_size,h_size,num_steps+1);
     }
 
     if (will_record_unitary) {
+        //Initialise unitary matrices
         propagator = arma::cx_cube(h_size,h_size,num_steps+1).fill(0);
         propagator.slice(0) = arma::cx_mat(arma::eye(h_size,h_size),arma::zeros(h_size,h_size));
         propagator_dagger = arma::cx_cube(h_size,h_size,num_steps+1).fill(0);
         propagator_dagger.slice(0) = arma::cx_mat(arma::eye(h_size,h_size),arma::zeros(h_size,h_size));
     }
 
+    arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
+    std::complex<double> ii = std::complex<double>(0,1);
     for (int i = 0; i < hamiltonian_all.n_slices; ++i) {
-        exp_hamiltonians.slice(i) = custom_matrix_exp(arma::cx_double(0,1)*hamiltonian_all.slice(i));
+        exp_hamiltonians.slice(i) = custom_matrix_exp(ii * hamiltonian_all.slice(i));
         if (will_record_unitary) {
             propagator.slice(i+1) = exp_hamiltonians.slice(i) * propagator.slice(i);
             propagator_dagger.slice(i+1) = propagator_dagger.slice(i)*exp_hamiltonians.slice(i).t();
         }
     }
-
-//    std::cout << "VonNeumann: exp(H):\n" << exp_hamiltonians << std::endl;
 
     for (int k = 0; k < num_rhos; ++k) {
         for (int j = 0; j < num_steps + 1; ++j) {
@@ -66,13 +66,14 @@ void VonNeumannSolver::calculate_evolution() {
         }
     }
 
-//    std::cout << "VonNeumann: rho_temp:\n" << rho_t_multi_temp.at(0) << std::endl;
+    std::cout << "VonNeumann: finished for one shot" << std::endl;
 
     #pragma omp critical
     {
         for (int i = 0; i < num_rhos; ++i) {
             rho_t_multi->at(i) = rho_t_multi->at(i) + rho_t_multi_temp.at(i);
         }
+        std::cout << "VonNeumann: finished joining data" << std::endl;
     };
 }
 
@@ -108,7 +109,7 @@ arma::cx_mat VonNeumannSolver::custom_matrix_exp(arma::cx_mat input_matrix) {
         output_matrix += tmp/factorial_i;
     }
 
-    for(int i=0; i < s; ++i)  { output_matrix = output_matrix*output_matrix; }
+    for(int i=0; i < s; ++i)  { output_matrix = output_matrix*output_matrix;}
 
     return output_matrix;
 }

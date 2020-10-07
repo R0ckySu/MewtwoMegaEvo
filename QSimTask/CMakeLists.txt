@@ -14,6 +14,15 @@ target_link_libraries(QSimTask PRIVATE QSimCoreLib)
 target_link_libraries(QSimTask PRIVATE omp)
 target_link_libraries(QSimTask PUBLIC armadillo)
 
+set(CMAKE_CXX_FLAGS -fopenmp)
+set(CMAKE_C_FLAGS -fopenmp)
+#set(CMAKE_CXX_FLAGS -O3)
+#set(CMAKE_C_FLAGS -O3)
+
+#set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_CXX_FLAGS -g)
+#set(CMAKE_C_FLAGS  -g)
+
 #Json Integration#
 include(FetchContent)
 FetchContent_Declare(json GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent GIT_TAG v3.7.3)
@@ -24,6 +33,6 @@ if(NOT json_POPULATED)
 endif()
 target_link_libraries(QSimTask PUBLIC nlohmann_json::nlohmann_json)
 
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS -g)
-set(CMAKE_C_FLAGS  -g)
+
+
+

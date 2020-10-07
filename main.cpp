@@ -1,10 +1,18 @@
 #include <iostream>
 #include "QSimTask/QuantumSimulationTask.h"
+#include "QSimTask/QSimCoreLib/Utils.h"
+#include <armadillo>
 
 int main() {
+
+//    std::cout << "Hello, World!\n" << qmt::spinorDecoder("XY") << std::endl;
     QSimTask task = QSimTask();
-    task.config_file_folder = "/Users/rockysu/MewtwoMegaEvo/configfiles";
+    rttr::type class_type = rttr::type::get(task);
+    rttr::property config_prp = class_type.get_property("config_file_folder");
+    config_prp.set_value(task,std::string("/Users/rockysu/MewtwoMegaEvo/configfiles"));
+
     task.preload();
-    std::cout << "Hello, World!" << std::endl;
+    task.sweeping_task();
+
     return 0;
 }

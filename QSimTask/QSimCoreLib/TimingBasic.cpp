@@ -3,9 +3,17 @@
 //
 
 #include "TimingBasic.h"
-#include <iomanip>
 #include "math.h"
-#include <sstream>
+#include <iomanip>
+#include <armadillo>
+
+#include <rttr/property.h>
+#include <rttr/registration.h>
+
+
+RTTR_REGISTRATION{
+    rttr::registration::class_<TimingBasic>("TimingBasic").property("pulse_width",&TimingBasic::get_pulse_width,&TimingBasic::set_pulse_width);
+};
 
 /********Timing Basic*******/
 void TimingBasic::set_pulse_width(double _pulse_width) {
@@ -28,13 +36,15 @@ TimingDesc TimingBasic::description() {
     desc.name = "BasicObj--";
     desc.table_head = "|--StartTime-|--Duration--|--EndTime---|";
 
-    std::stringstream descStream;
-    descStream << "|";
-    descStream << std::setw(12) << std::scientific << std::setprecision(4) << start_time << "|";
-    descStream << std::setw(12) << std::scientific << std::setprecision(4) << get_pulse_width() << "|";
-    descStream << std::setw(12) << std::scientific << std::setprecision(4) << end_time << "|";
 
-    desc.data_row = descStream.str();
+
+//    std::stringstream descStream;
+//    descStream << "|";
+//    descStream << std::setw(12) << std::scientific << std::setprecision(4) << start_time << "|";
+//    descStream << std::setw(12) << std::scientific << std::setprecision(4) << get_pulse_width() << "|";
+//    descStream << std::setw(12) << std::scientific << std::setprecision(4) << end_time << "|";
+
+    desc.data_row = std::string("|").append(std::to_string(start_time)).append("|").append(std::to_string(get_pulse_width())).append("|").append(std::to_string(end_time));
     return desc;
 }
 
@@ -42,9 +52,7 @@ TimingBasic::TimingBasic(const TimingBasic &t) {
     start_time = t.start_time;
     end_time = t.end_time;
     pulse_width = t.pulse_width;
-
     step_size = t.step_size;
-    total_num_steps = t.total_num_steps;
 }
 
 TimingBasic::TimingBasic() {
@@ -68,6 +76,10 @@ TimingBasic::TimingBasic(double start, double end, double _step_size) {
     start_time = start;
     end_time = end;
     step_size = _step_size;
+}
+
+int TimingBasic::get_total_num_steps() {
+    return floor(round(get_pulse_width()/step_size));
 }
 
 

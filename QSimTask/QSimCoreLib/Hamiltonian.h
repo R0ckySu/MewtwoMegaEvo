@@ -5,21 +5,23 @@
 #include <armadillo>
 #include "nlohmann/json.hpp"
 
+#include <rttr/rttr_enable.h>
+
 typedef std::string hamiltonian_tag_type;
 
 class Hamiltonian {
 public:
     hamiltonian_tag_type tag;
-    int parametric_index=0;
 
     double step_size;
     int num_of_steps;
+
+    arma::vec times_vec;
     arma::vec switching_signal;
 
     double amplitude;
     arma::cx_mat h_mat;
     arma::cx_vec wave_form;
-    arma::vec times_vec;
     std::string external_waveform_path;
 
     Hamiltonian();
@@ -29,10 +31,9 @@ public:
 
     virtual void load_waveform();   //Generating waveform
     virtual void fetch_H(arma::cx_cube* H0);
-    virtual void load_ext_waveform(std::string datapath);
+    virtual void load_ext_waveform(int param_index);
     virtual std::string description();
-private:
-
+RTTR_ENABLE();
 };
 
 /**********************************************************************************************************************/
@@ -68,26 +69,35 @@ public:
 
 private:
     double get_amplitude(double time) const;
+
+RTTR_ENABLE(Hamiltonian);
 };
 
 /**********************************************************************************************************************/
 
 class AWG_Hamiltonian: public Hamiltonian {
 //    virtual arma::cx_vec load_waveform() override;
+RTTR_ENABLE(Hamiltonian);
 };
 
 /**********************************************************************************************************************/
 
 class Noise_Hamiltonian: public Hamiltonian {
 public:
+    double shift_time;
+    std::vector<double> randomStartPosFactor;
     Noise_Hamiltonian();
+    Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &n);
     explicit Noise_Hamiltonian(nlohmann::json noise_config);
     ~Noise_Hamiltonian();
-//public:
-//    std::vector<double> randomStartPosFactor;
-//
+
+    void fetch_H(arma::cx_cube *H0) override;
+
+RTTR_ENABLE(Hamiltonian);
 //public:
 //    virtual arma::cx_vec load_waveform() override;
 };
+
+
 
 
