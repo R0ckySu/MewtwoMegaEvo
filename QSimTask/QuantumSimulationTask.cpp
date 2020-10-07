@@ -25,9 +25,13 @@ QSimTask::~QSimTask() {
 }
 
 void QSimTask::load_sim_configs() {
+    task_log("Loading simulation configs",1);
+
     std::string sim_configfile_path = std::string(config_file_folder).append("/sim_config.json");
     sim_configs = load_config_from_path(sim_configfile_path);
 
+    task_name = sim_configs["task_name"];
+    log_level_threshold = sim_configs["log_level"];
     param_vec.load(sim_configs["sweep_val_path"],arma::csv_ascii);
     step_size = sim_configs["step_size"];
     iterations = sim_configs["iterations"];
@@ -43,6 +47,7 @@ void QSimTask::load_sim_configs() {
 }
 
 void QSimTask::load_gate_configs() {
+    task_log("Loading Gate prototypes",1);
     std::string gate_configfile_path = std::string(config_file_folder).append("/gate_config.json");
     gate_configs = load_config_from_path(gate_configfile_path);
     gate_prototype_map = std::map<gate_tag_type,Gate *>();
@@ -53,19 +58,26 @@ void QSimTask::load_gate_configs() {
         gate_new->hamiltonian_obj_map_ptr = &ctrl_hamiltonian_prototype_map;
         gate_prototype_map.insert(std::make_pair(gate_new->tag, gate_new));
     }
+
+    // Virtual Measurement marker gate. Tagged by "M", 0 pulse_width;
+    auto *meas_marker_new = new MeasurementMarker();
+    gate_prototype_map.insert(std::make_pair(meas_marker_new->tag,meas_marker_new));
 }
 
 void QSimTask::load_hamiltonian_configs() {
+    task_log("Loading Hamiltonian prototypes",1);
+
     std::string hamiltonian_configfile_path = std::string(config_file_folder).append("/hamiltonian_config.json");
     hamiltonian_configs = load_config_from_path(hamiltonian_configfile_path);
     ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type,Hamiltonian *>();
     noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type,Noise_Hamiltonian *>();
 
     std::vector<nlohmann::json> h_prototypes_defs = hamiltonian_configs["hamiltonian_prototype_defs"];
-    //TODO: Implement by reflection will be a more elegant solution!
+    //TODO: Implement by reflection(RTTR) will be a more elegant solution!
     for (auto & h_prototypes_def : h_prototypes_defs) {
         std::string tag = h_prototypes_def["tag"];
         std::string hamiltonian_type = h_prototypes_def["type"];
+        task_log(std::string("Loading Hamiltonian tag:").append(tag),2);
         if (hamiltonian_type == "static") {
             auto *h_staic = new Static_Hamiltonian(h_prototypes_def);
             ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, h_staic));
@@ -89,12 +101,19 @@ Sequence* QSimTask::load_sequence() {
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
-        Gate gate_new = *gate_prototype_map[gate_tag];
-        gate_new.decode_param_str(gate_param_str);
-        seq->append_gate(gate_new);
+        if ( *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
+            // Gate found
+            Gate gate_new = *gate_prototype_map[gate_tag];
+            gate_new.decode_param_str(gate_param_str);
+            seq->append_gate(gate_new);
+        }
     }
 
     seq->generate_switching_sig();
+    arma::vec time_points = arma::vec(seq->measurement_time_point_vec);
+    std::stringstream vec_str;
+    vec_str << time_points;
+    task_log(std::string("Measurement time points are:\n").append(vec_str.str()),2);
 
     for (const auto& gate_item : gate_prototype_map) {
         auto gate_proto_tag = gate_item.first;
@@ -118,7 +137,7 @@ VonNeumannSolver* QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
         rho_t_item = arma::cx_cube(matrix_dim,matrix_dim,total_num_steps+1);
     }
 
-    std::cout << "QSimTask: rho initialised for solver" << std::endl;
+    task_log("Initial state initialised for solver",2);
 
     auto * ctrl_hamiltonian_time_dep = new arma::cx_cube(matrix_dim,matrix_dim,total_num_steps);
     ctrl_hamiltonian_time_dep->fill(0);
@@ -128,15 +147,9 @@ VonNeumannSolver* QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
         hamiltonian_item.second->load_waveform();
         hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
     }
-    std::cout << "QSimTask: Control Hamiltonians linked to solver" << std::endl;
-
-    arma::cx_cube * noise_hamiltonian_time_dep = new arma::cx_cube(matrix_dim,matrix_dim,total_num_steps);
-
-//    printf("Max num Thread: %d \n",omp_get_max_threads());
+    task_log(" Control Hamiltonians linked to solver",2);
 
     VonNeumannSolver solver_obj = * new VonNeumannSolver();
-
-    solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
 
     #pragma omp parallel for default(none) shared(ctrl_hamiltonian_time_dep,matrix_dim,total_num_steps,rho_multi_temp) private(solver_obj)
     for (int i = 0; i < iterations; ++i) {
@@ -153,18 +166,24 @@ VonNeumannSolver* QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
             noise_h_temp->fetch_H(noise_hamiltonian_time_dep_per_iter);
         }
         solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep_per_iter;
-//        std::cout << "QSimTask: Noise Hamiltonians linked to solver, index=" << std::to_string(i) << " at thread:" << std::to_string(omp_get_num_threads()) << std::endl;
+//      std::cout << "QSimTask: Noise Hamiltonians linked to solver, index=" << std::to_string(i) << " at thread:" << std::to_string(omp_get_num_threads()) << std::endl;
 
         solver_obj.calculate_evolution();
     }
 
+    std::vector<std::string> rho_init_strs = sim_configs["init_states"];
+    std::string fileName = std::string(config_file_folder).append("/rho_result");
+    for (int i = 0; i < rho_init_strs.size(); ++i) {
+        rho_multi_temp.at(i).save(arma::hdf5_name(fileName,rho_init_strs.at(i),arma::hdf5_opts::append));
+    }
 //    solver_obj.rho_t_multi->at(1).save(std::string(config_file_folder).append("/rhotest0"),arma::hdf5_binary);
-
+    task_log("Solver job done!",1);
     return &solver_obj;
 }
 
 void QSimTask::measument_solver() {
 
+    task_log("Finished measurements!",1);
 }
 
 void QSimTask::reload_with_sweeping_parameter(int index) {
@@ -207,4 +226,10 @@ nlohmann::json QSimTask::load_config_from_path(const std::string& path) {
     return config_json;
 }
 
+void QSimTask::task_log(std::string message, int log_level) {
+    if (log_level < log_level_threshold) {
+        std::string log_msg = std::string("QSimTask:").append(message);
+        std::cout << log_msg << std::endl;
+    }
+}
 

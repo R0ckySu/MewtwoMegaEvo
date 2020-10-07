@@ -57,3 +57,11 @@ RTTR_REGISTRATION {
     rttr::registration::class_<FID>("FID").
             property("tau",&FID::tau);
 };
+
+MeasurementMarker::MeasurementMarker() {
+    hamiltonian_tags_list = std::vector<std::string>();
+    tag = "M";
+    start_time = 0;
+    end_time = 0;
+    pulse_width = 0;
+}

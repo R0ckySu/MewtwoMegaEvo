@@ -3,7 +3,7 @@
 //
 
 #include "VonNeumannSolver.h"
-//#include <cmath>
+#include "Utils.h"
 #include <string>
 #include <random>
 
@@ -49,7 +49,7 @@ void VonNeumannSolver::calculate_evolution() {
     arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
     std::complex<double> ii = std::complex<double>(0,1);
     for (int i = 0; i < hamiltonian_all.n_slices; ++i) {
-        exp_hamiltonians.slice(i) = custom_matrix_exp(ii * hamiltonian_all.slice(i));
+        exp_hamiltonians.slice(i) = qmt::custom_matrix_exp(ii * hamiltonian_all.slice(i));
         if (will_record_unitary) {
             propagator.slice(i+1) = exp_hamiltonians.slice(i) * propagator.slice(i);
             propagator_dagger.slice(i+1) = propagator_dagger.slice(i)*exp_hamiltonians.slice(i).t();
@@ -78,41 +78,6 @@ void VonNeumannSolver::calculate_evolution() {
 }
 
 /**********************************************************************************************************************/
-
-arma::cx_mat VonNeumannSolver::custom_matrix_exp(arma::cx_mat input_matrix) {
-    // ok, but can be more efficient using the pade method.
-    // uses now matrix scaling in combination with a taylor
-    int accuracy = 10;
-
-    const double norm_val = arma::norm(input_matrix, "inf");
-
-    const double log2_val = (norm_val > 0.0) ? double(std::log2(norm_val)) : double(0);
-
-    int exponent = int(0);  std::frexp(log2_val, &exponent);
-
-    const int s = int( (std::max)(int(0), exponent + int(10)) );
-
-    input_matrix = input_matrix/double(std::pow(double(2), double(s)));
-
-    arma::mat tmp1(input_matrix.n_rows,input_matrix.n_rows);
-    tmp1.eye();
-    arma::mat tmp2(input_matrix.n_rows,input_matrix.n_rows);
-    tmp2.zeros();
-    arma::cx_mat tmp(tmp1,tmp2);
-    arma::cx_mat output_matrix(tmp1,tmp2);
-
-    double factorial_i = 1.0;
-
-    for(int i = 1; i < accuracy; i++) {
-        factorial_i = factorial_i * i;
-        tmp *= input_matrix;
-        output_matrix += tmp/factorial_i;
-    }
-
-    for(int i=0; i < s; ++i)  { output_matrix = output_matrix*output_matrix;}
-
-    return output_matrix;
-}
 
 bool VonNeumannSolver::verify_inputdata() {
     bool verified = false;

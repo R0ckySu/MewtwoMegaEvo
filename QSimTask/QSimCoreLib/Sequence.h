@@ -11,6 +11,7 @@ public:
     Sequence();
 
     std::map<gate_tag_type, arma::vec> gate_switching_map;
+    std::vector<double> measurement_time_point_vec;
 
     void append_gate(const Gate& g);
     void append_sequence(const Sequence & seq);
@@ -20,6 +21,4 @@ public:
 private:
     arma::vec time_vec;
     std::vector<Gate *> sequential_gate_list;
-
-    std::map<std::string, arma::vec> hamiltonian_switching_binding_map;
 };

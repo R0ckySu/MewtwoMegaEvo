@@ -34,3 +34,8 @@ public:
     std::vector<std::string> decode_param_str(std::string params) override;
     RTTR_ENABLE(Gate);
 };
+
+class MeasurementMarker: public Gate {
+public:
+    MeasurementMarker();
+};

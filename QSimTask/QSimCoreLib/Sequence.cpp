@@ -8,6 +8,7 @@
 
 Sequence::Sequence() {
     sequential_gate_list = std::vector<Gate *>();
+    measurement_time_point_vec = std::vector<double>();
 }
 
 void Sequence::generate_switching_sig() {
@@ -16,10 +17,15 @@ void Sequence::generate_switching_sig() {
 
     for (int i = 0; i < sequential_gate_list.size(); ++i) {
         Gate *gate_unit = sequential_gate_list.at(i);
-        //Skip FID gates
+        // Record virtual measurement gate time.
+        if (gate_unit->tag == std::string("M")) {
+            measurement_time_point_vec.push_back(gate_unit->start_time);
+        }
+        //Skip FID gates and virtual gates
         if (gate_unit->hamiltonian_tags_list.empty()) {
             continue;
         }
+
         if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
             gate_switching_map[gate_unit->tag].subvec(floor(gate_unit->start_time/this->step_size),floor(gate_unit->end_time/this->step_size)).fill(1);
         } else {

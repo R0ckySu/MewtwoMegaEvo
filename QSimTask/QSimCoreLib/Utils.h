@@ -18,12 +18,10 @@ namespace qmt{
     arma::cx_mat22 pauli_y();
     arma::cx_mat22 pauli_z();
 
-    arma::vec heaviside(int x_0, int length); // HeavySide function.
-
     arma::cx_mat spinorDecoder(std::string spinorStr);
     arma::cx_mat spinorExpressionDecoder(std::string expression);
 
-    arma::vec generate_filter_func_with_seed_vec(arma::vec seed_vec, int time_steps);
+    arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix);
 };
 
 std::vector<std::string> str_split(std::string s, char delimiter);

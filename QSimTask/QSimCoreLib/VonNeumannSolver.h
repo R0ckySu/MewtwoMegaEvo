@@ -39,7 +39,6 @@ public:
     void calculate_evolution();
 
 private:
-    arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix);
     bool verify_inputdata();
 };
 

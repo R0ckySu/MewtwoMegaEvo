@@ -120,6 +120,41 @@ namespace qmt{
         return result;
     }
 
+
+    arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix) {
+        // ok, but can be more efficient using the pade method.
+        // uses now matrix scaling in combination with a taylor
+        int accuracy = 10;
+
+        const double norm_val = arma::norm(input_matrix, "inf");
+
+        const double log2_val = (norm_val > 0.0) ? double(std::log2(norm_val)) : double(0);
+
+        int exponent = int(0);  std::frexp(log2_val, &exponent);
+
+        const int s = int( (std::max)(int(0), exponent + int(10)) );
+
+        input_matrix = input_matrix/double(std::pow(double(2), double(s)));
+
+        arma::mat tmp1(input_matrix.n_rows,input_matrix.n_rows);
+        tmp1.eye();
+        arma::mat tmp2(input_matrix.n_rows,input_matrix.n_rows);
+        tmp2.zeros();
+        arma::cx_mat tmp(tmp1,tmp2);
+        arma::cx_mat output_matrix(tmp1,tmp2);
+
+        double factorial_i = 1.0;
+
+        for(int i = 1; i < accuracy; i++) {
+            factorial_i = factorial_i * i;
+            tmp *= input_matrix;
+            output_matrix += tmp/factorial_i;
+        }
+
+        for(int i=0; i < s; ++i)  { output_matrix = output_matrix*output_matrix;}
+
+        return output_matrix;
+    }
 }
 
 std::vector<std::string> str_split(std::string s, char delimiter) {
@@ -134,6 +169,7 @@ std::vector<std::string> str_split(std::string s, char delimiter) {
 }
 
 arma::cx_mat load_matrix_from_config_str(std::string mat_string) {
+    //TODO: Smart loading matrix from external file or Pauli symbol.
 //    std::regex regPattern = std::regex(std::string("\\w([IXYZ])"));
 //    arma::cx_mat mat = arma::cx_mat().fill(0);
 //    if (std::regex_match(mat_string,regPattern)) {
@@ -170,3 +206,4 @@ std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::s
 
     return symbolic_seq_info_pair;
 };
+
