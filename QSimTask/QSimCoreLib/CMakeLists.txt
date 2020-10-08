@@ -8,13 +8,14 @@ link_directories(../../3rd_party_libs/lib)
 
 add_library(
         QSimCoreLib STATIC
-        Hamiltonian.cpp Hamiltonian.h
-        VonNeumannSolver.cpp VonNeumannSolver.h
-        Gate.cpp Gate.h
-        Sequence.cpp Sequence.h
+        QSimCore.h
+        Hamiltonian.cpp
+        VonNeumannSolver.cpp
+        Gate.cpp
+        Sequence.cpp
         TimingBasic.cpp TimingBasic.h
-        Utils.h Utils.cpp
-        Measurement.cpp Measurement.h)
+        Utils.cpp
+        Measurement.cpp)
 
 target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 target_link_libraries(QSimCoreLib PRIVATE omp)

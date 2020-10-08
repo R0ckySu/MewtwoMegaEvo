@@ -3,9 +3,7 @@
 //
 
 #include "QuantumSimulationTask.h"
-#include "QSimCoreLib/Utils.h"
 #include <iostream>
-
 #include <rttr/registration.h>
 #include <rttr/property.h>
 #include <rttr/type.h>
@@ -31,7 +29,7 @@ void QSimTask::sweeping_task() {
     for (int i = 0; i < param_vec.size(); ++i) {
         reload_with_sweeping_parameter(i);
         Sequence* seq = load_sequence();
-        MeasurementManager meas_manager = MeasurementManager(sim_configs["observables"],sim_configs["init_states"]);
+        MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
         meas_manager.step_size = step_size;
         auto rho_t_multi_result = launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
 
@@ -64,13 +62,24 @@ void QSimTask::load_sim_configs() {
     will_record_all_measurement = sim_configs["record_all_meas"];
     will_record_unitary = sim_configs["record_unitary"];
 
-    rho_inits = std::vector<arma::cx_mat>();
+    rho_inits = std::vector<symbolic_matrix>();
     int sys_dim = sim_configs["system_dim"];
     std::vector<std::string> rho_init_strs = sim_configs["init_states"];
     for(const auto& rho_init_str : rho_init_strs) {
-        arma::cx_mat rho_ = qmt::spinorDecoder(rho_init_str)/sys_dim;
+        symbolic_matrix rho_;
+        rho_.load_from_symbol(rho_init_str,config_file_folder);
+        rho_.mat /= sys_dim;
         rho_inits.push_back(rho_);
-        std::cout << "QSimTask: rho_init:\n" << rho_ << std::endl;
+        std::cout << "QSimTask: rho_init:\n" << rho_.mat << std::endl;
+    }
+
+    observables = std::vector<symbolic_matrix>();
+    std::vector<std::string> observable_strs = sim_configs["observables"];
+    for(const auto& obs_str : observable_strs) {
+        symbolic_matrix obs_;
+        obs_.load_from_symbol(obs_str,config_file_folder);
+        observables.push_back(obs_);
+        std::cout << "QSimTask: Observables:\n" << obs_.mat << std::endl;
     }
 }
 
@@ -107,15 +116,15 @@ void QSimTask::load_hamiltonian_configs() {
         std::string hamiltonian_type = h_prototypes_def["type"];
         task_log(std::string("Loading Hamiltonian tag:").append(tag),2);
         if (hamiltonian_type == "static") {
-            auto *h_staic = new Static_Hamiltonian(h_prototypes_def);
+            auto *h_staic = new Static_Hamiltonian(h_prototypes_def, config_file_folder);
             ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, h_staic));
         } else if(hamiltonian_type == "mw") {
-            auto *mw = new MW_Hamiltonian(h_prototypes_def);
+            auto *mw = new MW_Hamiltonian(h_prototypes_def, config_file_folder);
             ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,mw));
         } else if(hamiltonian_type == "awg") {
 
         } else if(hamiltonian_type == "noise") {
-            auto *noise = new Noise_Hamiltonian(h_prototypes_def);
+            auto *noise = new Noise_Hamiltonian(h_prototypes_def, config_file_folder);
             noise_hamiltonian_prototype_map.insert(std::make_pair(tag,noise));
         }
     }
@@ -146,6 +155,13 @@ Sequence* QSimTask::load_sequence() {
     std::stringstream vec_str;
     vec_str << time_points;
     task_log(std::string("Marker measurement time points are:\n").append(vec_str.str()),2);
+
+    for (auto ctrl_h_pair : ctrl_hamiltonian_prototype_map){
+        ctrl_h_pair.second->clean_up_on_reload();
+    }
+    for (auto noise_h_pair : noise_hamiltonian_prototype_map){
+        noise_h_pair.second->clean_up_on_reload();
+    }
 
     for (const auto& gate_item : gate_prototype_map) {
         auto gate_proto_tag = gate_item.first;

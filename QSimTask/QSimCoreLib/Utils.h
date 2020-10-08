@@ -1,9 +1,19 @@
 //
 // Created by Rocky Su on 20/9/20.
 //
+
+#ifndef MEWTWOMEGAEVO_UTILS_H
+#define MEWTWOMEGAEVO_UTILS_H
+
 #include <armadillo>
 #include <cmath>
 #include <iomanip>
+
+struct symbolic_matrix {
+    std::string symbol_name;
+    arma::cx_mat mat;
+    void load_from_symbol(std::string _symbol_name, std::string config_path);
+};
 
 namespace qmt{
 
@@ -45,3 +55,6 @@ std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::s
 std::string get_time_stamp_str();
 
 std::string double_to_fixprecision_str(double num, int percision);
+
+
+#endif //MEWTWOMEGAEVO_UTILS_H

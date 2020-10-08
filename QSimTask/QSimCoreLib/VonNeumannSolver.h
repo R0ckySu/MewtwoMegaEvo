@@ -4,6 +4,7 @@
 
 #include <armadillo>
 #include <iostream>
+#include "Utils.h"
 
 /*
  * VonNeumannSolver
@@ -29,7 +30,7 @@ public:
     arma::cx_cube propagator;
     arma::cx_cube propagator_dagger;
 
-    std::vector<arma::cx_mat> *rho0_multi;
+    std::vector<symbolic_matrix> *rho0_multi;
     std::vector<arma::cx_cube> *rho_t_multi;
     arma::cx_cube *ctrl_hamiltonian_time_dep;
     arma::cx_cube *noise_hamiltonian_time_dep;

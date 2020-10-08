@@ -2,6 +2,7 @@
 // Created by Rocky Su on 7/10/20.
 //
 #include <armadillo>
+#include "Utils.h"
 
 typedef std::string observable_name_type;
 typedef std::string init_state_name_type;
@@ -14,10 +15,10 @@ struct MeasurementError{
 class MeasurementManager {
 public:
     double step_size;
-    MeasurementManager(std::vector<observable_name_type> observables_,std::vector<init_state_name_type> init_states_);
+    MeasurementManager(std::vector<symbolic_matrix> observables_,std::vector<symbolic_matrix> init_states_);
     std::vector<MeasurementError> errors;
-    std::vector<observable_name_type> observables;
-    std::vector<init_state_name_type> init_states;
+    std::vector<symbolic_matrix> observables;
+    std::vector<symbolic_matrix> init_states;
 
     std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> meas_result_set;
     arma::vec measurement_time_point_vec;

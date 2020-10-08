@@ -225,3 +225,14 @@ std::string double_to_fixprecision_str(double num, int percision) {
     double_str << num;
     return double_str.str();
 }
+
+void symbolic_matrix::load_from_symbol(std::string _symbol_name, std::string config_path) {
+    symbol_name = std::move(_symbol_name);
+    std::regex symbol_reg = std::regex("^[IXYZ]+");
+    if (std::regex_match(symbol_name,symbol_reg)) {
+        mat = qmt::spinorDecoder(symbol_name);
+    } else {
+        mat = arma::cx_mat();
+        mat.load(std::string(config_path).append("/").append(symbol_name));
+    }
+}

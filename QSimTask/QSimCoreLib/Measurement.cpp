@@ -3,19 +3,18 @@
 //
 
 #include "Measurement.h"
-#include "Utils.h"
 
-MeasurementManager::MeasurementManager(std::vector<observable_name_type> observables_,
-                                       std::vector<init_state_name_type> init_states_) {
-    observables =observables_;
+MeasurementManager::MeasurementManager(std::vector<symbolic_matrix> observables_,
+                                       std::vector<symbolic_matrix> init_states_) {
+    observables = observables_;
     init_states = init_states_;
     measurement_time_point_vec = std::vector<double>();
     //Initialise the measurement results container
     for (int i = 0; i < observables_.size(); ++i) {
-        observable_name_type O = observables_.at(i);
+        observable_name_type O = observables_.at(i).symbol_name;
         std::map<init_state_name_type, arma::vec> res_rhos_map;
         for (int j = 0; j < init_states_.size(); ++j) {
-            init_state_name_type rho_0 = init_states_.at(j);
+            init_state_name_type rho_0 = init_states_.at(j).symbol_name;
             arma::vec res_temp = arma::vec();
             res_rhos_map.insert(std::make_pair(rho_0,res_temp));
         }
@@ -41,10 +40,10 @@ void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vect
 void MeasurementManager::measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi,
                                                         std::vector<int > time_indices) {
     for (int i = 0; i < observables.size(); ++i) {
-        observable_name_type O_symbol = observables.at(i);
-        arma::cx_mat O = qmt::spinorDecoder(O_symbol);
+        observable_name_type O_symbol = observables.at(i).symbol_name;
+        arma::cx_mat O = observables.at(i).mat;
         for (int j = 0; j < init_states.size(); ++j) {
-            init_state_name_type rho_sym = init_states.at(j);
+            init_state_name_type rho_sym = init_states.at(j).symbol_name;
             arma::vec meas_temp = arma::vec(time_indices.size());
             auto rho_temp = rho_multi.at(j);
             #pragma omp parallel for default(none) shared(meas_temp,time_indices,O,rho_temp)

@@ -3,15 +3,8 @@
 //
 
 #include "VonNeumannSolver.h"
-#include "Utils.h"
-#include <string>
 #include <random>
-
 #include <complex>
-#include <math.h>
-#include <chrono>
-#include <memory>
-#include <map>
 
 VonNeumannSolver::VonNeumannSolver() {
 
@@ -59,7 +52,7 @@ void VonNeumannSolver::calculate_evolution() {
     for (int k = 0; k < num_rhos; ++k) {
         for (int j = 0; j < num_steps + 1; ++j) {
             if (j==0) {
-                rho_t_multi_temp.at(k).slice(j) = rho0_multi->at(j);
+                rho_t_multi_temp.at(k).slice(j) = rho0_multi->at(j).mat;
             } else {
                 rho_t_multi_temp.at(k).slice(j) = exp_hamiltonians.slice(j-1) * rho_t_multi_temp.at(k).slice(j-1) * exp_hamiltonians.slice(j-1).t();
             }

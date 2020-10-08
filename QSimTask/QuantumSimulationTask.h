@@ -6,9 +6,7 @@
 #include <stack>
 #include <nlohmann/json.hpp>
 
-#include "QSimCoreLib/Measurement.h"
-#include "QSimCoreLib/Sequence.h"
-#include "QSimCoreLib/VonNeumannSolver.h"
+#include "QSimCoreLib/QSimCore.h"
 
 #include <rttr/rttr_enable.h>
 
@@ -32,7 +30,8 @@ public:
     bool will_record_all_measurement;
     double step_size;
     int iterations;
-    std::vector<arma::cx_mat> rho_inits;
+    std::vector<symbolic_matrix> rho_inits;
+    std::vector<symbolic_matrix> observables;
     arma::vec  param_vec;
     std::map<gate_tag_type, Gate *> gate_prototype_map;
     std::map<hamiltonian_tag_type, Hamiltonian *> ctrl_hamiltonian_prototype_map;
@@ -56,7 +55,6 @@ public:
     virtual Sequence* load_sequence();
     virtual std::vector<arma::cx_cube> launch_solver(int total_num_steps,int matrix_dim);
     void measument_solver();
-
 
     void preload() {
         load_sim_configs();

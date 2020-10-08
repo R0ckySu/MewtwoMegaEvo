@@ -2,6 +2,9 @@
 // Created by Rocky Su on 17/9/20.
 //
 
+#ifndef MEWTWOMEGAEVO_Gate_H
+#define MEWTWOMEGAEVO_Gate_H
+
 #include <armadillo>
 #include "TimingBasic.h"
 #include "nlohmann/json.hpp"
@@ -39,3 +42,5 @@ class MeasurementMarker: public Gate {
 public:
     MeasurementMarker();
 };
+
+#endif
