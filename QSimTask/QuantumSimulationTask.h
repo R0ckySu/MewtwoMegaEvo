@@ -15,6 +15,9 @@
 class QSimTask {
     RTTR_ENABLE();
 public:
+    int job_group_size;
+    int job_id;
+
     std::string task_name;
     int log_level_threshold=1;
     std::string task_time_stamp;
@@ -25,6 +28,8 @@ public:
     nlohmann::json gate_configs;
     nlohmann::json hamiltonian_configs;
 
+    bool will_record_unitary;
+    bool will_record_all_measurement;
     double step_size;
     int iterations;
     std::vector<arma::cx_mat> rho_inits;

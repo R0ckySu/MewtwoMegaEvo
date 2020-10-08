@@ -20,10 +20,12 @@ public:
     std::vector<init_state_name_type> init_states;
 
     std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> meas_result_set;
-    std::vector<double> measurement_time_point_vec;
+    arma::vec measurement_time_point_vec;
 
-    void measure_from_density_mat_with_time_points(std::vector<arma::cx_cube> rho_multi, std::vector<double> time_points);
+    void measure_from_density_mat_with_all_time_points(std::vector<arma::cx_cube> rho_multi);
+    void measure_from_density_mat_with_time_points(std::vector<arma::cx_cube> rho_multi, arma::vec time_points);
     void save_result_to_folder(const std::string& path, const std::string& param_label);
 private:
-    std::vector<int> get_time_index(std::vector<double> time_points);
+    std::vector<int> get_time_index(arma::vec time_points);
+    void measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi, std::vector<int> time_indices);
 };

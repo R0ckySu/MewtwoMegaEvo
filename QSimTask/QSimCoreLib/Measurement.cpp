@@ -23,12 +23,23 @@ MeasurementManager::MeasurementManager(std::vector<observable_name_type> observa
     }
 }
 
-
 void MeasurementManager::measure_from_density_mat_with_time_points(std::vector<arma::cx_cube> rho_multi,
-                                                                   std::vector<double> time_points) {
+                                                                   arma::vec time_points) {
     std::vector<int> time_indices = get_time_index(time_points);
     measurement_time_point_vec = time_points;
+    measure_density_mat_at_indices(rho_multi,time_indices);
+}
 
+void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vector<arma::cx_cube> rho_multi) {
+    int total_num_of_time_step = rho_multi.at(0).n_slices;
+
+    arma::vec time_indices = arma::linspace(0,total_num_of_time_step-1,total_num_of_time_step);
+    measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<int>>::from(time_indices));
+    measurement_time_point_vec = step_size * time_indices;
+}
+
+void MeasurementManager::measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi,
+                                                        std::vector<int > time_indices) {
     for (int i = 0; i < observables.size(); ++i) {
         observable_name_type O_symbol = observables.at(i);
         arma::cx_mat O = qmt::spinorDecoder(O_symbol);
@@ -55,9 +66,9 @@ void MeasurementManager::save_result_to_folder(const std::string& path, const st
             rho_entry.second.save(arma::hdf5_name(path,h5field_name,arma::hdf5_opts::append));
         }
     }
-    arma::dvec time_arma_vec = arma::vec(measurement_time_point_vec);
+
     std::string h5field_name = std::string(param_label).append("/").append("time_vec");
-    time_arma_vec.save(arma::hdf5_name(path,h5field_name,arma::hdf5_opts::append));
+    measurement_time_point_vec.save(arma::hdf5_name(path,h5field_name,arma::hdf5_opts::append));
 
     //Clean up containers after storage;
     for (auto& O_entry: meas_result_set) {
@@ -65,16 +76,16 @@ void MeasurementManager::save_result_to_folder(const std::string& path, const st
             arma::vec().swap(rho_entry.second);
         }
     }
-    std::vector<double>().swap(measurement_time_point_vec);
+    arma::vec().swap(measurement_time_point_vec);
 }
 
 
-std::vector<int> MeasurementManager::get_time_index(std::vector<double> time_points) {
-    std::vector<int> time_index = std::vector<int>(time_points.size());
-    std::cout << "MeasurementManager: indices for meas:" << std::endl;
-    for (int i = 0; i < time_points.size(); ++i) {
-        time_index.at(i) = floor(time_points.at(i)/step_size);
-        std::cout << time_index.at(i) << std::endl;
+std::vector<int> MeasurementManager::get_time_index(arma::vec time_points) {
+    std::vector<int> time_index = std::vector<int>(time_points.n_elem);
+    for (int i = 0; i < time_points.n_elem; ++i) {
+        time_index.at(i) = round(time_points.at(i)/step_size);
     }
     return time_index;
 }
+
+

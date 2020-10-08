@@ -8,18 +8,19 @@
 
 Sequence::Sequence() {
     sequential_gate_list = std::vector<Gate *>();
-    measurement_time_point_vec = std::vector<double>();
+    measurement_time_point_vec = arma::vec();
 }
 
 void Sequence::generate_switching_sig() {
 
     gate_switching_map = std::map<gate_tag_type, arma::vec>();
+    std::vector<double> meas_time_point_temp = std::vector<double>();
 
     for (int i = 0; i < sequential_gate_list.size(); ++i) {
         Gate *gate_unit = sequential_gate_list.at(i);
         // Record virtual measurement gate time.
         if (gate_unit->tag == std::string("M")) {
-            measurement_time_point_vec.push_back(gate_unit->start_time);
+            meas_time_point_temp.push_back(gate_unit->start_time);
         }
         //Skip FID gates and virtual gates
         if (gate_unit->hamiltonian_tags_list.empty()) {
@@ -35,6 +36,8 @@ void Sequence::generate_switching_sig() {
             gate_switching_map.insert(new_gate_swicthing_entry);
         }
     }
+
+    measurement_time_point_vec = arma::vec(meas_time_point_temp);
 }
 
 void Sequence::append_gate(const Gate &g) {

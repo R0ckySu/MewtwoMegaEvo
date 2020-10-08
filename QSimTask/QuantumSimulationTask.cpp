@@ -17,7 +17,7 @@ RTTR_REGISTRATION{
 };
 
 QSimTask::QSimTask() {
-
+    task_time_stamp = get_time_stamp_str();
 }
 
 QSimTask::~QSimTask() {
@@ -34,12 +34,18 @@ void QSimTask::sweeping_task() {
         MeasurementManager meas_manager = MeasurementManager(sim_configs["observables"],sim_configs["init_states"]);
         meas_manager.step_size = step_size;
         auto rho_t_multi_result = launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
-        meas_manager.measure_from_density_mat_with_time_points(rho_t_multi_result,seq->measurement_time_point_vec);
 
-        std::string result_file_name = std::string(result_output_folder).append("/").append(task_name).append(get_time_stamp_str());
+        std::string result_file_name = std::string(result_output_folder).append("/").append(task_name).append(task_time_stamp);
         std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
+
+        meas_manager.measure_from_density_mat_with_time_points(rho_t_multi_result,seq->measurement_time_point_vec);
         meas_manager.save_result_to_folder(result_file_name,result_param_str);
         task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(result_param_str),1);
+
+        if (will_record_all_measurement) {
+            meas_manager.measure_from_density_mat_with_all_time_points(rho_t_multi_result);
+            meas_manager.save_result_to_folder(std::string(result_file_name).append("_all"),result_param_str);
+        }
     }
 }
 
@@ -55,6 +61,8 @@ void QSimTask::load_sim_configs() {
     param_vec.load(sim_configs["sweep_val_path"],arma::csv_ascii);
     step_size = sim_configs["step_size"];
     iterations = sim_configs["iterations"];
+    will_record_all_measurement = sim_configs["record_all_meas"];
+    will_record_unitary = sim_configs["record_unitary"];
 
     rho_inits = std::vector<arma::cx_mat>();
     int sys_dim = sim_configs["system_dim"];
@@ -137,7 +145,7 @@ Sequence* QSimTask::load_sequence() {
     arma::vec time_points = arma::vec(seq->measurement_time_point_vec);
     std::stringstream vec_str;
     vec_str << time_points;
-    task_log(std::string("Measurement time points are:\n").append(vec_str.str()),2);
+    task_log(std::string("Marker measurement time points are:\n").append(vec_str.str()),2);
 
     for (const auto& gate_item : gate_prototype_map) {
         auto gate_proto_tag = gate_item.first;
@@ -151,8 +159,10 @@ Sequence* QSimTask::load_sequence() {
             }
         }
     }
+    task_log("Sequence loaded!",1);
     return seq;
 }
+
 std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
 
     std::vector<arma::cx_cube> rho_multi_temp = std::vector<arma::cx_cube>(rho_inits.size());
@@ -181,6 +191,7 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
         solver_obj.rho0_multi = &rho_inits;
         solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
 
+        //Load Noise Hamiltonian
         arma::cx_cube * noise_hamiltonian_time_dep_per_iter = new arma::cx_cube(matrix_dim,matrix_dim,total_num_steps);
         for (const auto& noise_hamiltonian_item : noise_hamiltonian_prototype_map) {
             auto * noise_h_temp = new Noise_Hamiltonian(*noise_hamiltonian_item.second);
@@ -190,8 +201,8 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
             noise_h_temp->fetch_H(noise_hamiltonian_time_dep_per_iter);
         }
         solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep_per_iter;
-//      std::cout << "QSimTask: Noise Hamiltonians linked to solver, index=" << std::to_string(i) << " at thread:" << std::to_string(omp_get_num_threads()) << std::endl;
 
+        //Start calculating time evolution
         solver_obj.calculate_evolution();
     }
 
@@ -222,6 +233,7 @@ void QSimTask::reload_with_sweeping_parameter(int index) {
         } else if (noise_hamiltonian_prototype_map.find(tag) == noise_hamiltonian_prototype_map.end()) {
             hamiltonian_obj = noise_hamiltonian_prototype_map[tag];
         }
+        hamiltonian_obj->clean_up_on_reload();
         rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
         parametric_prop.set_value(*hamiltonian_obj,param_val);
     } else if (type_name == "Sim") {

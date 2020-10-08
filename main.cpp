@@ -4,8 +4,8 @@
 #include <armadillo>
 
 int main() {
-
 //    std::cout << "Hello, World!\n" << qmt::spinorDecoder("XY") << std::endl;
+
     QSimTask task = QSimTask();
     rttr::type class_type = rttr::type::get(task);
     rttr::property config_prp = class_type.get_property("config_file_folder");

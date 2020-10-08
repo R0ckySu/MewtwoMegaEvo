@@ -11,7 +11,7 @@ public:
     Sequence();
 
     std::map<gate_tag_type, arma::vec> gate_switching_map;
-    std::vector<double> measurement_time_point_vec;
+    arma::vec measurement_time_point_vec;
 
     void append_gate(const Gate& g);
     void append_sequence(const Sequence & seq);

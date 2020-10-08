@@ -33,6 +33,8 @@ public:
     virtual void fetch_H(arma::cx_cube* H0);
     virtual void load_ext_waveform(int param_index);
     virtual std::string description();
+
+    virtual void clean_up_on_reload();
 RTTR_ENABLE();
 };
 

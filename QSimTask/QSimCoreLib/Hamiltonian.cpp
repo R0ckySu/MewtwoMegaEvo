@@ -78,6 +78,15 @@ std::string Hamiltonian::description() {
     return "Hamiltonian";
 }
 
+void Hamiltonian::clean_up_on_reload() {
+    step_size = 1;
+    num_of_steps = 0;
+
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
+    arma::cx_vec().swap(wave_form) ;
+}
+
 /**********************************************************************************************************************/
 Static_Hamiltonian::Static_Hamiltonian(nlohmann::json h_config) : Hamiltonian(h_config) {}
 
