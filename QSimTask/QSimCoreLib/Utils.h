@@ -3,6 +3,7 @@
 //
 #include <armadillo>
 #include <cmath>
+#include <iomanip>
 
 namespace qmt{
 
@@ -40,3 +41,7 @@ arma::cx_mat load_matrix_from_config_str(std::string mat_string);
  *
  * */
 std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::string seq_expression);
+
+std::string get_time_stamp_str();
+
+std::string double_to_fixprecision_str(double num, int percision);

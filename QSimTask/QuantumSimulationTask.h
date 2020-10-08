@@ -6,6 +6,7 @@
 #include <stack>
 #include <nlohmann/json.hpp>
 
+#include "QSimCoreLib/Measurement.h"
 #include "QSimCoreLib/Sequence.h"
 #include "QSimCoreLib/VonNeumannSolver.h"
 
@@ -14,10 +15,12 @@
 class QSimTask {
     RTTR_ENABLE();
 public:
-    int log_level_threshold=1;
     std::string task_name;
+    int log_level_threshold=1;
     std::string task_time_stamp;
     std::string config_file_folder;
+    std::string result_output_folder;
+
     nlohmann::json sim_configs;
     nlohmann::json gate_configs;
     nlohmann::json hamiltonian_configs;
@@ -46,8 +49,9 @@ public:
 
     virtual void reload_with_sweeping_parameter(int index);
     virtual Sequence* load_sequence();
-    virtual VonNeumannSolver* launch_solver(int total_num_steps,int matrix_dim);
+    virtual std::vector<arma::cx_cube> launch_solver(int total_num_steps,int matrix_dim);
     void measument_solver();
+
 
     void preload() {
         load_sim_configs();
@@ -55,16 +59,7 @@ public:
         load_gate_configs();
     }
 
-    void sweeping_task() {
-        std::cout << "QSimTask: Parametric Sweeping started\n" << std::endl;
-        //TODO: Grouped parameters for job slicing.
-        for (int i = 0; i < param_vec.size(); ++i) {
-            reload_with_sweeping_parameter(i);
-            Sequence* seq = load_sequence();
-            launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
-            measument_solver();
-        }
-    }
+    void sweeping_task();
 
 private:
     static nlohmann::json load_config_from_path(const std::string& path);

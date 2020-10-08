@@ -13,7 +13,8 @@ add_library(
         Gate.cpp Gate.h
         Sequence.cpp Sequence.h
         TimingBasic.cpp TimingBasic.h
-        Utils.h Utils.cpp)
+        Utils.h Utils.cpp
+        Measurement.cpp Measurement.h)
 
 target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 target_link_libraries(QSimCoreLib PRIVATE omp)

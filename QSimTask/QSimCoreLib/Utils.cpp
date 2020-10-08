@@ -207,3 +207,21 @@ std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::s
     return symbolic_seq_info_pair;
 };
 
+std::string get_time_stamp_str() {
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer[80];
+    time (&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(buffer,sizeof(buffer),"%Y%m%d%H%M%S",timeinfo);
+    std::string time_str(buffer);
+    return time_str;
+};
+
+std::string double_to_fixprecision_str(double num, int percision) {
+    std::ostringstream double_str;
+    double_str << std::setprecision(percision);
+    double_str << std::scientific;
+    double_str << num;
+    return double_str.str();
+}

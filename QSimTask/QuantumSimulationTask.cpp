@@ -24,6 +24,26 @@ QSimTask::~QSimTask() {
 
 }
 
+void QSimTask::sweeping_task() {
+    std::cout << "QSimTask: Parametric Sweeping started\n" << std::endl;
+    //TODO: Grouped parameters for job slicing.
+    //TODO: Configurable parallelization by CMake predefined params (Build time config)
+    for (int i = 0; i < param_vec.size(); ++i) {
+        reload_with_sweeping_parameter(i);
+        Sequence* seq = load_sequence();
+        MeasurementManager meas_manager = MeasurementManager(sim_configs["observables"],sim_configs["init_states"]);
+        meas_manager.step_size = step_size;
+        auto rho_t_multi_result = launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
+        meas_manager.measure_from_density_mat_with_time_points(rho_t_multi_result,seq->measurement_time_point_vec);
+
+        std::string result_file_name = std::string(result_output_folder).append("/").append(task_name).append(get_time_stamp_str());
+        std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
+        meas_manager.save_result_to_folder(result_file_name,result_param_str);
+        task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(result_param_str),1);
+    }
+}
+
+
 void QSimTask::load_sim_configs() {
     task_log("Loading simulation configs",1);
 
@@ -97,6 +117,7 @@ Sequence* QSimTask::load_sequence() {
     Sequence *seq = new Sequence();
     seq->step_size = step_size;
 
+    // Decode symbolic sequence
     auto gate_info_pair_vec = symbolic_sequence_decoder(sim_configs["sequence"]);
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
@@ -109,7 +130,10 @@ Sequence* QSimTask::load_sequence() {
         }
     }
 
+    // Generate swiching signal after gates loaded to sequeces
     seq->generate_switching_sig();
+
+    // Print measurement time points;
     arma::vec time_points = arma::vec(seq->measurement_time_point_vec);
     std::stringstream vec_str;
     vec_str << time_points;
@@ -129,8 +153,7 @@ Sequence* QSimTask::load_sequence() {
     }
     return seq;
 }
-
-VonNeumannSolver* QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
+std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
 
     std::vector<arma::cx_cube> rho_multi_temp = std::vector<arma::cx_cube>(rho_inits.size());
     for (auto & rho_t_item : rho_multi_temp) {
@@ -151,6 +174,7 @@ VonNeumannSolver* QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
 
     VonNeumannSolver solver_obj = * new VonNeumannSolver();
 
+    //TODO: Configurable parallelization by CMake predefined params (Build time config)
     #pragma omp parallel for default(none) shared(ctrl_hamiltonian_time_dep,matrix_dim,total_num_steps,rho_multi_temp) private(solver_obj)
     for (int i = 0; i < iterations; ++i) {
         solver_obj.rho_t_multi = &rho_multi_temp;
@@ -171,14 +195,8 @@ VonNeumannSolver* QSimTask::launch_solver(int total_num_steps,int matrix_dim) {
         solver_obj.calculate_evolution();
     }
 
-    std::vector<std::string> rho_init_strs = sim_configs["init_states"];
-    std::string fileName = std::string(config_file_folder).append("/rho_result");
-    for (int i = 0; i < rho_init_strs.size(); ++i) {
-        rho_multi_temp.at(i).save(arma::hdf5_name(fileName,rho_init_strs.at(i),arma::hdf5_opts::append));
-    }
-//    solver_obj.rho_t_multi->at(1).save(std::string(config_file_folder).append("/rhotest0"),arma::hdf5_binary);
     task_log("Solver job done!",1);
-    return &solver_obj;
+    return rho_multi_temp;
 }
 
 void QSimTask::measument_solver() {
