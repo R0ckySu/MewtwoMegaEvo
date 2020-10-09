@@ -236,3 +236,50 @@ void symbolic_matrix::load_from_symbol(std::string _symbol_name, std::string con
         mat.load(std::string(config_path).append("/").append(symbol_name));
     }
 }
+
+std::vector<std::string> decompose_to_elementary_gate_strings (std::string sequence_str) {
+    std::string seq_str = sequence_str;
+    std::vector<std::string> elementary_gate_list = std::vector<std::string>();
+
+    int left_first_bra_pos = seq_str.find_first_of('[');
+    int right_last_ket_pos = seq_str.find_last_of(']');
+
+    if ((left_first_bra_pos != seq_str.npos) && (right_last_ket_pos != seq_str.npos)) {
+        std::string left_seq = seq_str.substr(0, left_first_bra_pos-1);
+        std::cout << "Left:" << left_seq << std::endl;
+
+        std::string right_seq = seq_str.substr(right_last_ket_pos+2,seq_str.length()-right_last_ket_pos);
+        int num_end_pos = right_seq.find_first_of('-');
+        std::string num_str = right_seq.substr(0,num_end_pos);
+        right_seq = right_seq.substr(num_end_pos+1,right_seq.length()-num_end_pos);
+        std::cout << "Right:" << right_seq << std::endl;
+
+        int repeat_midle_num = atoi(num_str.c_str());
+
+        seq_str = seq_str.substr(left_first_bra_pos+1,right_last_ket_pos-left_first_bra_pos-1);
+        std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_midle_num << std::endl;
+
+        std::vector<std::string> splitted_gates_left = str_split(left_seq,'-');
+        for (int i = 0; i < splitted_gates_left.size(); ++i) {
+            elementary_gate_list.push_back(splitted_gates_left.at(i));
+        }
+
+        std::vector<std::string> splitted_gates_mid = decompose_to_elementary_gate_strings(seq_str);
+        for (int j = 0; j < repeat_midle_num; ++j) {
+            for (int i = 0; i < splitted_gates_mid.size(); ++i) {
+                elementary_gate_list.push_back(splitted_gates_mid.at(i));
+            }
+        }
+
+        std::vector<std::string> splitted_gates_right = str_split(right_seq,'-');
+        for (int i = 0; i < splitted_gates_right.size(); ++i) {
+            elementary_gate_list.push_back(splitted_gates_right.at(i));
+        }
+    } else {
+        std::vector<std::string> splitted_gates = str_split(seq_str,'-');
+        for (int i = 0; i < splitted_gates.size(); ++i) {
+            elementary_gate_list.push_back(splitted_gates.at(i));
+        }
+    }
+    return elementary_gate_list;
+}

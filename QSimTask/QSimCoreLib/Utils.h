@@ -56,5 +56,6 @@ std::string get_time_stamp_str();
 
 std::string double_to_fixprecision_str(double num, int percision);
 
+std::vector<std::string> decompose_to_elementary_gate_strings (std::string sequence_str);
 
 #endif //MEWTWOMEGAEVO_UTILS_H
