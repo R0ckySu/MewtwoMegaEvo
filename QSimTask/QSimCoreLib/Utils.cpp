@@ -180,33 +180,6 @@ arma::cx_mat load_matrix_from_config_str(std::string mat_string) {
     return qmt::spinorDecoder(mat_string);
 };
 
-std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::string seq_expression){
-//    int first_sq_bra = seq_expression.find_first_of('[');
-//    int last_sq_ket = seq_expression.find_last_of(']');
-//    std::string repeatable_sub_seq_str = seq_expression.substr(first_sq_bra+1,last_sq_ket-first_sq_bra-1);
-//    std::cout << repeatable_sub_seq_str << std::endl;
-    std::vector<std::string> symbolic_sequence_vec = str_split(seq_expression,'-');
-
-    auto symbolic_seq_info_pair = std::vector<std::pair<std::string, std::string>>();
-    for (const auto& gate_symbol : symbolic_sequence_vec) {
-        std::string tag;
-        std::string param_str;
-
-        int left_par_idx = gate_symbol.find_first_of('(');
-        int right_par_idx = gate_symbol.find_first_of(')');
-        if ((left_par_idx != std::string::npos) && (right_par_idx != std::string::npos)) {
-            tag = gate_symbol.substr(0,left_par_idx);
-            param_str = gate_symbol.substr(left_par_idx+1,right_par_idx-left_par_idx-1);
-        } else {
-            tag = gate_symbol;
-        }
-        std::cout << tag << ":" << param_str << std::endl;
-        symbolic_seq_info_pair.push_back(std::make_pair(tag,param_str));
-    }
-
-    return symbolic_seq_info_pair;
-};
-
 std::string get_time_stamp_str() {
     time_t rawtime;
     struct tm * timeinfo;
@@ -237,35 +210,36 @@ void symbolic_matrix::load_from_symbol(std::string _symbol_name, std::string con
     }
 }
 
-std::vector<std::string> decompose_to_elementary_gate_strings (std::string sequence_str) {
+std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string sequence_str) {
     std::string seq_str = sequence_str;
-    std::vector<std::string> elementary_gate_list = std::vector<std::string>();
+    std::vector<std::pair<std::string, std::string>> elementary_gate_list = std::vector<std::pair<std::string, std::string>>();
 
     int left_first_bra_pos = seq_str.find_first_of('[');
     int right_last_ket_pos = seq_str.find_last_of(']');
 
     if ((left_first_bra_pos != seq_str.npos) && (right_last_ket_pos != seq_str.npos)) {
         std::string left_seq = seq_str.substr(0, left_first_bra_pos-1);
-        std::cout << "Left:" << left_seq << std::endl;
+        //std::cout << "Left:" << left_seq << std::endl;
 
         std::string right_seq = seq_str.substr(right_last_ket_pos+2,seq_str.length()-right_last_ket_pos);
         int num_end_pos = right_seq.find_first_of('-');
-        std::string num_str = right_seq.substr(0,num_end_pos);
+        std::string num_of_repeat_str = right_seq.substr(0,num_end_pos);
         right_seq = right_seq.substr(num_end_pos+1,right_seq.length()-num_end_pos);
-        std::cout << "Right:" << right_seq << std::endl;
+        //std::cout << "Right:" << right_seq << std::endl;
 
-        int repeat_midle_num = atoi(num_str.c_str());
+        int repeat_middle_num = atoi(num_of_repeat_str.c_str());
 
         seq_str = seq_str.substr(left_first_bra_pos+1,right_last_ket_pos-left_first_bra_pos-1);
-        std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_midle_num << std::endl;
+        //std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_midle_num << std::endl;
 
         std::vector<std::string> splitted_gates_left = str_split(left_seq,'-');
         for (int i = 0; i < splitted_gates_left.size(); ++i) {
-            elementary_gate_list.push_back(splitted_gates_left.at(i));
+            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates_left.at(i)));
         }
 
-        std::vector<std::string> splitted_gates_mid = decompose_to_elementary_gate_strings(seq_str);
-        for (int j = 0; j < repeat_midle_num; ++j) {
+        // Called recursively to unwrap the repeatable sub sequences
+        std::vector<std::pair<std::string, std::string>> splitted_gates_mid = symbolic_sequence_str_parser(seq_str);
+        for (int j = 0; j < repeat_middle_num; ++j) {
             for (int i = 0; i < splitted_gates_mid.size(); ++i) {
                 elementary_gate_list.push_back(splitted_gates_mid.at(i));
             }
@@ -273,13 +247,19 @@ std::vector<std::string> decompose_to_elementary_gate_strings (std::string seque
 
         std::vector<std::string> splitted_gates_right = str_split(right_seq,'-');
         for (int i = 0; i < splitted_gates_right.size(); ++i) {
-            elementary_gate_list.push_back(splitted_gates_right.at(i));
+            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates_right.at(i)));
         }
     } else {
         std::vector<std::string> splitted_gates = str_split(seq_str,'-');
         for (int i = 0; i < splitted_gates.size(); ++i) {
-            elementary_gate_list.push_back(splitted_gates.at(i));
+            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates.at(i)));
         }
     }
     return elementary_gate_list;
+}
+
+std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(std::string gate_str) {
+    int first_para = gate_str.find_first_of('(');
+    int last_para = gate_str.find_last_of(')');
+    return std::make_pair(gate_str.substr(0,first_para), gate_str.substr(first_para+1,last_para-first_para-1));
 }

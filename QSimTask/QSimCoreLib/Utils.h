@@ -32,6 +32,9 @@ namespace qmt{
     arma::cx_mat spinorDecoder(std::string spinorStr);
     arma::cx_mat spinorExpressionDecoder(std::string expression);
 
+/*
+ * Matrix exponent approximated by Pade approximation
+ * */
     arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix);
 };
 
@@ -47,15 +50,28 @@ std::vector<std::string> str_split(std::string s, char delimiter);
 arma::cx_mat load_matrix_from_config_str(std::string mat_string);
 
 /*
- * Decode the sequence string to the elementary gate&param pair vector
- *
+ * Get current time in the 'YYYYMMDDHHMMSSSS' format
  * */
-std::vector<std::pair<std::string,std::string>> symbolic_sequence_decoder(std::string seq_expression);
-
 std::string get_time_stamp_str();
 
+/*
+ * Transform double to fixed precision in scientific format
+ * */
 std::string double_to_fixprecision_str(double num, int percision);
 
-std::vector<std::string> decompose_to_elementary_gate_strings (std::string sequence_str);
+/*
+ * Symbolic Sequence string parser
+ * - Sequence decomposition rule
+ *  |- Sub sequence wrapped by square braket "[]"
+ *  |- "[]^n" will repeat the sub sequence for n times.
+ *  |- Each symbolic gate in the sequence is separated by '-'
+ * - E.x.
+ *  |-Sequence_string: F(T/4)-[U(0,pi,X)-U(0,pi,Y)]^2-U(0,pi,X)-F(T/4)
+ *  |-Result: F(T/4), U(0,pi,X), U(0,pi,Y), U(0,pi,X), U(0,pi,Y), U(0,pi,X), F(T/4)
+ *  -- Where, gate symbols are decomposed to tag-param pair, for e.x., F(T/4) will be decomposed to "F" : "T/4"
+ * */
+std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string sequence_str);
+
+std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(std::string gate_str);
 
 #endif //MEWTWOMEGAEVO_UTILS_H

@@ -114,18 +114,21 @@ void QSimTask::load_hamiltonian_configs() {
     for (auto & h_prototypes_def : h_prototypes_defs) {
         std::string tag = h_prototypes_def["tag"];
         std::string hamiltonian_type = h_prototypes_def["type"];
-        task_log(std::string("Loading Hamiltonian tag:").append(tag),2);
-        if (hamiltonian_type == "static") {
-            auto *h_staic = new Static_Hamiltonian(h_prototypes_def, config_file_folder);
-            ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, h_staic));
-        } else if(hamiltonian_type == "mw") {
-            auto *mw = new MW_Hamiltonian(h_prototypes_def, config_file_folder);
-            ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,mw));
-        } else if(hamiltonian_type == "awg") {
+        bool enable = h_prototypes_def["enable"];
+        if (enable) {
+            task_log(std::string("Loading Hamiltonian tag:").append(tag),2);
+            if (hamiltonian_type == "static") {
+                auto *h_staic = new Static_Hamiltonian(h_prototypes_def, config_file_folder);
+                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, h_staic));
+            } else if(hamiltonian_type == "mw") {
+                auto *mw = new MW_Hamiltonian(h_prototypes_def, config_file_folder);
+                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,mw));
+            } else if(hamiltonian_type == "awg") {
 
-        } else if(hamiltonian_type == "noise") {
-            auto *noise = new Noise_Hamiltonian(h_prototypes_def, config_file_folder);
-            noise_hamiltonian_prototype_map.insert(std::make_pair(tag,noise));
+            } else if(hamiltonian_type == "noise") {
+                auto *noise = new Noise_Hamiltonian(h_prototypes_def, config_file_folder);
+                noise_hamiltonian_prototype_map.insert(std::make_pair(tag,noise));
+            }
         }
     }
 }
@@ -135,7 +138,7 @@ Sequence* QSimTask::load_sequence() {
     seq->step_size = step_size;
 
     // Decode symbolic sequence
-    auto gate_info_pair_vec = symbolic_sequence_decoder(sim_configs["sequence"]);
+    auto gate_info_pair_vec = symbolic_sequence_str_parser(sim_configs["sequence"]);
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;

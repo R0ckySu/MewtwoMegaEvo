@@ -24,6 +24,8 @@
  *
  * */
 
+//TODO: log control
+
 class VonNeumannSolver {
 public:
     bool will_record_unitary = false;

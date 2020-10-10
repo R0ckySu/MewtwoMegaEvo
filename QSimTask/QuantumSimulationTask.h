@@ -38,11 +38,6 @@ public:
     std::map<hamiltonian_tag_type, Noise_Hamiltonian *> noise_hamiltonian_prototype_map;
 
 private:
-//    void load_sequence_to_solver();
-//    void load_noise_to_solver();
-//    void load_measurements_to_solver();
-//    void launch_solver();
-//    void measument_solver();
 
 public:
     QSimTask();
