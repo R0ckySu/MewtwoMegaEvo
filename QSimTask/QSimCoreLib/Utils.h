@@ -72,6 +72,6 @@ std::string double_to_fixprecision_str(double num, int percision);
  * */
 std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string sequence_str);
 
-std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(std::string gate_str);
+std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(const std::string& gate_str);
 
 #endif //MEWTWOMEGAEVO_UTILS_H

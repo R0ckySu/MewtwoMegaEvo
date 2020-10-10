@@ -92,7 +92,6 @@ void QSimTask::load_gate_configs() {
     std::vector<nlohmann::json> gate_defs = gate_configs["gate_defs"];
     for (auto & gate_def : gate_defs) {
         Gate *gate_new = new Gate(gate_def);
-        gate_new->hamiltonian_obj_map_ptr = &ctrl_hamiltonian_prototype_map;
         gate_prototype_map.insert(std::make_pair(gate_new->tag, gate_new));
     }
 
@@ -142,15 +141,17 @@ Sequence* QSimTask::load_sequence() {
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
+        task_log(std::string("Sequence add Gate:").append(gate_tag).append(" with param:").append(gate_param_str),3);
         if ( *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
             // Gate found
-            Gate gate_new = *gate_prototype_map[gate_tag];
-            gate_new.decode_param_str(gate_param_str);
-            seq->append_gate(gate_new);
+            Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
+            if (!gate_param_str.empty()) {gate_new->decode_param_str(gate_param_str);}
+            seq->append_gate(*gate_new);
         }
     }
 
     // Generate swiching signal after gates loaded to sequeces
+    task_log("Sequence is generating switching signal",1);
     seq->generate_switching_sig();
 
     // Print measurement time points;

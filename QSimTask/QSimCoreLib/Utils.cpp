@@ -258,8 +258,16 @@ std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (s
     return elementary_gate_list;
 }
 
-std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(std::string gate_str) {
+std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(const std::string& gate_str) {
     int first_para = gate_str.find_first_of('(');
     int last_para = gate_str.find_last_of(')');
-    return std::make_pair(gate_str.substr(0,first_para), gate_str.substr(first_para+1,last_para-first_para-1));
+    std::string tag;
+    std::string param;
+    if (first_para!= std::string::npos && last_para!=std::string::npos) {
+        tag = gate_str.substr(0,first_para);
+        param = gate_str.substr(first_para+1,last_para-first_para-1);
+    } else {
+        tag = gate_str;
+    }
+    return std::make_pair(tag, param);
 }

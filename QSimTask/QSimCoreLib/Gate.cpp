@@ -5,6 +5,7 @@
 #include "Gate.h"
 #include "Utils.h"
 #include <rttr/registration.h>
+#include "exprtk.hpp"
 
 Gate::Gate() {
     tag = "";
@@ -14,7 +15,6 @@ Gate::Gate() {
 Gate::Gate(const TimingBasic &t, const Gate &g):TimingBasic(t) {
     tag = g.tag;
     hamiltonian_tags_list = g.hamiltonian_tags_list;
-    hamiltonian_obj_map_ptr = g.hamiltonian_obj_map_ptr;
 }
 
 Gate::Gate(nlohmann::json gate_config) {
@@ -26,6 +26,19 @@ Gate::Gate(nlohmann::json gate_config) {
 
 std::vector<std::string> Gate::decode_param_str(std::string params) {
     auto param_list = str_split(params,',');
+
+    exprtk::expression<double> expression;
+    std::string T_expression = param_list.at(T_pos);
+
+    exprtk::symbol_table<double> symbol_table;
+    double T = get_pulse_width();
+    symbol_table.add_variable("T", T);
+    expression.register_symbol_table(symbol_table);
+
+    exprtk::parser<double> parser;
+    parser.compile(T_expression,expression);
+    set_pulse_width(expression.value());
+
     return param_list;
 }
 
@@ -39,24 +52,18 @@ TimingDesc Gate::description() {
 
 /**********************************************************************************************************************/
 
-std::vector<std::string> FID::decode_param_str(std::string params) {
-    //TODO: Regex for pure number input (Now only for T/n format)
-    auto param_list = Gate::decode_param_str(params);
-    std::string tau_divided_str = param_list.at(0);
-    auto expression = str_split(tau_divided_str,'/');
-    double divider = std::stod(expression[1]);
-    set_pulse_width(tau/divider);
-    return param_list;
-}
+//std::vector<std::string> FID::decode_param_str(std::string params) {
+//    //TODO: Regex for pure number input (Now only for T/n format)
+//    auto param_list = Gate::decode_param_str(params);
+//
+//    std::string tau_divided_str = param_list.at(0);
+//    auto expression = str_split(tau_divided_str,'/');
+//    double divider = std::stod(expression[1]);
+//    set_pulse_width(tau/divider);
+//    return param_list;
+//}
 
-
-RTTR_REGISTRATION {
-    rttr::registration::class_<Gate>("Gate").
-            property("hamiltonian_tags_list",&Gate::hamiltonian_tags_list);
-
-    rttr::registration::class_<FID>("FID").
-            property("tau",&FID::tau);
-};
+/**********************************************************************************************************************/
 
 MeasurementMarker::MeasurementMarker() {
     hamiltonian_tags_list = std::vector<std::string>();
@@ -65,3 +72,8 @@ MeasurementMarker::MeasurementMarker() {
     end_time = 0;
     pulse_width = 0;
 }
+
+RTTR_REGISTRATION {
+    rttr::registration::class_<Gate>("Gate").
+            property("hamiltonian_tags_list",&Gate::hamiltonian_tags_list);
+};

@@ -9,9 +9,11 @@
 #include "TimingBasic.h"
 #include "nlohmann/json.hpp"
 #include "Hamiltonian.h"
-
 #include <rttr/rttr_enable.h>
 
+enum GateParamPosMap{
+    T_pos = 0,
+};
 
 typedef std::string gate_tag_type;
 
@@ -25,17 +27,9 @@ public:
 
     gate_tag_type tag;
     std::vector<hamiltonian_tag_type> hamiltonian_tags_list;
-    std::map<hamiltonian_tag_type, Hamiltonian *> *hamiltonian_obj_map_ptr;
     virtual std::vector<std::string> decode_param_str(std::string params);
     virtual TimingDesc description() override;
     RTTR_ENABLE(TimingBasic);
-};
-
-class FID: public Gate {
-public:
-    double tau=0;
-    std::vector<std::string> decode_param_str(std::string params) override;
-    RTTR_ENABLE(Gate);
 };
 
 class MeasurementMarker: public Gate {
