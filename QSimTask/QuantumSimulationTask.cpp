@@ -22,7 +22,7 @@ QSimTask::QSimTask() {
     config_file_folder = std::string(current_path).append("/").append(CONFIG_FOLDER_NAME);
     result_output_folder = std::string(current_path).append("/").append(OUTPUT_FOLDER_NAME);
     job_id = 0;
-    job_group_size = INT_MAX;
+    num_job_group = 1;
 }
 
 QSimTask::~QSimTask() {
@@ -31,7 +31,6 @@ QSimTask::~QSimTask() {
 
 void QSimTask::sweeping_task() {
     std::cout << "QSimTask: Parametric Sweeping started\n" << std::endl;
-    //TODO: Grouped parameters for job slicing.
     //TODO: Configurable parallelization by CMake predefined params (Build time config)
     for (int i = 0; i < param_vec.size(); ++i) {
         reload_with_sweeping_parameter(i);
@@ -40,7 +39,7 @@ void QSimTask::sweeping_task() {
         meas_manager.step_size = step_size;
         auto rho_t_multi_result = launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
 
-        std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_meas");
+        std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_J#").append(std::to_string(job_id)).append("_meas");
         std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
 
         meas_manager.measure_from_density_mat_with_time_points(rho_t_multi_result,seq->measurement_time_point_vec);
@@ -63,6 +62,7 @@ void QSimTask::load_sim_configs() {
 
     task_name = sim_configs["task_name"];
     log_level_threshold = sim_configs["log_level"];
+    job_slicing_strategy = sim_configs["job_slicing_strategy"];
     param_vec.load(sim_configs["sweep_val_path"],arma::csv_ascii);
     step_size = sim_configs["step_size"];
     iterations = sim_configs["iterations"];
@@ -82,6 +82,7 @@ void QSimTask::load_sim_configs() {
         system(copyConfigFileCommand.c_str());
     }
 
+    // Load initial states
     rho_inits = std::vector<symbolic_matrix>();
     int sys_dim = sim_configs["system_dim"];
     std::vector<std::string> rho_init_strs = sim_configs["init_states"];
@@ -93,6 +94,7 @@ void QSimTask::load_sim_configs() {
         std::cout << "QSimTask: rho_init:\n" << rho_.mat << std::endl;
     }
 
+    // Load observables
     observables = std::vector<symbolic_matrix>();
     std::vector<std::string> observable_strs = sim_configs["observables"];
     for(const auto& obs_str : observable_strs) {
@@ -101,6 +103,8 @@ void QSimTask::load_sim_configs() {
         observables.push_back(obs_);
         std::cout << "QSimTask: Observables:\n" << obs_.mat << std::endl;
     }
+
+    process_prameter_vec_with_job_slicing_strategy();
 }
 
 void QSimTask::load_gate_configs() {
@@ -303,3 +307,34 @@ void QSimTask::task_log(std::string message, int log_level) {
     }
 }
 
+void QSimTask::process_prameter_vec_with_job_slicing_strategy() {
+    int num_of_params = param_vec.size();
+    if ((num_job_group > num_of_params) || (job_id>num_job_group)) {
+        num_job_group = 1;
+        job_id = 0;
+        task_log(std::string("Wrong slicing parameters!"),1);
+        return;
+    }
+
+    if (job_slicing_strategy == JOB_SLICING_LINSPACE) {
+        arma::vec index_ends_list = arma::linspace(0,num_of_params,num_job_group+1);
+        int start_pos_for_this_job = index_ends_list.at(job_id);
+        int end_pos_for_this_job = index_ends_list.at(job_id+1);
+        param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
+    } else if (job_slicing_strategy == JOB_SLICING_LOGSPACE) {
+        arma::vec index_ends_list = arma::round(arma::logspace(0,log10(num_of_params),num_job_group));
+        index_ends_list.insert_rows(0,1);
+        for (int i = 1; i < index_ends_list.size()-1; ++i) {
+            if (index_ends_list.at(i) == index_ends_list.at(i-1)) {
+                index_ends_list.at(i) = index_ends_list.at(i)+1;
+            }
+        }
+        std::cout << index_ends_list << std::endl;
+        int start_pos_for_this_job = index_ends_list.at(job_id);
+        int end_pos_for_this_job = index_ends_list.at(job_id+1);
+        param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
+    } else if (job_slicing_strategy == JOB_SLICING_INVLOGSPACE) {
+        //TODO: JOB_SLICING_INVLOGSPACE
+    }
+    task_log(std::string("Job sliced!"),1);
+}

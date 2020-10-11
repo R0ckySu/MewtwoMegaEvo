@@ -34,7 +34,7 @@ If you have homebrew installed already, pre-compiled libs including armadillo, h
 
 ### Runtime reload of sweeping parameters
 
-## How to use
+## User guide
 ### Command args
 | arg  | arg name  | description |
 | ----------- | ----------- | ----------- |
@@ -75,7 +75,7 @@ sim_config.json provides all the general configurations of the simulation.
 | init_states | List of the density matrices at t=0 (See also: Symbolic/External matrix loading) |
 | iterations | Defines the num of iterations. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian) |
 | step_size | Time resolution of the simulation in second. |
-| sequence | Symbolic sequence string. (See also: Symbolic Sequence definitions) |
+| sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#sequence)) |
 | sweep_param_name | All the numeric fields in the config files could be charged with parametric sweeping. See parametric sweeping |
 | sweep_val_path | Specifies the source data for the sweeping parameter. See also: parametric sweeping |
 
@@ -170,7 +170,7 @@ Gate prototypes will only define the timing information and its corresponding Ha
 
 #### Symbolic/External matrix loading
 Complex matrices in the json config files could be either defined as SU(n) spinor symbols or loaded from external csv file.
--e.x.
+- e.x.
 1. Symbol "XY" will be parsed to be the tensor product of pauli matrix X and Y. Spinor symbol pattern will be identified automatically. 
 2. Symbol "rho1" is not identified as spinor symbol, so it will be loaded from ${config_folder}/rho1 in csv format.
 
@@ -179,7 +179,7 @@ Complex matrices in the json config files could be either defined as SU(n) spino
 1. Sub sequence wrapped by square braket "[]"
 2. "[]^n" will repeat the sub sequence for n times.
 3. Each symbolic gate in the sequence is separated by '-'
-- E.x.
+- e.x.
 ```
 Sequence_string: F(T/4)-[U1-U2]^2-U2-F(T/4)
 Result: F(T/4), U1, U2, U1, U2, U2, F(T/4)
@@ -196,3 +196,21 @@ Coming Soon
 
 ## Output data
 Output result data will be saved as HDF5 file.
+
+Data structure tree diagram:
+```
+|-Dataset|
+         |-param1-|
+         |-param2-|
+            ...
+         |-paramN-|
+                  |-time_vec-|
+                  |-Observable1-|
+                  |-Observable2-|
+                       ...
+                  |-ObservableN-|
+                                |-rho1-|
+                                |-rho2-|
+                                |-rho3-|
+                                  ...
+```

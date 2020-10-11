@@ -10,7 +10,7 @@
 #include "nlohmann/json.hpp"
 #include "QSimTask/QuantumSimulationTask.h"
 
-const char* short_options = "g:n:o:c:t:";
+const char* short_options = "g:i:o:c:t:";
 const struct option long_options[] = {
         {"num_job_group", 1, NULL,'g'},
         {"job_id",        1, NULL,'i'},
@@ -27,8 +27,8 @@ QSimTask* create_task_from_command_arg_parser(int argc, char *argv[]){
         printf("[+]Get sim task startup options : %d \n", c);
         switch (c) {
             case 'g':
-                std::cout << "Job_group_size:" << optarg << std::endl;
-                sim_task_new->job_group_size = std::stoi(optarg);
+                std::cout << "Num of jobs:" << optarg << std::endl;
+                sim_task_new->num_job_group = std::stoi(optarg);
                 break;
             case 'i':
                 std::cout << "Index of job:" << optarg << std::endl;

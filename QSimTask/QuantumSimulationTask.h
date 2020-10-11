@@ -10,14 +10,19 @@
 
 #include <rttr/rttr_enable.h>
 
+#define JOB_SLICING_LOGSPACE "logspace"
+#define JOB_SLICING_INVLOGSPACE "inv_logspace"
+#define JOB_SLICING_LINSPACE "linspace"
+
 #define CONFIG_FOLDER_NAME "config_files"
 #define OUTPUT_FOLDER_NAME "sim_results"
 
 class QSimTask {
     RTTR_ENABLE();
 public:
-    int job_group_size;
+    int num_job_group;
     int job_id;
+    std::string job_slicing_strategy;
 
     std::string task_name;
     int log_level_threshold=1;
@@ -66,4 +71,5 @@ public:
 private:
     static nlohmann::json load_config_from_path(const std::string& path);
     void task_log(std::string message, int log_level);
+    void process_prameter_vec_with_job_slicing_strategy();
 };
