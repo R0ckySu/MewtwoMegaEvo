@@ -67,7 +67,7 @@ void MeasurementManager::save_result_to_folder(const std::string& path, const st
     }
 
     std::string h5field_name = std::string(param_label).append("/").append("time_vec");
-    measurement_time_point_vec.save(arma::hdf5_name(path,h5field_name,arma::hdf5_opts::append));
+    measurement_time_point_vec.save(arma::hdf5_name(std::string(path).append(".hdf5"),h5field_name,arma::hdf5_opts::append));
 
     //Clean up containers after storage;
     for (auto& O_entry: meas_result_set) {

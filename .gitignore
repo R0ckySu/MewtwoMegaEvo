@@ -33,9 +33,10 @@
 
 *.json
 
+*.dSYM
 cmake-build-debug/
 .idea/*
 .idea/workspace.xml
 3rd_party_libs/*
 
-*/results/*
+*/sim_results/*

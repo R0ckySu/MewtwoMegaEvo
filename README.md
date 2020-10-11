@@ -4,10 +4,6 @@
 Mewtwo is a density matrix solver based on the Von-Neumann equation. Provided the simulator with time dependend hamiltonian 
 and the initial states of the system, the simulator can output the time evolution of the density matrix.
 
-
-Mewtwo refactoring project;
-Re-developed from DM_Solver
-
 ## Installation
 
 ### Compiler & CMake Requirement

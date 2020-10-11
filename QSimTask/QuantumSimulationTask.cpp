@@ -7,6 +7,8 @@
 #include <rttr/registration.h>
 #include <rttr/property.h>
 #include <rttr/type.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 RTTR_REGISTRATION{
     rttr::registration::class_<QSimTask>("QSimTask").constructor<>()
@@ -16,6 +18,11 @@ RTTR_REGISTRATION{
 
 QSimTask::QSimTask() {
     task_time_stamp = get_time_stamp_str();
+    char *current_path = getcwd(NULL,0);
+    config_file_folder = std::string(current_path).append("/").append(CONFIG_FOLDER_NAME);
+    result_output_folder = std::string(current_path).append("/").append(OUTPUT_FOLDER_NAME);
+    job_id = 0;
+    job_group_size = INT_MAX;
 }
 
 QSimTask::~QSimTask() {
@@ -33,7 +40,7 @@ void QSimTask::sweeping_task() {
         meas_manager.step_size = step_size;
         auto rho_t_multi_result = launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
 
-        std::string result_file_name = std::string(result_output_folder).append("/").append(task_name).append(task_time_stamp);
+        std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_meas");
         std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
 
         meas_manager.measure_from_density_mat_with_time_points(rho_t_multi_result,seq->measurement_time_point_vec);
@@ -61,6 +68,19 @@ void QSimTask::load_sim_configs() {
     iterations = sim_configs["iterations"];
     will_record_all_measurement = sim_configs["record_all_meas"];
     will_record_unitary = sim_configs["record_unitary"];
+
+    // Create new folder for result storage. & Backup the config files to the new path.
+    DIR *resultDir;
+    if ((resultDir=opendir(result_output_folder.c_str()))==NULL) {
+        mkdir(result_output_folder.c_str(),0777);
+    }
+    result_exact_path = std::string(result_output_folder).append("/").append(task_name).append(task_time_stamp);
+    DIR *dir;
+    if ((dir=opendir(result_exact_path.c_str())) == NULL) {
+        mkdir(result_exact_path.c_str(),0777);
+        std::string copyConfigFileCommand = std::string("cp -rv ").append(config_file_folder).append(" ").append(result_exact_path);
+        system(copyConfigFileCommand.c_str());
+    }
 
     rho_inits = std::vector<symbolic_matrix>();
     int sys_dim = sim_configs["system_dim"];

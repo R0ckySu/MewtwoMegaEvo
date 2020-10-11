@@ -10,6 +10,9 @@
 
 #include <rttr/rttr_enable.h>
 
+#define CONFIG_FOLDER_NAME "config_files"
+#define OUTPUT_FOLDER_NAME "sim_results"
+
 class QSimTask {
     RTTR_ENABLE();
 public:
@@ -38,6 +41,7 @@ public:
     std::map<hamiltonian_tag_type, Noise_Hamiltonian *> noise_hamiltonian_prototype_map;
 
 private:
+    std::string result_exact_path;
 
 public:
     QSimTask();

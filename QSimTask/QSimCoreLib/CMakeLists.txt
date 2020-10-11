@@ -3,8 +3,6 @@ project(QSimCoreLib VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(QSimCoreLibTest QSimLibTest.cpp)
-include_directories(../../3rd_party_libs/include)
-link_directories(../../3rd_party_libs/lib)
 
 add_library(
         QSimCoreLib STATIC
@@ -21,7 +19,6 @@ target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 target_link_libraries(QSimCoreLib PRIVATE omp)
 target_link_libraries(QSimCoreLib PUBLIC armadillo)
 target_link_libraries(QSimCoreLib PRIVATE nlohmann_json::nlohmann_json)
-
 target_link_libraries(QSimCoreLib PUBLIC librttr_core.a)
 target_link_libraries(QSimCoreLib PUBLIC librttr_core_s.a)
 

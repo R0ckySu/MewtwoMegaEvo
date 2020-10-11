@@ -12,7 +12,6 @@ add_subdirectory(QSimCoreLib)
 
 target_link_libraries(QSimTask PRIVATE QSimCoreLib)
 target_link_libraries(QSimTask PRIVATE omp)
-target_link_libraries(QSimTask PUBLIC armadillo)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)

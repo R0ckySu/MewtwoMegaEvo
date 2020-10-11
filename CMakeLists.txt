@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.11)
 project(MewtwoMegaEvo)
 
 set(CMAKE_CXX_STANDARD 11)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Playground/)
 
 include_directories(./3rd_party_libs/include)
 link_directories(./3rd_party_libs/lib)
 
 add_executable(MewtwoMegaEvo
-                main.cpp)
+                main.cpp command_arg_parser.h)
 
 
 add_subdirectory(QSimTask)
