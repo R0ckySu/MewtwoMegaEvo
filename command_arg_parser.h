@@ -12,11 +12,11 @@
 
 const char* short_options = "g:n:o:c:t:";
 const struct option long_options[] = {
-        {"job_group_size",1, NULL,'g'},
+        {"num_job_group", 1, NULL,'g'},
         {"job_id",        1, NULL,'i'},
         {"output_folder", 1, NULL,'o'},
         {"config_folder", 1, NULL,'c'},
-        {"timestamp",     1,NULL, 't'},
+        {"timestamp",     1, NULL, 't'},
         {nullptr,         0, nullptr, 0}
 };
 
