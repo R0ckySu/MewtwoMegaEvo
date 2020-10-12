@@ -31,6 +31,12 @@ If you have homebrew installed already, pre-compiled libs including armadillo, h
 ### Parallelization
 
 ### Job slicing for high performance computer
+#### Job slicing strategy
+| strategy  |  description |
+| ----------- | ----------- | 
+| linspace |  |
+| logspace |  |
+| inv_logspace |  |
 
 ### Runtime reload of sweeping parameters
 
@@ -38,8 +44,8 @@ If you have homebrew installed already, pre-compiled libs including armadillo, h
 ### Command args
 | arg  | arg name  | description |
 | ----------- | ----------- | ----------- |
-| -g | num_job_group | Num of the jobs (Job slicing for HPC)   |
-| -i | job_id | Index of the current job (Job slicing for HPC) |
+| -g | num_job_group | Num of the jobs [Job slicing for HPC](#Job-slicing-for-high-performance-computer)|
+| -i | job_id | Index of the current job [Job slicing for HPC](#Job-slicing-for-high-performance-computer)  |
 | -o | output_folder | Specifies the simulation result export path, /sim_results folder will be created at current dir by default. |
 | -c | config_folder| Specifies the simulation configuration folder, /config_files at current dir by default|
 | -t | timestamp | Force specifying the time stamp of the task, generated automatically by default |
@@ -75,7 +81,7 @@ sim_config.json provides all the general configurations of the simulation.
 | init_states | List of the density matrices at t=0 (See also: Symbolic/External matrix loading) |
 | iterations | Defines the num of iterations. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian) |
 | step_size | Time resolution of the simulation in second. |
-| sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#sequence)) |
+| sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations)) |
 | sweep_param_name | All the numeric fields in the config files could be charged with parametric sweeping. See parametric sweeping |
 | sweep_val_path | Specifies the source data for the sweeping parameter. See also: parametric sweeping |
 
@@ -175,6 +181,10 @@ Complex matrices in the json config files could be either defined as SU(n) spino
 2. Symbol "rho1" is not identified as spinor symbol, so it will be loaded from ${config_folder}/rho1 in csv format.
 
 #### Symbolic Sequence definations
+##### Gate Symbol
+
+##### Measurement Marker
+
 ##### Sequence string grammer
 1. Sub sequence wrapped by square braket "[]"
 2. "[]^n" will repeat the sub sequence for n times.

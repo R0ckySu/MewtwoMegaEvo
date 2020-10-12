@@ -30,7 +30,7 @@ QSimTask::~QSimTask() {
 }
 
 void QSimTask::sweeping_task() {
-    std::cout << "QSimTask: Parametric Sweeping started\n" << std::endl;
+    task_log("QSimTask: Parametric Sweeping started",1);
     //TODO: Configurable parallelization by CMake predefined params (Build time config)
     for (int i = 0; i < param_vec.size(); ++i) {
         reload_with_sweeping_parameter(i);
@@ -39,7 +39,7 @@ void QSimTask::sweeping_task() {
         meas_manager.step_size = step_size;
         auto rho_t_multi_result = launch_solver(seq->get_total_num_steps(),sim_configs["system_dim"]);
 
-        std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_J#").append(std::to_string(job_id)).append("_meas");
+        std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id)).append("_meas");
         std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
 
         meas_manager.measure_from_density_mat_with_time_points(rho_t_multi_result,seq->measurement_time_point_vec);
@@ -329,12 +329,23 @@ void QSimTask::process_prameter_vec_with_job_slicing_strategy() {
                 index_ends_list.at(i) = index_ends_list.at(i)+1;
             }
         }
-        std::cout << index_ends_list << std::endl;
         int start_pos_for_this_job = index_ends_list.at(job_id);
         int end_pos_for_this_job = index_ends_list.at(job_id+1);
         param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
     } else if (job_slicing_strategy == JOB_SLICING_INVLOGSPACE) {
-        //TODO: JOB_SLICING_INVLOGSPACE
+        arma::vec index_ends_list = arma::round(arma::logspace(0,log10(num_of_params),num_job_group));
+        index_ends_list.insert_rows(0,1);
+        for (int i = 1; i < index_ends_list.size()-1; ++i) {
+            if (index_ends_list.at(i) == index_ends_list.at(i-1)) {
+                index_ends_list.at(i) = index_ends_list.at(i)+1;
+            }
+        }
+        index_ends_list = num_of_params - index_ends_list;
+        int start_pos_for_this_job = index_ends_list.at(job_id);
+        int end_pos_for_this_job = index_ends_list.at(job_id+1);
+        param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
     }
-    task_log(std::string("Job sliced!"),1);
+    std::stringstream param_str;
+    param_str << param_vec;
+    task_log(std::string("Job sliced, param vec:\n").append(param_str.str()),1);
 }
