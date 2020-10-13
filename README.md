@@ -8,22 +8,25 @@ and the initial states of the system, the simulator can output the time evolutio
 
 ### Compiler & CMake Requirement
 1. gcc-8.1+
-2. CMake 11.0+
+2. g++-8.1+
+3. CMake 11.0+
+4. make
 
 ### Thrid party libs
-1. [Armadillo](http://arma.sourceforge.net/download.html) 9.x+ 
+1. [Armadillo](http://arma.sourceforge.net/download.html) 9.xxxx+ 
 2. openMP (Embeded in gcc, No need to install manually)
 3. Json (nlohmann::json Fetched by CMake, No need to install manually)
-4. [HDF5](https://www.hdfgroup.org/solutions/hdf5/)
+4. [HDF5](https://www.hdfgroup.org/solutions/hdf5/) (Required by Armadillo)
 5. [RTTR](https://www.rttr.org)
+6. Intel-MKL (Required by Armadillo)
 
 ### For Mac
 If you have homebrew installed already, pre-compiled libs including armadillo, hdf5 can be installed easily by brew install command.
 
-### For Linux (HPC user without root privilege)
+### For Linux
 
 ### For Windows
-
+Install [Cygwin](https://www.cygwin.com) and see the [For Linux](#For-Linux)
 
 ## Design
 ![archetechture](docs/archetechture.png)

@@ -29,6 +29,7 @@
 class VonNeumannSolver {
 public:
     bool will_record_unitary = false;
+    int total_repeat_num = 1; //Do not use it for iteration control!!!
     arma::cx_cube propagator;
     arma::cx_cube propagator_dagger;
 

@@ -64,7 +64,7 @@ void VonNeumannSolver::calculate_evolution() {
     #pragma omp critical
     {
         for (int i = 0; i < num_rhos; ++i) {
-            rho_t_multi->at(i) = rho_t_multi->at(i) + rho_t_multi_temp.at(i);
+            rho_t_multi->at(i) = rho_t_multi->at(i) + rho_t_multi_temp.at(i)/total_repeat_num;
         }
         std::cout << "VonNeumann: finished joining data" << std::endl;
     };

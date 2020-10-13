@@ -5,10 +5,6 @@
 #include "Utils.h"
 #include <regex>
 
-//
-// Created by Rocky Su on 2019/11/11.
-//
-
 namespace qmt{
 
     std::complex<double > ii(0,1);
@@ -210,6 +206,11 @@ void symbolic_matrix::load_from_symbol(std::string _symbol_name, std::string con
     }
 }
 
+symbolic_matrix::symbolic_matrix() {
+    symbol_name="";
+    mat=arma::cx_mat().fill(0);
+}
+
 std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string sequence_str) {
     std::string seq_str = sequence_str;
     std::vector<std::pair<std::string, std::string>> elementary_gate_list = std::vector<std::pair<std::string, std::string>>();
@@ -218,19 +219,31 @@ std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (s
     int right_last_ket_pos = seq_str.find_last_of(']');
 
     if ((left_first_bra_pos != seq_str.npos) && (right_last_ket_pos != seq_str.npos)) {
-        std::string left_seq = seq_str.substr(0, left_first_bra_pos-1);
-        //std::cout << "Left:" << left_seq << std::endl;
+        std::string left_seq;
+        if (left_first_bra_pos>0) {
+            left_seq = seq_str.substr(0, left_first_bra_pos-1);
+        }
+//        std::cout << "Left:" << left_seq << std::endl;
 
-        std::string right_seq = seq_str.substr(right_last_ket_pos+2,seq_str.length()-right_last_ket_pos);
-        int num_end_pos = right_seq.find_first_of('-');
-        std::string num_of_repeat_str = right_seq.substr(0,num_end_pos);
-        right_seq = right_seq.substr(num_end_pos+1,right_seq.length()-num_end_pos);
-        //std::cout << "Right:" << right_seq << std::endl;
+        std::string right_string = seq_str.substr(right_last_ket_pos,seq_str.size()-right_last_ket_pos);
+        int num_end_pos = right_string.size()-1;
+//        std::cout << "Right raw string:" << right_string << std::endl;
+        if (right_string.find_first_of('-') != right_string.npos) {
+            num_end_pos = right_string.find_first_of('-')-1;
+        }
+//        std::cout << "Num str ends pos in right raw string:" << num_end_pos << std::endl;
+
+        std::string right_seq;
+        if (num_end_pos != right_string.size()-1) {
+            right_seq = right_string.substr(num_end_pos+2,right_string.length()-(num_end_pos+2));
+        }
+        std::string num_of_repeat_str = right_string.substr(2,num_end_pos-1);
+//        std::cout << "Right:" << right_seq << std::endl;
 
         int repeat_middle_num = atoi(num_of_repeat_str.c_str());
 
         seq_str = seq_str.substr(left_first_bra_pos+1,right_last_ket_pos-left_first_bra_pos-1);
-        //std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_midle_num << std::endl;
+//        std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_middle_num << std::endl;
 
         std::vector<std::string> splitted_gates_left = str_split(left_seq,'-');
         for (int i = 0; i < splitted_gates_left.size(); ++i) {

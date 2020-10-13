@@ -10,6 +10,7 @@
 #include <iomanip>
 
 struct symbolic_matrix {
+    symbolic_matrix();
     std::string symbol_name;
     arma::cx_mat mat;
     void load_from_symbol(std::string _symbol_name, std::string config_path);
@@ -17,7 +18,7 @@ struct symbolic_matrix {
 
 namespace qmt{
 
-    const double pi = 3.14159265359;       //pi
+    const double pi = M_PI;                //pi
     const double h = 6.626e-34;            //Planck constant
     const double h_bar = 6.626e-34/2/pi;   //Reduced Planck constant
     const double e = 1.6e-19;              //Elementary charge

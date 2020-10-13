@@ -79,7 +79,7 @@ TimingBasic::TimingBasic(double start, double end, double _step_size) {
 }
 
 int TimingBasic::get_total_num_steps() {
-    return floor(round(get_pulse_width()/step_size));
+    return round(get_pulse_width()/step_size);
 }
 
 

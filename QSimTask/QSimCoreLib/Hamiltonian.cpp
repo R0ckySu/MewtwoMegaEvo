@@ -37,8 +37,9 @@ Hamiltonian::Hamiltonian() {
     num_of_steps = 1;
     amplitude = 0.0;
     h_mat = symbolic_matrix();
-    wave_form = arma::cx_vec();
-    times_vec = arma::vec();
+    switching_signal = arma::vec().fill(0);
+    wave_form = arma::cx_vec().fill(0);
+    times_vec = arma::vec().fill(0);
     external_waveform_path="";
 }
 
@@ -47,13 +48,15 @@ Hamiltonian::Hamiltonian(const Hamiltonian &h) {
     amplitude = h.amplitude;
     h_mat = h.h_mat;
     step_size = h.step_size;
+//    switching_signal = h.switching_signal;
+//    wave_form = h.wave_form;
     num_of_steps = h.num_of_steps;
     external_waveform_path = h.external_waveform_path;
 }
 
 Hamiltonian::Hamiltonian(nlohmann::json h_config, std::string config_path) {
     amplitude = h_config["amplitude"];
-
+    amplitude = amplitude * M_PI;
     std::string h_string = h_config["h_pauli_mat"];
     h_mat.load_from_symbol(h_string,config_path);
     external_waveform_path = h_config["waveform_path"];;
@@ -78,12 +81,15 @@ std::string Hamiltonian::description() {
 }
 
 void Hamiltonian::clean_up_on_reload() {
-    step_size = 1;
-    num_of_steps = 0;
+//    step_size = 1;
+//    num_of_steps = 0;
+    wave_form.fill(0);
+    switching_signal.fill(0);
+    times_vec.fill(0);
 
     arma::vec().swap(times_vec);
     arma::vec().swap(switching_signal);
-    arma::cx_vec().swap(wave_form) ;
+    arma::cx_vec().swap(wave_form);
 }
 
 /**********************************************************************************************************************/
@@ -160,6 +166,11 @@ void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 
 std::string MW_Hamiltonian::description() {
     return "Microwave Hamiltonian";
+}
+
+void MW_Hamiltonian::clean_up_on_reload() {
+    Hamiltonian::clean_up_on_reload();
+
 }
 
 /**********************************************************************************************************************/

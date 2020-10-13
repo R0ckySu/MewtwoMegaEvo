@@ -50,6 +50,7 @@ void QSimTask::sweeping_task() {
             meas_manager.measure_from_density_mat_with_all_time_points(rho_t_multi_result);
             meas_manager.save_result_to_folder(std::string(result_file_name).append("_all"),result_param_str);
         }
+        delete seq;
     }
 }
 
@@ -165,7 +166,6 @@ Sequence* QSimTask::load_sequence() {
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
-        task_log(std::string("Sequence add Gate:").append(gate_tag).append(" with param:").append(gate_param_str),3);
         if ( *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
             // Gate found
             Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
@@ -211,7 +211,7 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
 
     std::vector<arma::cx_cube> rho_multi_temp = std::vector<arma::cx_cube>(rho_inits.size());
     for (auto & rho_t_item : rho_multi_temp) {
-        rho_t_item = arma::cx_cube(matrix_dim,matrix_dim,total_num_steps+1);
+        rho_t_item = arma::cx_cube(matrix_dim,matrix_dim,total_num_steps+1).fill(0);
     }
 
     task_log("Initial state initialised for solver",2);
@@ -225,6 +225,7 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
         hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
     }
     task_log(" Control Hamiltonians linked to solver",2);
+//    std::cout << "ctrl H, 1:10" << ctrl_hamiltonian_time_dep->slices(1,10) << std::endl;
 
     VonNeumannSolver solver_obj = * new VonNeumannSolver();
 
@@ -234,9 +235,11 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
         solver_obj.rho_t_multi = &rho_multi_temp;
         solver_obj.rho0_multi = &rho_inits;
         solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
+        solver_obj.total_repeat_num = iterations;
 
         //Load Noise Hamiltonian
         arma::cx_cube * noise_hamiltonian_time_dep_per_iter = new arma::cx_cube(matrix_dim,matrix_dim,total_num_steps);
+        noise_hamiltonian_time_dep_per_iter->fill(0);
         for (const auto& noise_hamiltonian_item : noise_hamiltonian_prototype_map) {
             auto * noise_h_temp = new Noise_Hamiltonian(*noise_hamiltonian_item.second);
             noise_h_temp->num_of_steps = total_num_steps;

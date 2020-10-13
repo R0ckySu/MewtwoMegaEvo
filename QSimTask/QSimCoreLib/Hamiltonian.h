@@ -69,6 +69,7 @@ public:
 
     void load_waveform() override;
     void fetch_H(arma::cx_cube* H0) override;
+    void clean_up_on_reload() override;
     std::string description() override;
 
 private:
