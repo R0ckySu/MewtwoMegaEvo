@@ -28,7 +28,7 @@ void VonNeumannSolver::calculate_evolution() {
 
     std::vector<arma::cx_cube> rho_t_multi_temp = std::vector<arma::cx_cube>(num_rhos);
     for (int i = 0; i < num_rhos; ++i) {
-        rho_t_multi_temp.at(i) = arma::cx_cube(h_size,h_size,num_steps+1);
+        rho_t_multi_temp.at(i) = arma::cx_cube(h_size,h_size,num_steps+1).fill(0);
     }
 
     if (will_record_unitary) {
@@ -52,7 +52,7 @@ void VonNeumannSolver::calculate_evolution() {
     for (int k = 0; k < num_rhos; ++k) {
         for (int j = 0; j < num_steps + 1; ++j) {
             if (j==0) {
-                rho_t_multi_temp.at(k).slice(j) = rho0_multi->at(j).mat;
+                rho_t_multi_temp.at(k).slice(j) = rho0_multi->at(k).mat;
             } else {
                 rho_t_multi_temp.at(k).slice(j) = exp_hamiltonians.slice(j-1) * rho_t_multi_temp.at(k).slice(j-1) * exp_hamiltonians.slice(j-1).t();
             }

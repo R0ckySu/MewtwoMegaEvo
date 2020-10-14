@@ -28,6 +28,7 @@ void Hamiltonian::load_ext_waveform(int param_index) {
         int sharp_pos = datapath_index.find_first_of('#');
         datapath_index.insert(sharp_pos+1,std::to_string(param_index));
         wave_form.load(datapath_index,arma::csv_ascii);
+        wave_form = wave_form * amplitude;
         std::cout << "Hamiltonian: Loaded external waveform:" << datapath_index << std::endl;
     }
 }
@@ -71,7 +72,7 @@ Hamiltonian::~Hamiltonian() {
 
 void Hamiltonian::load_waveform() {
     times_vec = step_size * arma::linspace(0,num_of_steps+1,num_of_steps+1);
-    wave_form = arma::cx_vec(num_of_steps);
+    wave_form = arma::cx_vec(num_of_steps).fill(0);
 }
 
 void Hamiltonian::fetch_H(arma::cx_cube *H0) {}
