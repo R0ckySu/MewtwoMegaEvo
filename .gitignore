@@ -31,8 +31,6 @@
 *.out
 *.app
 
-*.json
-
 *.dSYM
 cmake-build-debug/
 .idea/*
