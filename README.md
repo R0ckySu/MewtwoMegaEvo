@@ -1,8 +1,9 @@
 # MewtwoMegaEvo
 ![avatar](https://repository-images.githubusercontent.com/295927869/ddd5ba00-fb6d-11ea-9d3c-e3cd43139e62)
-
-Mewtwo is a density matrix solver based on the Von-Neumann equation. Provided the simulator with time dependend hamiltonian 
-and the initial states of the system, the simulator can output the time evolution of the density matrix.
+##Intro
+Mewtwo is a density matrix solver based on the Von-Neumann equation, integrated with symbolic quantum gate and sequence parsing and compiling. 
+Written in C++, this software is designed for very large scale qubits dynamic simulation by harnessing the power of parallelisation and job slicing for high performance computer.
+In a nutshell, by taking in the time dependend hamiltonian and the initial states of the system, the simulator can output the time evolution of the density matrix.
 
 ## Installation
 
@@ -13,10 +14,10 @@ and the initial states of the system, the simulator can output the time evolutio
 4. make
 
 ### Thrid party libs
-1. [Armadillo](http://arma.sourceforge.net/download.html) 9.xxxx+ 
-2. openMP (Embeded in gcc, No need to install manually)
-3. Json (nlohmann::json Fetched by CMake, No need to install manually)
-4. [HDF5](https://www.hdfgroup.org/solutions/hdf5/) (Required by Armadillo)
+1. [HDF5](https://www.hdfgroup.org/solutions/hdf5/) (Required by Armadillo, install before Armadillo)
+2. [Armadillo](http://arma.sourceforge.net/download.html) 9.xxxx+ 
+3. openMP (Embeded in gcc, No need to install manually)
+4. Json (nlohmann::json Fetched by CMake, No need to install manually)
 5. [RTTR](https://www.rttr.org)
 6. Intel-MKL (Required by Armadillo)
 
@@ -34,14 +35,28 @@ Install [Cygwin](https://www.cygwin.com) and see the [For Linux](#For-Linux)
 ### Parallelization
 
 ### Job slicing for high performance computer
-#### Job slicing strategy
-| strategy  |  description |
-| ----------- | ----------- | 
-| linspace |  |
-| logspace |  |
-| inv_logspace |  |
+Total simulation time will depend on the most complicated simulation task if we divide the tasks to multiple jobs and submit 
+simultaneously. Then the load-balancing became critical to minimise the computation time. Provided with ordered parameter 
+vector, if the simulation complexity doesn't increase with the parameters, it's easy to chop the whole task into groups with 
+same size. If the complexity growth with the parameter, then we will need different strategy.
 
-### Runtime reload of sweeping parameters
+#### Job slicing strategy (Parameter-wise)
+For example, if a parametric sweeping task has n parameters to sweep through. The whole task can be sliced into several 
+groups by the strategies in the table below, so that HPC users can submit each sliced group to separate jobs to HPC.
+
+Provided the number of the groups (jobs) you wish to submit in the [command arg (-g & -i)](#Command-args), and specify 
+the strategy in the sim_config.json, then the simulation running on each job will know the range of the parameter vector
+they are responsible for.
+
+ e.x.: Task with n parameters will be sliced into g groups, then the end index of each job will be:
+| strategy  | End index list for each job |
+| ----------- | ----------- | 
+| linspace | linspace(0,n,g+1) |
+| logspace | round(logspace(0,log10(n),g)), repeated indices shift by +1 |
+| inv_logspace | n - round(logspace(0,log10(n),g)), repeated indices shift by +1 |
+
+#### job slice shell script (job_slice.sh)
+The shell script for generating qsub scripts for HPC job queue managing system is also provided in our software package.
 
 ## User guide
 ### Command args
@@ -80,8 +95,8 @@ sim_config.json provides all the general configurations of the simulation.
 | record_unitary | Set to true will output all of the unitary matrix generated on simulation (Time consuming) |
 | record_all_meas | Set to true, measurement will be taken at every time point (Time consuming) |
 | system_dim | Defines the dimension of the Hilbert space |
-| observables | List of the observables (See also: Symbolic/External matrix loading) |
-| init_states | List of the density matrices at t=0 (See also: Symbolic/External matrix loading) |
+| observables | List of the observables (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input)) |
+| init_states | List of the density matrices at t=0 (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input)) |
 | iterations | Defines the num of iterations. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian) |
 | step_size | Time resolution of the simulation in second. |
 | sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations)) |
@@ -91,7 +106,7 @@ sim_config.json provides all the general configurations of the simulation.
 #### gate_config.json
 gate_config.json provides all the gate prototypes for building symbolic sequences for our simulation task.
 Gate prototypes will only define the timing information and its corresponding Hamiltonians.
-```json
+```json5
 {  
   "gate_defs": [
     {
@@ -120,7 +135,7 @@ Gate prototypes will only define the timing information and its corresponding Ha
 | pulse_width | Defines the gate operation time length |
 
 #### hamiltonian.json
-```json
+```json5
 {
   "hamiltonian_prototype_defs": [
     {
@@ -168,16 +183,18 @@ Gate prototypes will only define the timing information and its corresponding Ha
 | field name  |  description |
 | ----------- | ----------- | 
 | tag | Tag of the hamiltonian prototype |
-| type | Hamiltonian type, could be specified as static, mw, awg and noise. (See also: Hamiltonian types) |
+| type | Hamiltonian type, could be specified as static, mw, awg and noise. (See also: [Hamiltonian types](#hamiltonian-types)) |
 | enable | Switch for hamiltonian turning on/off |
 | amplitude | Scaling the amplitude of the waveform |
-| h_pauli_mat | Defines the hamiltonian matrix (See also: Symbolic/External matrix loading) |
+| h_pauli_mat | Defines the hamiltonian matrix (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input)) |
 | waveform_path | Specify the external waveform data file path(in csv format) |
 
 #### Parametric Sweeping
-
-
-#### Symbolic/External matrix loading
+The numeric field you wish to perform parametric sweeping is located by the following format string, for example:
+```json5
+"sweep_param_name":"Gate:F:pulse_width",
+```
+#### Symbolic or External matrix Input
 Complex matrices in the json config files could be either defined as SU(n) spinor symbols or loaded from external csv file.
 - e.x.
 1. Symbol "XY" will be parsed to be the tensor product of pauli matrix X and Y. Spinor symbol pattern will be identified automatically. 
@@ -187,6 +204,8 @@ Complex matrices in the json config files could be either defined as SU(n) spino
 ##### Gate Symbol
 
 ##### Measurement Marker
+Measurement marker "M", is a reserved gate symbol, which is a 0-width virtual gate for marking the position in the sequence 
+you wish to make a measurement.
 
 ##### Sequence string grammer
 1. Sub sequence wrapped by square braket "[]"
