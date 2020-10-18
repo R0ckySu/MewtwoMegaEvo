@@ -5,7 +5,7 @@
 #include "Gate.h"
 #include "Utils.h"
 #include <rttr/registration.h>
-#include "exprtk.hpp"
+#include <exprtk/exprtk.hpp>
 
 Gate::Gate() {
     tag = "";

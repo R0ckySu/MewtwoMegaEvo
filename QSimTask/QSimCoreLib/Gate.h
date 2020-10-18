@@ -7,7 +7,7 @@
 
 #include <armadillo>
 #include "TimingBasic.h"
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 #include "Hamiltonian.h"
 #include <rttr/rttr_enable.h>
 
