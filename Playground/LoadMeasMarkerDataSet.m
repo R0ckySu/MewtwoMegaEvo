@@ -12,7 +12,7 @@ function dataset = LoadMeasMarkerDataSet(data_path)
     configInfo = jsondecode(str);
     dataset.configInfo = configInfo;
     
-    original_param_vec = csvread(configInfo.sweep_val_path);
+    original_param_vec = csvread([data_path,config_folder_name,filesep,configInfo.sweep_val_file]);
     param_name_strs = {};
     for i = 1:length(original_param_vec)
         param_name_strs = [param_name_strs,num2str(original_param_vec(i),'%10.4e')]
@@ -53,6 +53,8 @@ function dataset = LoadMeasMarkerDataSet(data_path)
                     set(gca,'FontSize',12);
                     colorbar;
                     title({configInfo.task_name,['O:',observable_array{o_idx},',\rho:',init_state_array{i_idx}]});
+                    savefig(gcf,[data_path,filesep,'meas_marker']);
+                    saveas(gcf,[data_path,filesep,'meas_marker'],'jpg');
                 end
             end
         end

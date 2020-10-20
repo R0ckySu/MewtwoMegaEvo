@@ -64,7 +64,8 @@ void QSimTask::load_sim_configs() {
     task_name = sim_configs["task_name"];
     log_level_threshold = sim_configs["log_level"];
     job_slicing_strategy = sim_configs["job_slicing_strategy"];
-    param_vec.load(sim_configs["sweep_val_path"],arma::csv_ascii);
+    std::string sweep_val_file_name = sim_configs["sweep_val_file"];
+    param_vec.load(std::string(config_file_folder).append("/").append(sweep_val_file_name),arma::csv_ascii);
     step_size = sim_configs["step_size"];
     iterations = sim_configs["iterations"];
     will_record_all_measurement = sim_configs["record_all_meas"];
@@ -79,7 +80,9 @@ void QSimTask::load_sim_configs() {
     DIR *dir;
     if ((dir=opendir(result_exact_path.c_str())) == NULL) {
         mkdir(result_exact_path.c_str(),0777);
-        std::string copyConfigFileCommand = std::string("cp -rv ").append(config_file_folder).append(" ").append(result_exact_path);
+        std::string new_config_file_folder = std::string(result_exact_path).append("/config_files");
+        mkdir(new_config_file_folder.c_str(),0777);
+        std::string copyConfigFileCommand = std::string("cp -v ").append(config_file_folder).append("/* ").append(new_config_file_folder);
         system(copyConfigFileCommand.c_str());
     }
 
