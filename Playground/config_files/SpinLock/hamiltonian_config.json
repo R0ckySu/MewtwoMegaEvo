@@ -1,0 +1,23 @@
+{
+  "hamiltonian_prototype_defs": [
+    {
+      "tag": "X1",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1e5,
+      "freq": 0,
+      "phase": 0,
+      "h_pauli_mat": "X",
+      "waveform_path":""
+    },
+    {
+      "tag": "noise1",
+      "type": "noise",
+      "enable": true,
+      "amplitude":1e1,
+      "h_pauli_mat": "Z",
+      "lag_time": 0,
+      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ11#.csv"
+    }
+  ]
+}

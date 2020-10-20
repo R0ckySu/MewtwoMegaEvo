@@ -225,7 +225,7 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
         hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
     }
     task_log(" Control Hamiltonians linked to solver",2);
-//    std::cout << "ctrl H, 1:10" << ctrl_hamiltonian_time_dep->slices(1,10) << std::endl;
+//    std::cout << "ctrl H, end-10,end" << ctrl_hamiltonian_time_dep->slices(ctrl_hamiltonian_time_dep->n_slices-11,ctrl_hamiltonian_time_dep->n_slices-1) << std::endl;
 
     VonNeumannSolver solver_obj = * new VonNeumannSolver();
 
@@ -268,6 +268,7 @@ void QSimTask::reload_with_sweeping_parameter(int index) {
     auto tag = param_info[1];
     auto property_name = param_info[2];
     auto param_val = param_vec.at(index);
+    task_log(std::string("Reloading:").append(type_name).append(":").append(tag).append(" on field:").append(property_name),1);
 
     if (type_name == "Gate") {
         Gate * gate_obj = gate_prototype_map[tag];
@@ -275,9 +276,9 @@ void QSimTask::reload_with_sweeping_parameter(int index) {
         parametric_prop.set_value(*gate_obj,param_val);
     } else if (type_name == "Hamiltonian") {
         Hamiltonian * hamiltonian_obj;
-        if (ctrl_hamiltonian_prototype_map.find(tag) == ctrl_hamiltonian_prototype_map.end()){
+        if (ctrl_hamiltonian_prototype_map.find(tag) != ctrl_hamiltonian_prototype_map.end()){
             hamiltonian_obj = ctrl_hamiltonian_prototype_map[tag];
-        } else if (noise_hamiltonian_prototype_map.find(tag) == noise_hamiltonian_prototype_map.end()) {
+        } else if (noise_hamiltonian_prototype_map.find(tag) != noise_hamiltonian_prototype_map.end()) {
             hamiltonian_obj = noise_hamiltonian_prototype_map[tag];
         }
         hamiltonian_obj->clean_up_on_reload();

@@ -13,6 +13,7 @@ RTTR_REGISTRATION{
             .property("h_mat",&Hamiltonian::h_mat);
 
     rttr::registration::class_<MW_Hamiltonian>("MW_Hamiltonian")
+            .property("amplitude",&MW_Hamiltonian::amplitude)
             .property("freq",&MW_Hamiltonian::freq)
             .property("phase",&MW_Hamiltonian::phase);
 
@@ -130,15 +131,18 @@ void MW_Hamiltonian::load_waveform() {
             }
         }
         else{
+            std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) == 1.0) {
-                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
-                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
-                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
-                                           - std::exp(j * freq * 2. * M_PI * (times_vec[i])));
+                    wave_form[i] = step_size*amplitude*std::cos(times_vec[i]*freq*2.*M_PI + phase);
+//                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
+//                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
+//                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
+//                                           - std::exp(j * freq * 2. * M_PI * (times_vec[i])));
                 }
             }
         }
+//        std::cout << "waveform:" << wave_form << std::endl;
     }
 
 //        pulse_data_conj = arma::conj(pulse_data);
@@ -166,7 +170,7 @@ void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 }
 
 std::string MW_Hamiltonian::description() {
-    return "Microwave Hamiltonian";
+    return "Microwave  Hamiltonian";
 }
 
 void MW_Hamiltonian::clean_up_on_reload() {

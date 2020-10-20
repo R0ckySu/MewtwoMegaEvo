@@ -1,0 +1,15 @@
+{
+  "task_name": "SpinLockingQNS",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_unitary": false,
+  "record_all_meas": false,
+  "system_dim": 2,
+  "observables": ["X"],
+  "init_states": ["X"],
+  "iterations" : 64,
+  "step_size": 1e-8,
+  "sequence": "[Xpi-M]^20",
+  "sweep_param_name":"Hamiltonian:X1:amplitude",
+  "sweep_val_path":"/Users/rockysu/MewtwoMegaEvo/Playground/config_files/param_vec"
+}

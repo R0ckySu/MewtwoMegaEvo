@@ -19,7 +19,7 @@ add_library(
 #target_link_libraries(QSimCoreLib PRIVATE omp)
 target_link_libraries(QSimCoreLib PUBLIC armadillo)
 target_link_libraries(QSimCoreLib PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(QSimCoreLib PUBLIC librttr_core_s.a)
+target_link_libraries(QSimCoreLib PUBLIC librttr_core.a)
 
 #set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_FLAGS -g)

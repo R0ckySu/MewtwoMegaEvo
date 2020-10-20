@@ -1,0 +1,19 @@
+{  
+  "gate_defs": [
+    {
+      "tag": "X1pi",
+      "hamiltonians": ["X1"],
+      "pulse_width": 5e-6
+    },
+    {
+      "tag": "X2pi",
+      "hamiltonians": ["X2"],
+      "pulse_width": 5e-6
+    },
+    {
+      "tag": "F",
+      "hamiltonians": [],
+      "pulse_width": 1e-4
+    }
+  ]
+}
