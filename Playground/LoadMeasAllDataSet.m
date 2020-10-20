@@ -3,6 +3,9 @@ function dataset = LoadMeasAllDataSet(data_path)
     dataset.meas_all = struct();
     dataset.meas = struct();
     
+    folder_name = strsplit(data_path,'/');
+    folder_name = folder_name{end};
+    
     config_folder_name = [filesep,'config_files'];
     
     configFile = strcat(data_path,config_folder_name,filesep,'sim_config.json')
@@ -38,7 +41,7 @@ function dataset = LoadMeasAllDataSet(data_path)
                     end
                 end
                 legend(legend_label);
-                title({configInfo.task_name,[configInfo.sweep_param_name,replace(measall_param_fieldNames{j},'/','=')]});
+                title({folder_name,[replace(configInfo.sweep_param_name,'_','\_'),replace(measall_param_fieldNames{j},'/','=')]});
                 set(gca,'FontSize',12);
                 xlabel('evo time (s)');
                 ylabel('P');

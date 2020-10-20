@@ -11,5 +11,5 @@
   "step_size": 1e-8,
   "sequence": "[Xpi-M]^20",
   "sweep_param_name":"Hamiltonian:X1:amplitude",
-  "sweep_val_path":"/Users/rockysu/MewtwoMegaEvo/Playground/config_files/param_vec"
+  "sweep_val_file":"param_vec"
 }

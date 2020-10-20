@@ -9,7 +9,7 @@
   "init_states": ["YI","IY"],
   "iterations" : 16,
   "step_size": 1e-8,
-  "sequence": "[F(T/4)-X2pi-F(T/4)-X1pi-F(T/4)-X2pi-F(T/4)-X1pi-M]^4",
+  "sequence": "[F(T/4)-X2pi-F(T/4)-X1pi-F(T/4)-X2pi-F(T/4)-X1pi-M]^10",
   "sweep_param_name":"Gate:F:pulse_width",
-  "sweep_val_path":"/Users/rockysu/MewtwoMegaEvo/Playground/config_files/param_vec"
+  "sweep_val_file":"param_vec"
 }

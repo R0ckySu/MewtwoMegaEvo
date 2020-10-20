@@ -1,5 +1,5 @@
 {
-  "task_name": "Ramsy",
+  "task_name": "Ramsey",
   "log_level": 4,
   "job_slicing_strategy":"linspace",
   "record_unitary": false,
@@ -11,5 +11,5 @@
   "step_size": 1e-10,
   "sequence": "[Xpi-M]^80",
   "sweep_param_name":"Hamiltonian:X1:freq",
-  "sweep_val_path":"/Users/rockysu/MewtwoMegaEvo/Playground/config_files/param_vec"
+  "sweep_val_file":"param_vec"
 }

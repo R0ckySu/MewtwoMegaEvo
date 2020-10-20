@@ -2,6 +2,9 @@ function dataset = LoadMeasMarkerDataSet(data_path)
     dataset = struct();
     dataset.meas2D = struct();
     
+    folder_name = strsplit(data_path,'/');
+    folder_name = folder_name{end};
+    
     config_folder_name = [filesep,'config_files'];
     
     configFile = strcat(data_path,config_folder_name,filesep,'sim_config.json')
@@ -52,7 +55,7 @@ function dataset = LoadMeasMarkerDataSet(data_path)
                     ylabel(configInfo.sweep_param_name);
                     set(gca,'FontSize',12);
                     colorbar;
-                    title({configInfo.task_name,['O:',observable_array{o_idx},',\rho:',init_state_array{i_idx}]});
+                    title({folder_name,['O:',observable_array{o_idx},',\rho:',init_state_array{i_idx}]});
                     savefig(gcf,[data_path,filesep,'meas_marker']);
                     saveas(gcf,[data_path,filesep,'meas_marker'],'jpg');
                 end
