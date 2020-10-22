@@ -6,5 +6,10 @@ int main(int argc, char *argv[]) {
     QSimTask *sim_task = create_task_from_command_arg_parser(argc,argv);
     sim_task->preload();
     sim_task->sweeping_task();
+    
+    std::string matlab_cmd = std::string("matlab -nodisplay -r \"LoadMeasMarkerDataSet('").append(sim_task->result_exact_path).append("');exit\"");
+    std::cout << matlab_cmd << std::endl;
+    system(matlab_cmd.c_str());
+
     return 0;
 }
