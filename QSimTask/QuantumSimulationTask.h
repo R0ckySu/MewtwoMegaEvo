@@ -45,7 +45,6 @@ public:
     std::map<hamiltonian_tag_type, Hamiltonian *> ctrl_hamiltonian_prototype_map;
     std::map<hamiltonian_tag_type, Noise_Hamiltonian *> noise_hamiltonian_prototype_map;
 
-private:
     std::string result_exact_path;
 
 public:

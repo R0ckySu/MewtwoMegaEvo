@@ -232,8 +232,15 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
 
     VonNeumannSolver solver_obj = * new VonNeumannSolver();
 
+    std::vector<double > randomstartlist = std::vector<double >(iterations);
+    srand((unsigned)time(NULL));
+    for (int i1 = 0; i1 < iterations; ++i1) {
+        double noiseRandomStartPosFactor = rand()/double(RAND_MAX);
+        randomstartlist.at(i1) = floor(noiseRandomStartPosFactor*1000)/1000;
+    }
+
     //TODO: Configurable parallelization by CMake predefined params (Build time config)
-    #pragma omp parallel for default(none) shared(ctrl_hamiltonian_time_dep,matrix_dim,total_num_steps,rho_multi_temp) private(solver_obj)
+    #pragma omp parallel for default(none) shared(randomstartlist,ctrl_hamiltonian_time_dep,matrix_dim,total_num_steps,rho_multi_temp) private(solver_obj)
     for (int i = 0; i < iterations; ++i) {
         solver_obj.rho_t_multi = &rho_multi_temp;
         solver_obj.rho0_multi = &rho_inits;
@@ -247,6 +254,7 @@ std::vector<arma::cx_cube> QSimTask::launch_solver(int total_num_steps,int matri
             auto * noise_h_temp = new Noise_Hamiltonian(*noise_hamiltonian_item.second);
             noise_h_temp->num_of_steps = total_num_steps;
             noise_h_temp->step_size = step_size;
+            noise_h_temp->randomStartPosFactor = randomstartlist.at(i);
             noise_h_temp->load_ext_waveform(i);
             noise_h_temp->fetch_H(noise_hamiltonian_time_dep_per_iter);
         }

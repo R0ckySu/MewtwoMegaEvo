@@ -90,17 +90,15 @@ RTTR_ENABLE(Hamiltonian);
 class Noise_Hamiltonian: public Hamiltonian {
 public:
     double shift_time;
-    std::vector<double> randomStartPosFactor;
+    double randomStartPosFactor;
     Noise_Hamiltonian();
     Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &n);
     explicit Noise_Hamiltonian(nlohmann::json noise_config, std::string config_path);
     ~Noise_Hamiltonian();
 
     void fetch_H(arma::cx_cube *H0) override;
-
+    void load_ext_waveform(int param_index) override;
 RTTR_ENABLE(Hamiltonian);
-//public:
-//    virtual arma::cx_vec load_waveform() override;
 };
 
 #endif

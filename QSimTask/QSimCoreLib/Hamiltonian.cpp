@@ -189,7 +189,7 @@ Noise_Hamiltonian::Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltoni
 }
 
 Noise_Hamiltonian::Noise_Hamiltonian(nlohmann::json noise_config, std::string config_path) : Hamiltonian(noise_config, config_path)  {
-
+    shift_time = noise_config["lag_time"];
 }
 
 void Noise_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -197,6 +197,26 @@ void Noise_Hamiltonian::fetch_H(arma::cx_cube *H0) {
     for (int i = 0; i < H0->n_slices; ++i) {
         H0->slice(i) += h_mat.mat*wave_form(i)*step_size;
     }
+}
+
+void Noise_Hamiltonian::load_ext_waveform(int param_index) {
+    Hamiltonian::load_ext_waveform(param_index);
+    int raw_wave_total_length = wave_form.size();
+
+    int shift_steps = 0;
+    if (shift_time != 0) {
+        shift_steps = floor(shift_time/step_size);
+    }
+
+    int residual_steps = raw_wave_total_length - num_of_steps - shift_steps;
+    if (residual_steps > 0) {
+        shift_steps += floor(residual_steps * randomStartPosFactor);
+    } else {
+        std::cout << "Noise_Hamiltonian Error: Insufficient length of raw data! Expect:" << num_of_steps + shift_steps << " Provided:" << raw_wave_total_length << std::endl;
+    }
+
+    wave_form = wave_form.subvec(shift_steps,shift_steps+num_of_steps);
+    std::cout << "Noise_Hamiltonian: shifted by" << shift_steps << std::endl;
 }
 
 Noise_Hamiltonian::~Noise_Hamiltonian() = default;
