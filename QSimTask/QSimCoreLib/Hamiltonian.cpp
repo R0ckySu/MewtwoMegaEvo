@@ -94,6 +94,16 @@ void Hamiltonian::clean_up_on_reload() {
     arma::cx_vec().swap(wave_form);
 }
 
+void Hamiltonian::add_signal(arma::vec _sig) {
+    if (switching_signal.size()==0) {
+        switching_signal = _sig;
+    } else if (_sig.size() == switching_signal.size()) {
+        switching_signal += _sig;
+    } else {
+        std::cout << "Hamiltonian:" << tag << " Mismatched signal length!" << std::endl;
+    }
+}
+
 /**********************************************************************************************************************/
 Static_Hamiltonian::Static_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config, config_path) {}
 
@@ -120,21 +130,20 @@ MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path)
 
 void MW_Hamiltonian::load_waveform() {
     Hamiltonian::load_waveform();
-
     if(switching_signal.size()) {
         const arma::cx_double j = arma::cx_double(0,1);
         if(freq == 0.){
             for (int i = 0; i < switching_signal.size(); ++i){
-                if (switching_signal.at(i) == 1.0) {
-                    wave_form[i] = step_size*amplitude*(get_amplitude(times_vec[i]) + get_amplitude(times_vec[i+1]))/2*std::exp(j*phase);
+                if (switching_signal.at(i) != 0.0) {
+                    wave_form[i] = step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
                 }
             }
         }
         else{
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
-                if (switching_signal.at(i) == 1.0) {
-                    wave_form[i] = step_size*amplitude*std::cos(times_vec[i]*freq*2.*M_PI + phase);
+                if (switching_signal.at(i) != 0.0) {
+                    wave_form[i] = step_size*amplitude*switching_signal.at(i)*std::cos(times_vec[i]*freq*2.*M_PI + phase);
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))

@@ -69,38 +69,23 @@ void Sequence::append_sequence(const Sequence & seq) {
     }
 }
 
-void Sequence::test() {
-//    set_pulse_width(200e-7);
-//    step_size = 1e-7;
-//
-//    MW_Hamiltonian X1 = MW_Hamiltonian();
-//    X1.tag = "X1";
-//    X1.h_mat.mat = arma::cx_mat(arma::ones(4,4),arma::zeros(4,4));
-//    X1.amplitude = 1.5e1;
-//    X1.phase = M_PI/2;
-//    X1.freq = 1e4;
-//    X1.num_of_steps = get_total_num_steps();
-//    X1.step_size = step_size;
-//
-//    Gate gate1 = Gate();
-//    gate1.tag = "G1";
-//    gate1.set_pulse_width(1e-6);
-//    gate1.step_size = step_size;
-//    append_gate(gate1);
-//    append_gate(gate1);
-//
-//    Gate gate2 = Gate();
-//    gate2.tag = "G2";
-//    gate2.set_pulse_width(3e-6);
-//    gate2.step_size = step_size;
-//    append_gate(gate2);
-//
-//    generate_switching_sig();
-//
-//    X1.switching_signal = gate_switching_map["G1"];
-//    X1.load_waveform();
-//    std::cout << X1.wave_form << std::endl;
-//    std::cout << "G1 sw:\n" << gate_switching_map["G1"] << std::endl;
-//    std::cout << "G2 sw:\n" << gate_switching_map["G2"] << std::endl;
+void Sequence::load_sequence(double _step_size, std::string sequence_string,
+                             std::map<std::string, Gate *> gate_prototype_map) {
+    step_size = _step_size;
+
+    // Decode symbolic sequence
+    auto gate_info_pair_vec = symbolic_sequence_str_parser(sequence_string);
+    for (const auto& info_pair : gate_info_pair_vec) {
+        std::string gate_tag = info_pair.first;
+        std::string gate_param_str = info_pair.second;
+        if ( *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
+            // Gate found
+            Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
+            if (!gate_param_str.empty()) {gate_new->decode_param_str(gate_param_str);}
+            append_gate(*gate_new);
+        }
+    }
+
+    generate_switching_sig();
 }
 

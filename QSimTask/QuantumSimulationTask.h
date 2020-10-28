@@ -17,6 +17,14 @@
 #define CONFIG_FOLDER_NAME "config_files"
 #define OUTPUT_FOLDER_NAME "sim_results"
 
+struct sim_prototypes {
+    sim_prototypes();
+    sim_prototypes(const sim_prototypes &s);
+    std::map<gate_tag_type, Gate *> gate_prototype_map;
+    std::map<hamiltonian_tag_type, Hamiltonian *> ctrl_hamiltonian_prototype_map;
+    std::map<hamiltonian_tag_type, Noise_Hamiltonian *> noise_hamiltonian_prototype_map;
+};
+
 class QSimTask {
     RTTR_ENABLE();
 public:
@@ -24,6 +32,7 @@ public:
     int job_id;
     std::string job_slicing_strategy;
 
+    int system_dimension=2;
     std::string task_name;
     int log_level_threshold=1;
     std::string task_time_stamp;
@@ -41,9 +50,7 @@ public:
     std::vector<symbolic_matrix> rho_inits;
     std::vector<symbolic_matrix> observables;
     arma::vec  param_vec;
-    std::map<gate_tag_type, Gate *> gate_prototype_map;
-    std::map<hamiltonian_tag_type, Hamiltonian *> ctrl_hamiltonian_prototype_map;
-    std::map<hamiltonian_tag_type, Noise_Hamiltonian *> noise_hamiltonian_prototype_map;
+    sim_prototypes simulation_prototypes;
 
     std::string result_exact_path;
 
@@ -54,9 +61,8 @@ public:
     virtual void load_gate_configs();
     virtual void load_hamiltonian_configs();
 
-    virtual void reload_with_sweeping_parameter(int index);
-    virtual Sequence* load_sequence();
-    virtual std::vector<arma::cx_cube> launch_solver(int total_num_steps,int matrix_dim);
+    virtual sim_prototypes reload_prototypes_with_sweeping_parameter(int index);
+    std::vector<arma::cx_cube> launch_solver(Sequence *seq, sim_prototypes *prototypes);
     void measument_solver();
 
     void preload() {
@@ -65,8 +71,10 @@ public:
         load_gate_configs();
     }
 
-    void sweeping_task();
+    virtual void sweeping_task();
 
+    arma::cx_cube* compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
+    arma::cx_cube* compile_time_dep_noise_hamiltonian(std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,int noise_idx, std::vector<double> random_start_pos_factor, int total_num_steps);
 private:
     static nlohmann::json load_config_from_path(const std::string& path);
     void task_log(std::string message, int log_level);

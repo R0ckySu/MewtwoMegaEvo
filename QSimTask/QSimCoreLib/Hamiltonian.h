@@ -31,6 +31,7 @@ public:
     Hamiltonian(const Hamiltonian &h);
     ~Hamiltonian();
 
+    virtual void add_signal(arma::vec _sig);
     virtual void load_waveform();   //Generating waveform
     virtual void fetch_H(arma::cx_cube* H0);
     virtual void load_ext_waveform(int param_index);

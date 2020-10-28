@@ -39,6 +39,8 @@ void VonNeumannSolver::calculate_evolution() {
         propagator_dagger.slice(0) = arma::cx_mat(arma::eye(h_size,h_size),arma::zeros(h_size,h_size));
     }
 
+//    std::cout << "VonNeumann: Cal propagator" << std::endl;
+
     arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
     std::complex<double> ii = std::complex<double>(0,1);
     for (int i = 0; i < hamiltonian_all.n_slices; ++i) {
@@ -49,6 +51,7 @@ void VonNeumannSolver::calculate_evolution() {
         }
     }
 
+//    std::cout << "VonNeumann: Cal rho time evo" << std::endl;
     for (int k = 0; k < num_rhos; ++k) {
         for (int j = 0; j < num_steps + 1; ++j) {
             if (j==0) {
@@ -86,4 +89,18 @@ bool VonNeumannSolver::verify_inputdata() {
     verified = hamiltonian_size_check && initstate_size_check && length_check;
 
     return verified;
+}
+
+arma::cx_cube VonNeumannSolver::get_propagator_time_evo() {
+    if (will_record_unitary) {
+        return propagator;
+    }
+    return arma::cx_cube();
+}
+
+arma::cx_cube VonNeumannSolver::get_propagator_dagger_time_evo() {
+    if (will_record_unitary) {
+        return propagator_dagger;
+    }
+    return arma::cx_cube();
 }

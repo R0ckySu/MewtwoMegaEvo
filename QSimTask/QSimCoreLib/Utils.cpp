@@ -153,6 +153,17 @@ namespace qmt{
     }
 }
 
+std::vector<double> generate_random_num_list(int number_of_rand, int effective_digits) {
+    int factor = pow(10,effective_digits);
+    std::vector<double> rand_list = std::vector<double >(number_of_rand);
+    srand((unsigned)time(NULL));
+    for (int i1 = 0; i1 < number_of_rand; ++i1) {
+        double randnum = rand()/double(RAND_MAX);
+        rand_list.at(i1) = floor(randnum*factor)/factor;
+    }
+    return rand_list;
+}
+
 std::vector<std::string> str_split(std::string s, char delimiter) {
     std::vector<std::string> splits = std::vector<std::string>();
     std::string split;

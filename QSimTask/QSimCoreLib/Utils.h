@@ -33,6 +33,8 @@ namespace qmt{
     arma::cx_mat spinorDecoder(std::string spinorStr);
     arma::cx_mat spinorExpressionDecoder(std::string expression);
 
+//    arma::cx_mat commutator(arma::cx_mat A, arma::cx_mat B);
+//    arma::cx_mat anti_commutator(arma::cx_mat A, arma::cx_mat B);
 /*
  * Matrix exponent approximated by Pade approximation
  * */
@@ -40,6 +42,8 @@ namespace qmt{
 };
 
 std::vector<std::string> str_split(std::string s, char delimiter);
+
+std::vector<double> generate_random_num_list(int number_of_rand, int effective_digits);
 
 /* Load matrix from config string:
  * e.x.

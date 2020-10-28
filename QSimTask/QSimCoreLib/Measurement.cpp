@@ -12,7 +12,7 @@ MeasurementManager::MeasurementManager(std::vector<symbolic_matrix> observables_
     //Initialise the measurement results container
     for (int i = 0; i < observables_.size(); ++i) {
         observable_name_type O = observables_.at(i).symbol_name;
-        std::map<init_state_name_type, arma::vec> res_rhos_map;
+        auto res_rhos_map = std::map<init_state_name_type, arma::vec>();
         for (int j = 0; j < init_states_.size(); ++j) {
             init_state_name_type rho_0 = init_states_.at(j).symbol_name;
             arma::vec res_temp = arma::vec();
@@ -39,11 +39,14 @@ void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vect
 
 void MeasurementManager::measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi,
                                                         std::vector<int > time_indices) {
+    std::cout << "Measuring density mat" << std::endl;
     for (int i = 0; i < observables.size(); ++i) {
         observable_name_type O_symbol = observables.at(i).symbol_name;
         arma::cx_mat O = observables.at(i).mat;
         for (int j = 0; j < init_states.size(); ++j) {
             init_state_name_type rho_sym = init_states.at(j).symbol_name;
+            std::cout << "Measuring O:" << O_symbol << " rho:" << rho_sym << std::endl;
+
             arma::vec meas_temp = arma::vec(time_indices.size());
             auto rho_temp = rho_multi.at(j);
             #pragma omp parallel for default(none) shared(meas_temp,time_indices,O,rho_temp)
