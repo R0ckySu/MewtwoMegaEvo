@@ -82,6 +82,6 @@ int TimingBasic::get_total_num_steps() {
     return round(get_pulse_width()/step_size);
 }
 
-
-
-
+TimingBasic *TimingBasic::clone() {
+    return new TimingBasic(*this);
+}

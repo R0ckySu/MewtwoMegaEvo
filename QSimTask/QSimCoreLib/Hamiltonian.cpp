@@ -50,8 +50,6 @@ Hamiltonian::Hamiltonian(const Hamiltonian &h) {
     amplitude = h.amplitude;
     h_mat = h.h_mat;
     step_size = h.step_size;
-//    switching_signal = h.switching_signal;
-//    wave_form = h.wave_form;
     num_of_steps = h.num_of_steps;
     external_waveform_path = h.external_waveform_path;
 }
@@ -65,10 +63,9 @@ Hamiltonian::Hamiltonian(nlohmann::json h_config, std::string config_path) {
 }
 
 Hamiltonian::~Hamiltonian() {
-//    arma::cx_mat().swap(h_mat);
-//    arma::cx_vec().swap(wave_form);
-//    arma::vec().swap(times_vec);
-//    arma::vec().swap(switching_signal);
+    arma::cx_vec().swap(wave_form);
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
 }
 
 void Hamiltonian::load_waveform() {
@@ -95,13 +92,18 @@ void Hamiltonian::clean_up_on_reload() {
 }
 
 void Hamiltonian::add_signal(arma::vec _sig) {
-    if (switching_signal.size()==0) {
+    if (switching_signal.size() == 0) {
         switching_signal = _sig;
     } else if (_sig.size() == switching_signal.size()) {
         switching_signal += _sig;
     } else {
         std::cout << "Hamiltonian:" << tag << " Mismatched signal length!" << std::endl;
+        std::cout << "Expect length:" << switching_signal.n_elem << " received:" << _sig.n_elem << std::endl;
     }
+}
+
+Hamiltonian *Hamiltonian::clone() {
+    return new Hamiltonian(*this);
 }
 
 /**********************************************************************************************************************/
@@ -117,6 +119,10 @@ MW_Hamiltonian::MW_Hamiltonian() {
 MW_Hamiltonian::MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m): Hamiltonian(h) {
     freq = m.freq;
     phase = m.phase;
+}
+
+MW_Hamiltonian *MW_Hamiltonian::clone() {
+    return new MW_Hamiltonian(*this);
 }
 
 MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config, config_path)  {
@@ -187,6 +193,7 @@ void MW_Hamiltonian::clean_up_on_reload() {
 
 }
 
+
 /**********************************************************************************************************************/
 Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {
 
@@ -226,6 +233,14 @@ void Noise_Hamiltonian::load_ext_waveform(int param_index) {
 
     wave_form = wave_form.subvec(shift_steps,shift_steps+num_of_steps);
     std::cout << "Noise_Hamiltonian: shifted by" << shift_steps << std::endl;
+}
+
+std::string Noise_Hamiltonian::description() {
+    return "Noise Hamiltonian";
+}
+
+Noise_Hamiltonian *Noise_Hamiltonian::clone() {
+    return new Noise_Hamiltonian(*this);
 }
 
 Noise_Hamiltonian::~Noise_Hamiltonian() = default;

@@ -14,34 +14,23 @@ sim_prototypes::sim_prototypes() {
     ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Hamiltonian *>();
     noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Noise_Hamiltonian *>();
     gate_prototype_map = std::map<hamiltonian_tag_type, Gate *>();
-
 };
+
 sim_prototypes::sim_prototypes(const sim_prototypes &s) {
     //Copy constructer
     ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Hamiltonian *>();
     for (const auto& ctrl_h_item : s.ctrl_hamiltonian_prototype_map) {
-        Hamiltonian *ctrl_h_copy_ptr(ctrl_h_item.second);
-//        auto ctrl_h_copy = *ctrl_h_item.second;
-//        ctrl_h_copy_ptr = &ctrl_h_copy;
-        ctrl_hamiltonian_prototype_map.insert(std::make_pair(ctrl_h_item.first,ctrl_h_copy_ptr));
-//        std::cout << "Copied:" << ctrl_h_item.first << ctrl_h_copy->h_mat.mat << std::endl;
+        ctrl_hamiltonian_prototype_map.insert(std::make_pair(ctrl_h_item.first,ctrl_h_item.second->clone()));
     }
 
     noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Noise_Hamiltonian *>();
     for (const auto& noise_h_item : s.noise_hamiltonian_prototype_map) {
-        Noise_Hamiltonian * noise_h_copy_ptr(noise_h_item.second);
-//        auto noise_h_copy = *noise_h_item.second;
-//        noise_h_copy_ptr = &noise_h_copy;
-        noise_hamiltonian_prototype_map.insert(std::make_pair(noise_h_item.first,noise_h_copy_ptr));
-//        std::cout << "Copied:" << noise_h_item.first << noise_h_copy->h_mat.mat << std::endl;
+        noise_hamiltonian_prototype_map.insert(std::make_pair(noise_h_item.first,noise_h_item.second->clone()));
     }
 
     gate_prototype_map = std::map<hamiltonian_tag_type, Gate *>();
     for (const auto& gate_item : s.gate_prototype_map) {
-        Gate * gate_copy_ptr(gate_item.second);
-//        auto gate_copy = *gate_item.second;
-//        gate_copy_ptr = &gate_copy;
-        gate_prototype_map.insert(std::make_pair(gate_item.first,gate_copy_ptr));
+        gate_prototype_map.insert(std::make_pair(gate_item.first,gate_item.second->clone()));
     }
 };
 
@@ -72,13 +61,11 @@ void QSimTask::sweeping_task() {
         std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
 
         //Reload sweeping param and generate a new prototype set from original one
-        sim_prototypes *reloaded_prototype = new sim_prototypes();
-        *reloaded_prototype = reload_prototypes_with_sweeping_parameter(i);
+        sim_prototypes *reloaded_prototype = reload_prototypes_with_sweeping_parameter(i);
 
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
         seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->gate_prototype_map);
-        seq->generate_switching_sig();
 
         //Launch Solver from
         std::vector<arma::cx_cube> rho_multi_result = launch_solver(seq, reloaded_prototype);
@@ -94,7 +81,7 @@ void QSimTask::sweeping_task() {
             meas_manager.save_result_to_folder(std::string(result_file_name).append("_all"),result_param_str);
         }
 
-//        delete seq;
+        delete seq;
     }
 }
 
@@ -258,8 +245,8 @@ void QSimTask::measument_solver() {
     task_log("Finished measurements!",1);
 }
 
-sim_prototypes QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
-    sim_prototypes reloaded_prototypes = sim_prototypes(simulation_prototypes);
+sim_prototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
+    sim_prototypes *reloaded_prototypes = new sim_prototypes(simulation_prototypes);
 
     std::vector<std::string> param_info = str_split(sim_configs["sweep_param_name"],':');
     auto type_name = param_info[0];
@@ -269,17 +256,16 @@ sim_prototypes QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
     task_log(std::string("Reloading:").append(type_name).append(":").append(tag).append(" on field:").append(property_name),1);
 
     if (type_name == "Gate") {
-        Gate * gate_obj = reloaded_prototypes.gate_prototype_map[tag];
+        Gate * gate_obj = reloaded_prototypes->gate_prototype_map[tag];
         rttr::property parametric_prop = rttr::type::get(*gate_obj).get_property(property_name);
         parametric_prop.set_value(*gate_obj,param_val);
     } else if (type_name == "Hamiltonian") {
         Hamiltonian * hamiltonian_obj;
-        if (reloaded_prototypes.ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes.ctrl_hamiltonian_prototype_map.end()){
-            hamiltonian_obj = reloaded_prototypes.ctrl_hamiltonian_prototype_map[tag];
-        } else if (reloaded_prototypes.noise_hamiltonian_prototype_map.find(tag) != reloaded_prototypes.noise_hamiltonian_prototype_map.end()) {
-            hamiltonian_obj = reloaded_prototypes.noise_hamiltonian_prototype_map[tag];
+        if (reloaded_prototypes->ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->ctrl_hamiltonian_prototype_map.end()){
+            hamiltonian_obj = reloaded_prototypes->ctrl_hamiltonian_prototype_map[tag];
+        } else if (reloaded_prototypes->noise_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->noise_hamiltonian_prototype_map.end()) {
+            hamiltonian_obj = reloaded_prototypes->noise_hamiltonian_prototype_map[tag];
         }
-        hamiltonian_obj->clean_up_on_reload();
         rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
         parametric_prop.set_value(*hamiltonian_obj,param_val);
     }
@@ -359,7 +345,6 @@ QSimTask::compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamil
         auto gate_proto_obj = gate_item.second;
 
         for (const auto& binded_hamiltonian_tag : gate_proto_obj->hamiltonian_tags_list) {
-//            std::cout << "Gate:" << gate_proto_tag << "\n Switching:\n" << seq.gate_switching_map[gate_proto_tag].subvec(100,120);
             hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
         }
     }

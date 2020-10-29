@@ -19,6 +19,10 @@ Gate::Gate(const TimingBasic &t, const Gate &g):TimingBasic(t) {
     ext_shaped_sig = g.ext_shaped_sig;
 }
 
+Gate *Gate::clone() {
+    return new Gate(*this);
+}
+
 Gate::Gate(nlohmann::json gate_config, double _step_size) {
     step_size = _step_size;
     tag = gate_config["tag"];

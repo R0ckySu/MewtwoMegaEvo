@@ -61,7 +61,7 @@ public:
     virtual void load_gate_configs();
     virtual void load_hamiltonian_configs();
 
-    virtual sim_prototypes reload_prototypes_with_sweeping_parameter(int index);
+    virtual sim_prototypes* reload_prototypes_with_sweeping_parameter(int index);
     std::vector<arma::cx_cube> launch_solver(Sequence *seq, sim_prototypes *prototypes);
     void measument_solver();
 

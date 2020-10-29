@@ -31,6 +31,7 @@ public:
     arma::vec ext_shaped_sig;
     virtual std::vector<std::string> decode_param_str(std::string params);
     virtual TimingDesc description() override;
+    Gate* clone() override;
     RTTR_ENABLE(TimingBasic);
 };
 

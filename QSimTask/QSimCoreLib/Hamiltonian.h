@@ -37,6 +37,8 @@ public:
     virtual void load_ext_waveform(int param_index);
     virtual std::string description();
 
+    virtual Hamiltonian* clone();
+
     virtual void clean_up_on_reload();
 RTTR_ENABLE();
 };
@@ -73,6 +75,7 @@ public:
     void clean_up_on_reload() override;
     std::string description() override;
 
+    MW_Hamiltonian* clone() override;
 private:
     double get_amplitude(double time) const;
 
@@ -99,6 +102,8 @@ public:
 
     void fetch_H(arma::cx_cube *H0) override;
     void load_ext_waveform(int param_index) override;
+    std::string description() override;
+    Noise_Hamiltonian* clone() override;
 RTTR_ENABLE(Hamiltonian);
 };
 
