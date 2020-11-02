@@ -35,10 +35,11 @@ void Sequence::generate_switching_sig() {
         }
 
         if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
-            gate_switching_map[gate_unit->tag].subvec(round(gate_unit->start_time/this->step_size),round(gate_unit->end_time/this->step_size-1)).fill(1);
+
+            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
         } else {
             arma::vec new_switching = arma::vec(get_total_num_steps()).fill(0);
-            new_switching.subvec(round(gate_unit->start_time/this->step_size),round(gate_unit->end_time/this->step_size)-1).fill(1);
+            new_switching.subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
             std::pair<gate_tag_type, arma::vec> new_gate_swicthing_entry = std::pair<gate_tag_type, arma::vec>(gate_unit->tag,new_switching);
             gate_switching_map.insert(new_gate_swicthing_entry);
         }

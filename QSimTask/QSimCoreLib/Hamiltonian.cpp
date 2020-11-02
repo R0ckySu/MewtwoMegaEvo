@@ -56,7 +56,6 @@ Hamiltonian::Hamiltonian(const Hamiltonian &h) {
 
 Hamiltonian::Hamiltonian(nlohmann::json h_config, std::string config_path) {
     amplitude = h_config["amplitude"];
-    amplitude = amplitude * M_PI;
     std::string h_string = h_config["h_pauli_mat"];
     h_mat.load_from_symbol(h_string,config_path);
     external_waveform_path = h_config["waveform_path"];;
@@ -141,15 +140,15 @@ void MW_Hamiltonian::load_waveform() {
         if(freq == 0.){
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
                 }
             }
         }
-        else{
+        else {
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = step_size*amplitude*switching_signal.at(i)*std::cos(times_vec[i]*freq*2.*M_PI + phase);
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::cos(times_vec[i]*freq*2.*M_PI + phase);
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
