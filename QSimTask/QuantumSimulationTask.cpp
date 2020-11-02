@@ -10,6 +10,86 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+
+ParamScheduler::ParamScheduler() {
+    num_of_params = 0;
+    param_info_table = std::vector<std::map<std::string, std::string>>();
+    param_val_map = std::map<std::string, arma::vec>();
+}
+
+void ParamScheduler::load_param_info_table_from_json(std::vector<nlohmann::json> param_info_json_list) {
+    for (int i = 0; i < param_info_json_list.size(); ++i) {
+        nlohmann::json prama_info_item = param_info_json_list.at(i);
+        auto param_item_map = std::map<std::string, std::string>();
+        param_item_map.insert(std::make_pair("class",std::string(prama_info_item["class"])));
+        param_item_map.insert(std::make_pair("tag",std::string(prama_info_item["tag"])));
+        param_item_map.insert(std::make_pair("prop",std::string(prama_info_item["property"])));
+        param_item_map.insert(std::make_pair("val_name",std::string(prama_info_item["param_name"])));
+        param_info_table.push_back(param_item_map);
+    }
+}
+
+std::string ParamScheduler::get_param_val_string_for_ith_param(int param_idx) {
+    return double_to_fixprecision_str(param_val_map.begin()->second.at(param_idx),4);
+}
+
+void ParamScheduler::load_param_val_from_folder(std::string folder) {
+    for (auto param_info_item : param_info_table) {
+        std::string file_path = std::string(folder).append("/").append(param_info_item.at("val_name"));
+        arma::vec val = arma::vec();
+        val.load(file_path,arma::csv_ascii);
+        param_val_map.insert(std::make_pair(param_info_item.at("val_name"),val));
+        num_of_params = val.n_elem;
+    }
+}
+
+void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, int num_job_group, std::string job_slicing_strategy) {
+    if ((num_job_group > num_of_params) || (job_id>num_job_group)) {
+        num_job_group = 1;
+        job_id = 0;
+        std::cout << std::string("Wrong slicing parameters!") << std::endl;
+        return;
+    }
+
+    int start_pos_for_this_job = 0;
+    int end_pos_for_this_job = 0;
+
+    if (job_slicing_strategy == JOB_SLICING_LINSPACE) {
+        arma::vec index_ends_list = arma::linspace(0,num_of_params,num_job_group+1);
+        start_pos_for_this_job = index_ends_list.at(job_id);
+        end_pos_for_this_job = index_ends_list.at(job_id+1) -1;
+    } else if (job_slicing_strategy == JOB_SLICING_LOGSPACE) {
+        arma::vec index_ends_list = arma::round(arma::logspace(0,log10(num_of_params),num_job_group));
+        index_ends_list.insert_rows(0,1);
+        for (int i = 1; i < index_ends_list.size()-1; ++i) {
+            if (index_ends_list.at(i) == index_ends_list.at(i-1)) {
+                index_ends_list.at(i) = index_ends_list.at(i)+1;
+            }
+        }
+        start_pos_for_this_job = index_ends_list.at(job_id);
+        end_pos_for_this_job = index_ends_list.at(job_id+1)-1;
+    } else if (job_slicing_strategy == JOB_SLICING_INVLOGSPACE) {
+        arma::vec index_ends_list = arma::round(arma::logspace(0,log10(num_of_params),num_job_group));
+        index_ends_list.insert_rows(0,1);
+        for (int i = 1; i < index_ends_list.size()-1; ++i) {
+            if (index_ends_list.at(i) == index_ends_list.at(i-1)) {
+                index_ends_list.at(i) = index_ends_list.at(i)+1;
+            }
+        }
+        index_ends_list = num_of_params - index_ends_list;
+        start_pos_for_this_job = index_ends_list.at(job_id);
+        end_pos_for_this_job = index_ends_list.at(job_id+1)-1;
+    }
+
+    for (auto param_val_item : param_val_map) {
+        arma::vec sliced_vec = param_val_item.second.subvec(start_pos_for_this_job,end_pos_for_this_job);
+        param_val_item.second = sliced_vec;
+        std::stringstream param_str;
+        param_str << sliced_vec;
+        std::cout<< std::string("Job sliced, ").append(param_val_item.first).append(": param vec:\n").append(param_str.str()) << std::endl;
+    }
+}
+
 sim_prototypes::sim_prototypes() {
     ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Hamiltonian *>();
     noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Noise_Hamiltonian *>();
@@ -56,9 +136,9 @@ QSimTask::~QSimTask() {
 void QSimTask::sweeping_task() {
     task_log("QSimTask: Parametric Sweeping started",1);
     //TODO: Configurable parallelization by CMake predefined params (Build time config)
-    for (int i = 0; i < param_vec.size(); ++i) {
+    for (int i = 0; i < param_schedule.num_of_params; ++i) {
         std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id)).append("_meas");
-        std::string result_param_str = double_to_fixprecision_str(param_vec.at(i),4);
+        std::string result_param_str = param_schedule.get_param_val_string_for_ith_param(i);
 
         //Reload sweeping param and generate a new prototype set from original one
         sim_prototypes *reloaded_prototype = reload_prototypes_with_sweeping_parameter(i);
@@ -66,6 +146,7 @@ void QSimTask::sweeping_task() {
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
         seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->gate_prototype_map);
+        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
 
         //Launch Solver from
         std::vector<arma::cx_cube> rho_multi_result = launch_solver(seq, reloaded_prototype);
@@ -95,8 +176,11 @@ void QSimTask::load_sim_configs() {
     task_name = sim_configs["task_name"];
     log_level_threshold = sim_configs["log_level"];
     job_slicing_strategy = sim_configs["job_slicing_strategy"];
-    std::string sweep_val_file_name = sim_configs["sweep_val_file"];
-    param_vec.load(std::string(config_file_folder).append("/").append(sweep_val_file_name),arma::csv_ascii);
+
+    param_schedule = ParamScheduler();
+    param_schedule.load_param_info_table_from_json(sim_configs["sweep_param_info"]);
+    param_schedule.load_param_val_from_folder(config_file_folder);
+
     step_size = sim_configs["step_size"];
     iterations = sim_configs["iterations"];
     will_record_all_measurement = sim_configs["record_all_meas"];
@@ -140,7 +224,7 @@ void QSimTask::load_sim_configs() {
         std::cout << "QSimTask: Observables:\n" << obs_.mat << std::endl;
     }
 
-    process_prameter_vec_with_job_slicing_strategy();
+    param_schedule.process_prameter_vec_with_job_slicing_strategy(job_id,num_job_group,job_slicing_strategy);
 }
 
 void QSimTask::load_gate_configs() {
@@ -152,7 +236,6 @@ void QSimTask::load_gate_configs() {
     std::vector<nlohmann::json> gate_defs = gate_configs["gate_defs"];
     for (auto & gate_def : gate_defs) {
         Gate *gate_new = new Gate(gate_def,step_size);
-        gate_new->step_size = step_size;
         gate_prototype_map.insert(std::make_pair(gate_new->tag, gate_new));
     }
 
@@ -248,29 +331,32 @@ void QSimTask::measument_solver() {
 sim_prototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
     sim_prototypes *reloaded_prototypes = new sim_prototypes(simulation_prototypes);
 
-    std::vector<std::string> param_info = str_split(sim_configs["sweep_param_name"],':');
-    auto type_name = param_info[0];
-    auto tag = param_info[1];
-    auto property_name = param_info[2];
-    auto param_val = param_vec.at(index);
-    task_log(std::string("Reloading:").append(type_name).append(":").append(tag).append(" on field:").append(property_name),1);
+    for (int i = 0; i < param_schedule.param_info_table.size(); ++i) {
+        auto type_name = param_schedule.param_info_table.at(i).at("class");
+        auto tag = param_schedule.param_info_table.at(i).at("tag");
+        auto property_name = param_schedule.param_info_table.at(i).at("prop");
+        auto val_name = param_schedule.param_info_table.at(i).at("val_name");
+        auto param_val = param_schedule.param_val_map.at(val_name).at(index);
+        task_log(std::string("Reloading:").append(type_name).append(":").append(tag).append(" on field:").append(property_name).append(" vector filename:").append(val_name),1);
 
-    if (type_name == "Gate") {
-        Gate * gate_obj = reloaded_prototypes->gate_prototype_map[tag];
-        rttr::property parametric_prop = rttr::type::get(*gate_obj).get_property(property_name);
-        parametric_prop.set_value(*gate_obj,param_val);
-    } else if (type_name == "Hamiltonian") {
-        Hamiltonian * hamiltonian_obj;
-        if (reloaded_prototypes->ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->ctrl_hamiltonian_prototype_map.end()){
-            hamiltonian_obj = reloaded_prototypes->ctrl_hamiltonian_prototype_map[tag];
-        } else if (reloaded_prototypes->noise_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->noise_hamiltonian_prototype_map.end()) {
-            hamiltonian_obj = reloaded_prototypes->noise_hamiltonian_prototype_map[tag];
+        if (type_name == "Gate") {
+            Gate * gate_obj = reloaded_prototypes->gate_prototype_map[tag];
+            rttr::property parametric_prop = rttr::type::get(*gate_obj).get_property(property_name);
+            parametric_prop.set_value(*gate_obj,param_val);
+        } else if (type_name == "Hamiltonian") {
+            Hamiltonian * hamiltonian_obj;
+            if (reloaded_prototypes->ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->ctrl_hamiltonian_prototype_map.end()){
+                hamiltonian_obj = reloaded_prototypes->ctrl_hamiltonian_prototype_map[tag];
+            } else if (reloaded_prototypes->noise_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->noise_hamiltonian_prototype_map.end()) {
+                hamiltonian_obj = reloaded_prototypes->noise_hamiltonian_prototype_map[tag];
+            }
+            rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
+            parametric_prop.set_value(*hamiltonian_obj,param_val);
         }
-        rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
-        parametric_prop.set_value(*hamiltonian_obj,param_val);
+
+        std::cout << "QSimTask: Parameter " << sim_configs["sweep_param_name"] << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
     }
 
-    std::cout << "QSimTask: Parameter " << sim_configs["sweep_param_name"] << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
     return reloaded_prototypes;
 }
 
@@ -291,49 +377,6 @@ void QSimTask::task_log(std::string message, int log_level) {
         std::string log_msg = std::string("QSimTask:").append(message);
         std::cout << log_msg << std::endl;
     }
-}
-
-void QSimTask::process_prameter_vec_with_job_slicing_strategy() {
-    int num_of_params = param_vec.size();
-    if ((num_job_group > num_of_params) || (job_id>num_job_group)) {
-        num_job_group = 1;
-        job_id = 0;
-        task_log(std::string("Wrong slicing parameters!"),1);
-        return;
-    }
-
-    if (job_slicing_strategy == JOB_SLICING_LINSPACE) {
-        arma::vec index_ends_list = arma::linspace(0,num_of_params,num_job_group+1);
-        int start_pos_for_this_job = index_ends_list.at(job_id);
-        int end_pos_for_this_job = index_ends_list.at(job_id+1);
-        param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
-    } else if (job_slicing_strategy == JOB_SLICING_LOGSPACE) {
-        arma::vec index_ends_list = arma::round(arma::logspace(0,log10(num_of_params),num_job_group));
-        index_ends_list.insert_rows(0,1);
-        for (int i = 1; i < index_ends_list.size()-1; ++i) {
-            if (index_ends_list.at(i) == index_ends_list.at(i-1)) {
-                index_ends_list.at(i) = index_ends_list.at(i)+1;
-            }
-        }
-        int start_pos_for_this_job = index_ends_list.at(job_id);
-        int end_pos_for_this_job = index_ends_list.at(job_id+1);
-        param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
-    } else if (job_slicing_strategy == JOB_SLICING_INVLOGSPACE) {
-        arma::vec index_ends_list = arma::round(arma::logspace(0,log10(num_of_params),num_job_group));
-        index_ends_list.insert_rows(0,1);
-        for (int i = 1; i < index_ends_list.size()-1; ++i) {
-            if (index_ends_list.at(i) == index_ends_list.at(i-1)) {
-                index_ends_list.at(i) = index_ends_list.at(i)+1;
-            }
-        }
-        index_ends_list = num_of_params - index_ends_list;
-        int start_pos_for_this_job = index_ends_list.at(job_id);
-        int end_pos_for_this_job = index_ends_list.at(job_id+1);
-        param_vec = param_vec.subvec(start_pos_for_this_job,end_pos_for_this_job-1);
-    }
-    std::stringstream param_str;
-    param_str << param_vec;
-    task_log(std::string("Job sliced, param vec:\n").append(param_str.str()),1);
 }
 
 arma::cx_cube*
