@@ -38,3 +38,4 @@ cmake-build-debug/
 3rd_party_libs/*
 
 */sim_results/*
+*/NoiseData/*

@@ -10,6 +10,7 @@ In a nutshell, by taking in the time dependend hamiltonian and the initial state
 ### Compiler & CMake Requirement
 1. gcc-8.1+
 2. g++-8.1+
+3. gfortran-8.1+
 3. CMake 11.0+
 4. make
 
@@ -20,6 +21,8 @@ In a nutshell, by taking in the time dependend hamiltonian and the initial state
 4. Json (nlohmann::json Fetched by CMake, No need to install manually)
 5. [RTTR](https://www.rttr.org)
 6. Intel-MKL (Required by Armadillo)
+7. OpenBlas (Required by Armadillo)
+8. Lapack (Required by Armadillo)
 
 ### For Mac
 If you have homebrew installed already, pre-compiled libs including armadillo, hdf5 can be installed easily by brew install command.
@@ -27,7 +30,7 @@ If you have homebrew installed already, pre-compiled libs including armadillo, h
 ### For Linux
 
 ### For Windows
-Install [Cygwin](https://www.cygwin.com) and see the [For Linux](#For-Linux)
+Enable Windows Linux Subsystem and see the [For Linux](#For-Linux)
 
 ## Design
 ![archetechture](docs/archetechture.png)
@@ -41,6 +44,7 @@ vector, if the simulation complexity doesn't increase with the parameters, it's 
 same size. If the complexity growth with the parameter, then we will need different strategy.
 
 #### Job slicing strategy (Parameter-wise)
+![parallelization1](docs/parallelization1.png)
 For example, if a parametric sweeping task has n parameters to sweep through. The whole task can be sliced into several 
 groups by the strategies in the table below, so that HPC users can submit each sliced group to separate jobs to HPC.
 
@@ -54,6 +58,9 @@ they are responsible for.
 | linspace | linspace(0,n,g+1) |
 | logspace | round(logspace(0,log10(n),g)), repeated indices shift by +1 |
 | inv_logspace | n - round(logspace(0,log10(n),g)), repeated indices shift by +1 |
+
+#### Job slicing strategy (Repeat-wise)
+![parallelization2](docs/parallelization2.png)
 
 #### job slice shell script (job_slice.sh)
 The shell script for generating qsub scripts for HPC job queue managing system is also provided in our software package.
