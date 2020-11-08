@@ -48,6 +48,9 @@ RTTR_ENABLE();
 class Static_Hamiltonian: public Hamiltonian {
 public:
     explicit Static_Hamiltonian(nlohmann::json h_config, std::string config_path);
+    Static_Hamiltonian* clone();
+    void load_waveform();
+    void fetch_H(arma::cx_cube *H0);
 };
 
 /**********************************************************************************************************************/
@@ -58,14 +61,6 @@ public:
     explicit MW_Hamiltonian(nlohmann::json h_config, std::string config_path);
 //    ~MW_Hamiltonian();
     MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m);
-
-    struct gaussian_modulation_param {double mu; double sigma;};
-    enum modulation_type {
-        gaussian,
-        undef
-    };
-    gaussian_modulation_param gaussian_mod_param{};
-    modulation_type modulation=undef;
 
     double freq;
     double phase;

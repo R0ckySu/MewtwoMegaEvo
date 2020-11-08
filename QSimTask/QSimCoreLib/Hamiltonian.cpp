@@ -106,7 +106,23 @@ Hamiltonian *Hamiltonian::clone() {
 }
 
 /**********************************************************************************************************************/
+
+Static_Hamiltonian *Static_Hamiltonian::clone() {
+    return new Static_Hamiltonian(*this);
+}
+
 Static_Hamiltonian::Static_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config, config_path) {}
+
+void Static_Hamiltonian::fetch_H(arma::cx_cube *H0) {
+    for (int i = 0; i < H0->n_slices; ++i) {
+        H0->slice(i) += step_size * h_mat.mat * wave_form(i);
+    }
+}
+
+void Static_Hamiltonian::load_waveform() {
+    Hamiltonian::load_waveform();
+    wave_form.fill(amplitude);
+}
 
 /**********************************************************************************************************************/
 
@@ -148,7 +164,7 @@ void MW_Hamiltonian::load_waveform() {
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::cos(times_vec[i]*freq*2.*M_PI + phase);
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*2.*M_PI + phase));
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
@@ -160,16 +176,6 @@ void MW_Hamiltonian::load_waveform() {
     }
 
 //        pulse_data_conj = arma::conj(pulse_data);
-}
-
-double MW_Hamiltonian::get_amplitude(double time) const{
-    if (modulation == undef){
-        return 1;
-    }
-    if (modulation == gaussian) {
-        return std::exp(-(time - gaussian_mod_param.mu)* (time - gaussian_mod_param.mu)/(2 * gaussian_mod_param.sigma * gaussian_mod_param.sigma));
-    }
-    return 0;
 }
 
 void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -189,9 +195,7 @@ std::string MW_Hamiltonian::description() {
 
 void MW_Hamiltonian::clean_up_on_reload() {
     Hamiltonian::clean_up_on_reload();
-
 }
-
 
 /**********************************************************************************************************************/
 Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {

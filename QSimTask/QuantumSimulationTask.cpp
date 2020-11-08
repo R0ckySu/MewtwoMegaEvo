@@ -33,7 +33,7 @@ QSimTask::~QSimTask() {
 void QSimTask::launch_task() {
     int max_num_of_threads = omp_get_max_threads();
     task_log(std::string("QSimTask: Device has ").append(std::to_string(max_num_of_threads)).append(" threads."),1);
-    if(iterations < max_num_of_threads || enable_param_parallel_mode) {
+    if(enable_param_parallel_mode) {
         task_log("QSimTask: Task started, sweeping parallelized along parameters",1);
         sweeping_param_parallel();
     } else {
@@ -102,7 +102,7 @@ void QSimTask::sweeping_param_parallel() {
 
     arma::vec noise_index_ends_list = arma::linspace(0,iterations,num_job_group+1);
     int start_pos_for_this_job = noise_index_ends_list.at(job_id);
-    int end_pos_for_this_job = noise_index_ends_list.at(job_id+1) - 1;
+    int end_pos_for_this_job = noise_index_ends_list.at(job_id+1);
     task_log(std::string("Noise index start:").append(std::to_string(start_pos_for_this_job)).append(" index ends:").append(std::to_string(end_pos_for_this_job)),1);
 
     #pragma omp parallel for default(none) shared(start_pos_for_this_job,end_pos_for_this_job,result_file_name)
@@ -317,7 +317,7 @@ SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
             parametric_prop.set_value(*hamiltonian_obj,param_val);
         }
 
-        std::cout << "QSimTask: Parameter " << sim_configs["sweep_param_name"] << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
+        std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
     }
 
     return reloaded_prototypes;

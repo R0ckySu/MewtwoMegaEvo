@@ -1,6 +1,14 @@
 {
   "hamiltonian_prototype_defs": [
     {
+      "tag": "system",
+      "type": "static",
+      "enable": true,
+      "amplitude":3.1415926e6,
+      "h_pauli_mat": "Z",
+      "waveform_path":""
+    },
+    {
       "tag": "X1",
       "type": "mw",
       "enable": true,
