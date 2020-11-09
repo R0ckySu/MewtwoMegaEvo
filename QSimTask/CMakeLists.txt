@@ -8,8 +8,7 @@ add_library(
         QSimTask STATIC
         QuantumSimulationTask.h QuantumSimulationTask.cpp
         ParamScheduler.h ParamScheduler.cpp
-        SimPrototypes.h SimPrototypes.cpp
-        QSimPulseOptimisationTask.cpp QSimPulseOptimisationTask.h)
+        SimPrototypes.h SimPrototypes.cpp)
 
 add_subdirectory(QSimCoreLib)
 
