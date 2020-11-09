@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.11)
 project(MewtwoMegaEvo)
 
 set(CMAKE_CXX_STANDARD 11)
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Playground/Precompiled_exe/${CMAKE_SYSTEM_NAME}/)
+#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Playground/Precompiled_exe/${CMAKE_SYSTEM_NAME}/)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Playground/)
 
 include_directories(./3rd_party_libs/include)
 link_directories(./3rd_party_libs/lib)

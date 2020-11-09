@@ -1,16 +1,16 @@
 {
-  "task_name": "CPMG",
+  "task_name": "CPMG-QNS",
   "log_level": 4,
   "job_slicing_strategy":"linspace",
   "record_unitary": false,
   "record_all_meas": true,
   "enable_param_parallel_mode":false,
-  "system_dim": 4,
-  "observables": ["YI","IY"],
-  "init_states": ["YI","IY"],
-  "iterations" : 16,
+  "system_dim": 2,
+  "observables": ["Y"],
+  "init_states": ["Y"],
+  "repeat" : 16,
   "step_size": 1e-8,
-  "sequence": "[F(T/4)-X2pi-F(T/4)-X1pi-F(T/4)-X2pi-F(T/4)-X1pi-M]^10",
+  "sequence": "[F(T/4)-X1pi-F(T/2)-X1pi-F(T/4)-M]^10",
   "sweep_param_info": [
     {
       "class":"Gate",

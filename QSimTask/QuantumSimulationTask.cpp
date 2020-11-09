@@ -181,7 +181,7 @@ void QSimTask::load_sim_configs() {
     param_schedule.load_param_val_from_folder(config_file_folder);
 
     step_size = sim_configs["step_size"];
-    iterations = sim_configs["iterations"];
+    iterations = sim_configs["repeat"];
     will_record_all_measurement = sim_configs["record_all_meas"];
     will_record_unitary = sim_configs["record_unitary"];
     enable_param_parallel_mode = sim_configs["enable_param_parallel_mode"];

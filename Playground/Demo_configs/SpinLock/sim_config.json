@@ -8,9 +8,9 @@
   "system_dim": 2,
   "observables": ["X"],
   "init_states": ["X"],
-  "iterations" : 64,
+  "repeat" : 64,
   "step_size": 1e-8,
-  "sequence": "[Xpi-M]^20",
+  "sequence": "[Xpi-M]^10",
   "sweep_param_info": [
     {
       "class":"Hamiltonian",

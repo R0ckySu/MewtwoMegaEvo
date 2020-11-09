@@ -26,7 +26,7 @@ function dataset = LoadMeasMarkerDataSet(data_path)
     configInfo = jsondecode(str);
     dataset.configInfo = configInfo;
     
-    original_param_vec = csvread([data_path,config_folder_name,filesep,configInfo.sweep_val_file]);
+    original_param_vec = csvread([data_path,config_folder_name,filesep,'param_vec']);
     param_name_strs = {};
     for i = 1:length(original_param_vec)
         param_name_strs = [param_name_strs,num2str(original_param_vec(i),'%10.4e')];
@@ -62,7 +62,7 @@ function dataset = LoadMeasMarkerDataSet(data_path)
                     dataset.meas2D.(observable_array{o_idx}).(init_state_array{i_idx}) = meas_marker2D;
                     dataset.meas2D.time_point2D = time_point2D;
                     dataset.meas2D.xlabel = 'n^{th} meas marker';
-                    dataset.meas2D.ylabel = 'configInfo.sweep_param_name';
+                    dataset.meas2D.ylabel = 'param';
                     figure;
                     imagesc('YData',param_vec,'CData',meas_marker2D);
                     xlabel(dataset.meas2D.xlabel);

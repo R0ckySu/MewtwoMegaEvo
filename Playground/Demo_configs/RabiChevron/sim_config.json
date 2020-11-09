@@ -8,7 +8,7 @@
   "system_dim": 2,
   "observables": ["Z"],
   "init_states": ["Z"],
-  "iterations" : 1,
+  "repeat" : 1,
   "step_size": 1e-10,
   "sequence": "[Xpi(T/10)-M]^40",
   "sweep_param_info": [
