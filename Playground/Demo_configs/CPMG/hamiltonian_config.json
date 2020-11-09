@@ -4,39 +4,29 @@
       "tag": "X1",
       "type": "mw",
       "enable": true,
-      "amplitude":1e5,
+      "amplitude":1e6,
       "freq": 0,
       "phase": 0,
-      "h_pauli_mat": "IX",
-      "waveform_path":""
-    },
-    {
-      "tag": "X2",
-      "type": "mw",
-      "enable": true,
-      "amplitude":1e5,
-      "freq": 0,
-      "phase": 0,
-      "h_pauli_mat": "XI",
+      "h_pauli_mat": "X",
       "waveform_path":""
     },
     {
       "tag": "noise1",
       "type": "noise",
       "enable": true,
-      "amplitude":1,
-      "h_pauli_mat": "IZ",
+      "amplitude":5e1,
+      "h_pauli_mat": "Z",
       "lag_time": 0,
       "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ11#.csv"
     },
     {
       "tag": "noise2",
       "type": "noise",
-      "enable": true,
-      "amplitude":1e-2,
-      "h_pauli_mat": "ZI",
-      "lag_time": 1e-6,
-      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ21#.csv"
+      "enable": false,
+      "amplitude":1e2,
+      "h_pauli_mat": "Y",
+      "lag_time": 0,
+      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ11#.csv"
     }
   ]
 }

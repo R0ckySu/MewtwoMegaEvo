@@ -1,0 +1,29 @@
+//
+// Created by Rocky Su on 6/11/20.
+//
+
+#include "SimPrototypes.h"
+
+SimPrototypes::SimPrototypes() {
+    ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Hamiltonian *>();
+    noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Noise_Hamiltonian *>();
+    gate_prototype_map = std::map<hamiltonian_tag_type, Gate *>();
+};
+
+SimPrototypes::SimPrototypes(const SimPrototypes &s) {
+    //Copy constructer
+    ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Hamiltonian *>();
+    for (const auto& ctrl_h_item : s.ctrl_hamiltonian_prototype_map) {
+        ctrl_hamiltonian_prototype_map.insert(std::make_pair(ctrl_h_item.first,ctrl_h_item.second->clone()));
+    }
+
+    noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Noise_Hamiltonian *>();
+    for (const auto& noise_h_item : s.noise_hamiltonian_prototype_map) {
+        noise_hamiltonian_prototype_map.insert(std::make_pair(noise_h_item.first,noise_h_item.second->clone()));
+    }
+
+    gate_prototype_map = std::map<hamiltonian_tag_type, Gate *>();
+    for (const auto& gate_item : s.gate_prototype_map) {
+        gate_prototype_map.insert(std::make_pair(gate_item.first,gate_item.second->clone()));
+    }
+};

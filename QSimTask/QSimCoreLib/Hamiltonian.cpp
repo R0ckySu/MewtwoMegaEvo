@@ -50,25 +50,21 @@ Hamiltonian::Hamiltonian(const Hamiltonian &h) {
     amplitude = h.amplitude;
     h_mat = h.h_mat;
     step_size = h.step_size;
-//    switching_signal = h.switching_signal;
-//    wave_form = h.wave_form;
     num_of_steps = h.num_of_steps;
     external_waveform_path = h.external_waveform_path;
 }
 
 Hamiltonian::Hamiltonian(nlohmann::json h_config, std::string config_path) {
     amplitude = h_config["amplitude"];
-    amplitude = amplitude * M_PI;
     std::string h_string = h_config["h_pauli_mat"];
     h_mat.load_from_symbol(h_string,config_path);
     external_waveform_path = h_config["waveform_path"];;
 }
 
 Hamiltonian::~Hamiltonian() {
-//    arma::cx_mat().swap(h_mat);
-//    arma::cx_vec().swap(wave_form);
-//    arma::vec().swap(times_vec);
-//    arma::vec().swap(switching_signal);
+    arma::cx_vec().swap(wave_form);
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
 }
 
 void Hamiltonian::load_waveform() {
@@ -94,8 +90,39 @@ void Hamiltonian::clean_up_on_reload() {
     arma::cx_vec().swap(wave_form);
 }
 
+void Hamiltonian::add_signal(arma::vec _sig) {
+    if (switching_signal.size() == 0) {
+        switching_signal = _sig;
+    } else if (_sig.size() == switching_signal.size()) {
+        switching_signal += _sig;
+    } else {
+        std::cout << "Hamiltonian:" << tag << " Mismatched signal length!" << std::endl;
+        std::cout << "Expect length:" << switching_signal.n_elem << " received:" << _sig.n_elem << std::endl;
+    }
+}
+
+Hamiltonian *Hamiltonian::clone() {
+    return new Hamiltonian(*this);
+}
+
 /**********************************************************************************************************************/
+
+Static_Hamiltonian *Static_Hamiltonian::clone() {
+    return new Static_Hamiltonian(*this);
+}
+
 Static_Hamiltonian::Static_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config, config_path) {}
+
+void Static_Hamiltonian::fetch_H(arma::cx_cube *H0) {
+    for (int i = 0; i < H0->n_slices; ++i) {
+        H0->slice(i) += step_size * h_mat.mat * wave_form(i);
+    }
+}
+
+void Static_Hamiltonian::load_waveform() {
+    Hamiltonian::load_waveform();
+    wave_form.fill(amplitude);
+}
 
 /**********************************************************************************************************************/
 
@@ -109,6 +136,10 @@ MW_Hamiltonian::MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m): H
     phase = m.phase;
 }
 
+MW_Hamiltonian *MW_Hamiltonian::clone() {
+    return new MW_Hamiltonian(*this);
+}
+
 MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config, config_path)  {
     freq = h_config["freq"];
     phase = h_config["phase"];
@@ -120,21 +151,20 @@ MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path)
 
 void MW_Hamiltonian::load_waveform() {
     Hamiltonian::load_waveform();
-
     if(switching_signal.size()) {
         const arma::cx_double j = arma::cx_double(0,1);
         if(freq == 0.){
             for (int i = 0; i < switching_signal.size(); ++i){
-                if (switching_signal.at(i) == 1.0) {
-                    wave_form[i] = step_size*amplitude*(get_amplitude(times_vec[i]) + get_amplitude(times_vec[i+1]))/2*std::exp(j*phase);
+                if (switching_signal.at(i) != 0.0) {
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
                 }
             }
         }
-        else{
+        else {
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
-                if (switching_signal.at(i) == 1.0) {
-                    wave_form[i] = step_size*amplitude*std::cos(times_vec[i]*freq*2.*M_PI + phase);
+                if (switching_signal.at(i) != 0.0) {
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*2.*M_PI + phase));
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
@@ -146,16 +176,6 @@ void MW_Hamiltonian::load_waveform() {
     }
 
 //        pulse_data_conj = arma::conj(pulse_data);
-}
-
-double MW_Hamiltonian::get_amplitude(double time) const{
-    if (modulation == undef){
-        return 1;
-    }
-    if (modulation == gaussian) {
-        return std::exp(-(time - gaussian_mod_param.mu)* (time - gaussian_mod_param.mu)/(2 * gaussian_mod_param.sigma * gaussian_mod_param.sigma));
-    }
-    return 0;
 }
 
 void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -175,7 +195,6 @@ std::string MW_Hamiltonian::description() {
 
 void MW_Hamiltonian::clean_up_on_reload() {
     Hamiltonian::clean_up_on_reload();
-
 }
 
 /**********************************************************************************************************************/
@@ -217,6 +236,14 @@ void Noise_Hamiltonian::load_ext_waveform(int param_index) {
 
     wave_form = wave_form.subvec(shift_steps,shift_steps+num_of_steps);
     std::cout << "Noise_Hamiltonian: shifted by" << shift_steps << std::endl;
+}
+
+std::string Noise_Hamiltonian::description() {
+    return "Noise Hamiltonian";
+}
+
+Noise_Hamiltonian *Noise_Hamiltonian::clone() {
+    return new Noise_Hamiltonian(*this);
 }
 
 Noise_Hamiltonian::~Noise_Hamiltonian() = default;

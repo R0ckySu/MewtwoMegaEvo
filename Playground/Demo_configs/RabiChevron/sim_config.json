@@ -1,0 +1,22 @@
+{
+  "task_name": "RabiChevron",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_unitary": false,
+  "record_all_meas": true,
+  "enable_param_parallel_mode":true,
+  "system_dim": 2,
+  "observables": ["Z"],
+  "init_states": ["Z"],
+  "repeat" : 1,
+  "step_size": 1e-10,
+  "sequence": "[Xpi(T/10)-M]^40",
+  "sweep_param_info": [
+    {
+      "class":"Hamiltonian",
+      "tag":"X1",
+      "property":"freq",
+      "param_name":"param_vec"
+    }
+  ]
+}

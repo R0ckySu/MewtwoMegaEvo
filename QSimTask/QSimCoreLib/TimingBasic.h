@@ -46,6 +46,7 @@ public:
 
     //Returns formatted table head and data string in pair. Subclasses are responsible to override this method!
     virtual TimingDesc description();
+    virtual TimingBasic* clone();
     RTTR_ENABLE();
 };
 

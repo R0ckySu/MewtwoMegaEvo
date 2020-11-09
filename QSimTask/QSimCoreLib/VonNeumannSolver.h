@@ -30,6 +30,7 @@ class VonNeumannSolver {
 public:
     bool will_record_unitary = false;
     int total_repeat_num = 1; //Do not use it for iteration control!!!
+
     arma::cx_cube propagator;
     arma::cx_cube propagator_dagger;
 
@@ -41,6 +42,8 @@ public:
     VonNeumannSolver();
     ~VonNeumannSolver();
     void calculate_evolution();
+    arma::cx_cube get_propagator_time_evo();
+    arma::cx_cube get_propagator_dagger_time_evo();
 
 private:
     bool verify_inputdata();

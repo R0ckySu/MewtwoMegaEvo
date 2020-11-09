@@ -21,14 +21,17 @@ class Gate: public TimingBasic {
 public:
     //Initialiser
     Gate();
-    explicit Gate(nlohmann::json gate_config);
+    explicit Gate(nlohmann::json gate_config, double _step_size);
     //Copy constructor
     Gate(const TimingBasic &t,const Gate &g);
 
     gate_tag_type tag;
     std::vector<hamiltonian_tag_type> hamiltonian_tags_list;
+    std::string ext_shaped_sig_path;
+    arma::vec ext_shaped_sig;
     virtual std::vector<std::string> decode_param_str(std::string params);
     virtual TimingDesc description() override;
+    Gate* clone() override;
     RTTR_ENABLE(TimingBasic);
 };
 

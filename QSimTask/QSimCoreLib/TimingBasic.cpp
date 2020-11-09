@@ -36,15 +36,13 @@ TimingDesc TimingBasic::description() {
     desc.name = "BasicObj--";
     desc.table_head = "|--StartTime-|--Duration--|--EndTime---|";
 
-
-
-//    std::stringstream descStream;
-//    descStream << "|";
-//    descStream << std::setw(12) << std::scientific << std::setprecision(4) << start_time << "|";
-//    descStream << std::setw(12) << std::scientific << std::setprecision(4) << get_pulse_width() << "|";
-//    descStream << std::setw(12) << std::scientific << std::setprecision(4) << end_time << "|";
-
-    desc.data_row = std::string("|").append(std::to_string(start_time)).append("|").append(std::to_string(get_pulse_width())).append("|").append(std::to_string(end_time));
+    std::stringstream descStream;
+    descStream << "|";
+    descStream << std::setw(12) << std::scientific << std::setprecision(4) << start_time << "|";
+    descStream << std::setw(12) << std::scientific << std::setprecision(4) << get_pulse_width() << "|";
+    descStream << std::setw(12) << std::scientific << std::setprecision(4) << end_time << "|";
+    desc.data_row = descStream.str();
+//    desc.data_row = std::string("|").append(std::to_string(start_time)).append("|").append(std::to_string(get_pulse_width())).append("|").append(std::to_string(end_time));
     return desc;
 }
 
@@ -65,11 +63,13 @@ TimingBasic::TimingBasic() {
 TimingBasic::~TimingBasic() = default;
 
 int TimingBasic::get_start_index() {
+    if (step_size==0) {std::cout<< "TimingBasic: stepsize can't be 0!!";return 1;}
     return round(start_time/step_size);
 }
 
 int TimingBasic::get_end_index() {
-    return round(end_time/step_size);
+    if (step_size==0) {std::cout<< "TimingBasic: stepsize can't be 0!!";return 1;}
+    return get_start_index()+get_total_num_steps()-1;
 }
 
 TimingBasic::TimingBasic(double start, double end, double _step_size) {
@@ -79,9 +79,10 @@ TimingBasic::TimingBasic(double start, double end, double _step_size) {
 }
 
 int TimingBasic::get_total_num_steps() {
+    if (step_size==0) {std::cout<< "TimingBasic: stepsize can't be 0!!";return 1;};
     return round(get_pulse_width()/step_size);
 }
 
-
-
-
+TimingBasic *TimingBasic::clone() {
+    return new TimingBasic(*this);
+}

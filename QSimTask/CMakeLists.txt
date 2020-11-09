@@ -6,7 +6,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_library(
         QSimTask STATIC
-        QuantumSimulationTask.h QuantumSimulationTask.cpp)
+        QuantumSimulationTask.h QuantumSimulationTask.cpp
+        ParamScheduler.h ParamScheduler.cpp
+        SimPrototypes.h SimPrototypes.cpp
+        QSimPulseOptimisationTask.cpp QSimPulseOptimisationTask.h)
 
 add_subdirectory(QSimCoreLib)
 

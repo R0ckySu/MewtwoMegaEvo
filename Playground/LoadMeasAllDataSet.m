@@ -41,7 +41,7 @@ function dataset = LoadMeasAllDataSet(data_path)
                     end
                 end
                 legend(legend_label);
-                title({folder_name,[replace(configInfo.sweep_param_name,'_','\_'),replace(measall_param_fieldNames{j},'/','=')]});
+                title({folder_name,['param',replace(measall_param_fieldNames{j},'/','=')]});
                 set(gca,'FontSize',12);
                 xlabel('evo time (s)');
                 ylabel('P');

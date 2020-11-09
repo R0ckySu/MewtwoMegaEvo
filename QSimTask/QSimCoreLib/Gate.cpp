@@ -15,13 +15,27 @@ Gate::Gate() {
 Gate::Gate(const TimingBasic &t, const Gate &g):TimingBasic(t) {
     tag = g.tag;
     hamiltonian_tags_list = g.hamiltonian_tags_list;
+    ext_shaped_sig_path = g.ext_shaped_sig_path;
+    ext_shaped_sig = g.ext_shaped_sig;
 }
 
-Gate::Gate(nlohmann::json gate_config) {
+Gate *Gate::clone() {
+    return new Gate(*this);
+}
+
+Gate::Gate(nlohmann::json gate_config, double _step_size) {
+    step_size = _step_size;
     tag = gate_config["tag"];
     std::vector<std::string> h_tag_list = gate_config["hamiltonians"];
     hamiltonian_tags_list = h_tag_list;
-    this->set_pulse_width(gate_config["pulse_width"]);
+    ext_shaped_sig_path = gate_config["ext_shaped_sig_path"];
+    if (!ext_shaped_sig_path.empty()) {
+        ext_shaped_sig = arma::vec().load(ext_shaped_sig_path);
+        double ext_sig_pulse_width = step_size * ext_shaped_sig.size();
+        this->set_pulse_width(ext_sig_pulse_width);
+    } else {
+        this->set_pulse_width(gate_config["pulse_width"]);
+    }
 }
 
 std::vector<std::string> Gate::decode_param_str(std::string params) {

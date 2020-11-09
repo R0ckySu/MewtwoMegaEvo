@@ -31,10 +31,13 @@ public:
     Hamiltonian(const Hamiltonian &h);
     ~Hamiltonian();
 
+    virtual void add_signal(arma::vec _sig);
     virtual void load_waveform();   //Generating waveform
     virtual void fetch_H(arma::cx_cube* H0);
     virtual void load_ext_waveform(int param_index);
     virtual std::string description();
+
+    virtual Hamiltonian* clone();
 
     virtual void clean_up_on_reload();
 RTTR_ENABLE();
@@ -45,6 +48,9 @@ RTTR_ENABLE();
 class Static_Hamiltonian: public Hamiltonian {
 public:
     explicit Static_Hamiltonian(nlohmann::json h_config, std::string config_path);
+    Static_Hamiltonian* clone();
+    void load_waveform();
+    void fetch_H(arma::cx_cube *H0);
 };
 
 /**********************************************************************************************************************/
@@ -56,14 +62,6 @@ public:
 //    ~MW_Hamiltonian();
     MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m);
 
-    struct gaussian_modulation_param {double mu; double sigma;};
-    enum modulation_type {
-        gaussian,
-        undef
-    };
-    gaussian_modulation_param gaussian_mod_param{};
-    modulation_type modulation=undef;
-
     double freq;
     double phase;
 
@@ -72,6 +70,7 @@ public:
     void clean_up_on_reload() override;
     std::string description() override;
 
+    MW_Hamiltonian* clone() override;
 private:
     double get_amplitude(double time) const;
 
@@ -98,6 +97,8 @@ public:
 
     void fetch_H(arma::cx_cube *H0) override;
     void load_ext_waveform(int param_index) override;
+    std::string description() override;
+    Noise_Hamiltonian* clone() override;
 RTTR_ENABLE(Hamiltonian);
 };
 
