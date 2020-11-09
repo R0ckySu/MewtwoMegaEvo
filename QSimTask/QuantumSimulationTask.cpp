@@ -54,7 +54,7 @@ void QSimTask::sweeping_repeat_parallel() {
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
         seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->gate_prototype_map);
-        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
+//        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
         int total_num_steps = seq->get_total_num_steps();
 
         //Launch Solver from
