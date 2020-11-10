@@ -24,7 +24,13 @@ void ParamScheduler::load_param_info_table_from_json(std::vector<nlohmann::json>
 }
 
 std::string ParamScheduler::get_param_val_string_for_ith_param(int param_idx) {
-    return double_to_fixprecision_str(param_val_map.begin()->second.at(param_idx),4);
+    std::string param_str;
+    for (int i = 0; i < param_info_table.size(); ++i) {
+        std::string val_name = param_info_table.at(i)["val_name"];
+        std::string val_string = double_to_fixprecision_str(param_val_map.at(val_name).at(param_idx),4);
+        param_str.append("#").append(val_name).append("=").append(val_string);
+    }
+    return param_str;
 }
 
 void ParamScheduler::load_param_val_from_folder(std::string folder) {

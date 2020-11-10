@@ -26,12 +26,23 @@ function dataset = LoadMeasMarkerDataSet(data_path)
     configInfo = jsondecode(str);
     dataset.configInfo = configInfo;
     
-    original_param_vec = csvread([data_path,config_folder_name,filesep,'param_vec']);
-    param_name_strs = {};
-    for i = 1:length(original_param_vec)
-        param_name_strs = [param_name_strs,num2str(original_param_vec(i),'%10.4e')];
+    param_vec_file_names = {configInfo.sweep_param_info.param_name};
+    original_param_vec_struct = struct();
+    num_of_params = 0;
+    for i=1:length(param_vec_file_names)
+        original_param_vec_struct.(param_vec_file_names{i}) = csvread([data_path,config_folder_name,filesep,param_vec_file_names{i}]);
+        num_of_params = length(original_param_vec_struct.(param_vec_file_names{i}));
     end
-    dataset.param_vec = original_param_vec;
+    
+    param_name_strs = {};
+    for i = 1:num_of_params
+        param_str_temp = '';
+        for j=1:length(param_vec_file_names)
+            param_str_temp = [param_str_temp,'#',param_vec_file_names{j},'=',num2str(original_param_vec_struct.(param_vec_file_names{j})(i),'%10.4e')];
+        end
+        param_name_strs = [param_name_strs,param_str_temp];
+    end
+    dataset.param_vec = original_param_vec_struct;
     observable_array = configInfo.observables;
     init_state_array = configInfo.init_states;
     
@@ -45,6 +56,8 @@ function dataset = LoadMeasMarkerDataSet(data_path)
             measall_filePath = [data_path,filesep,hdf5fileNames{i}];
             measall_info = h5info(measall_filePath);
             measall_param_fieldNames={measall_info.Groups.Name};
+            figure;
+            set(gcf, 'Position',  [10, 10, 640*length(observable_array), 480*length(init_state_array)]);
             for o_idx=1:length(observable_array)
                 dataset.meas2D.(observable_array{o_idx}) = struct();
                 for i_idx = 1:length(init_state_array)
@@ -63,15 +76,15 @@ function dataset = LoadMeasMarkerDataSet(data_path)
                     dataset.meas2D.time_point2D = time_point2D;
                     dataset.meas2D.xlabel = 'n^{th} meas marker';
                     dataset.meas2D.ylabel = 'param';
-                    figure;
+                    subplot(length(observable_array),length(init_state_array),(o_idx-1)*length(observable_array)+i_idx)
                     imagesc('YData',param_vec,'CData',meas_marker2D);
                     xlabel(dataset.meas2D.xlabel);
                     ylabel(dataset.meas2D.ylabel);
                     set(gca,'FontSize',12);
                     colorbar;
                     title({folder_name,['O:',observable_array{o_idx},',\rho:',init_state_array{i_idx}]});
-                    savefig(gcf,[data_path,filesep,'meas_marker']);
-                    saveas(gcf,[data_path,filesep,'meas_marker'],'jpg');
+                    savefig(gcf,[data_path,filesep,hdf5fileNames{i},'_2D']);
+                    saveas(gcf,[data_path,filesep,hdf5fileNames{i},'_2D'],'jpg');
                 end
             end
         end
