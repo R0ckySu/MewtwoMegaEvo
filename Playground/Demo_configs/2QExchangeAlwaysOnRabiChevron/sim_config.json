@@ -1,0 +1,28 @@
+{
+  "task_name": "Shallot2QRaw",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_unitary": false,
+  "record_all_meas": true,
+  "enable_param_parallel_mode":false,
+  "system_dim": 4,
+  "observables": ["ZI","IZ"],
+  "init_states": ["rho1"],
+  "repeat" : 1,
+  "step_size": 1e-9,
+  "sequence": "[Xrot-M]^200",
+  "sweep_param_info": [
+    {
+      "class":"Hamiltonian",
+      "tag":"X1d",
+      "property":"freq",
+      "param_name":"freq_vec"
+    },
+    {
+      "class":"Hamiltonian",
+      "tag":"X2d",
+      "property":"freq",
+      "param_name":"freq_vec"
+    }
+  ]
+}

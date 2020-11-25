@@ -57,7 +57,7 @@ function dataset = LoadMeasMarkerDataSet(data_path)
             measall_info = h5info(measall_filePath);
             measall_param_fieldNames={measall_info.Groups.Name};
             figure;
-            set(gcf, 'Position',  [10, 10, 640*length(observable_array), 480*length(init_state_array)]);
+            set(gcf, 'Position',  [10, 10, 640*length(init_state_array), 480*length(observable_array)]);
             for o_idx=1:length(observable_array)
                 dataset.meas2D.(observable_array{o_idx}) = struct();
                 for i_idx = 1:length(init_state_array)
@@ -76,13 +76,13 @@ function dataset = LoadMeasMarkerDataSet(data_path)
                     dataset.meas2D.time_point2D = time_point2D;
                     dataset.meas2D.xlabel = 'n^{th} meas marker';
                     dataset.meas2D.ylabel = 'param';
-                    subplot(length(observable_array),length(init_state_array),(o_idx-1)*length(observable_array)+i_idx)
+                    subplot(length(observable_array),length(init_state_array),(o_idx-1)*length(init_state_array)+i_idx)
                     imagesc('YData',param_vec,'CData',meas_marker2D);
                     xlabel(dataset.meas2D.xlabel);
                     ylabel(dataset.meas2D.ylabel);
                     set(gca,'FontSize',12);
                     colorbar;
-                    title({folder_name,['O:',observable_array{o_idx},',\rho:',init_state_array{i_idx}]});
+                    title({folder_name,['Observable:',observable_array{o_idx},',\rho_0:',init_state_array{i_idx}]});
                     savefig(gcf,[data_path,filesep,hdf5fileNames{i},'_2D']);
                     saveas(gcf,[data_path,filesep,hdf5fileNames{i},'_2D'],'jpg');
                 end

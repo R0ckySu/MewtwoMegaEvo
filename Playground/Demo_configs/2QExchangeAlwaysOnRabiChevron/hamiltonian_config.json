@@ -1,0 +1,86 @@
+{
+  "hamiltonian_prototype_defs": [
+    {
+      "tag": "Ez1",
+      "type": "static",
+      "enable": true,
+      "amplitude":3.1415926e7,
+      "h_pauli_mat": "IZ",
+      "waveform_path":""
+    },
+    {
+      "tag": "Ez2",
+      "type": "static",
+      "enable": true,
+      "amplitude":6.28e7,
+      "h_pauli_mat": "ZI",
+      "waveform_path":""
+    },
+    {
+      "tag": "Exchange",
+      "type": "static",
+      "enable": true,
+      "amplitude":6.28e6,
+      "h_pauli_mat": "J",
+      "waveform_path":""
+    },
+    {
+      "tag": "X1u",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1e6,
+      "freq": 2.1099e+07,
+      "phase": 0,
+      "h_pauli_mat": "XI",
+      "waveform_path":""
+    },
+    {
+      "tag": "X1d",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1e6,
+      "freq": 1.9099e+07,
+      "phase": 0,
+      "h_pauli_mat": "XI",
+      "waveform_path":""
+    },
+    {
+      "tag": "X2u",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1e6,
+      "freq": 1.0901e+07,
+      "phase": 0,
+      "h_pauli_mat": "IX",
+      "waveform_path":""
+    },
+    {
+      "tag": "X2d",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1e6,
+      "freq": 9.9010e+06,
+      "phase": 0,
+      "h_pauli_mat": "IX",
+      "waveform_path":""
+    },
+    {
+      "tag": "noise1",
+      "type": "noise",
+      "enable": false,
+      "amplitude":1e6,
+      "h_pauli_mat": "IZ",
+      "lag_time": 0,
+      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/Pink0MeanNoise#.csv"
+    },
+    {
+      "tag": "noise2",
+      "type": "noise",
+      "enable": false,
+      "amplitude":1e6,
+      "h_pauli_mat": "ZI",
+      "lag_time": 0,
+      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNon0NoiseOnRotFrame_Y#.csv"
+    }
+  ]
+}
