@@ -121,7 +121,7 @@ void Static_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 
 void Static_Hamiltonian::load_waveform() {
     Hamiltonian::load_waveform();
-    wave_form.fill(amplitude);
+    wave_form.fill(amplitude * M_PI);
 }
 
 /**********************************************************************************************************************/
