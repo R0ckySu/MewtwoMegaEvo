@@ -81,6 +81,7 @@ void QSimTask::sweeping_repeat_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
+            delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
@@ -142,6 +143,7 @@ void QSimTask::sweeping_param_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
+            delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
