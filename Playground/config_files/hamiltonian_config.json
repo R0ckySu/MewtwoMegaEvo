@@ -4,17 +4,7 @@
       "tag": "X1",
       "type": "mw",
       "enable": true,
-      "amplitude":1e5,
-      "freq": 0,
-      "phase": 0,
-      "h_pauli_mat": "IX",
-      "waveform_path":""
-    },
-    {
-      "tag": "X2",
-      "type": "mw",
-      "enable": true,
-      "amplitude":1e5,
+      "amplitude":6.666666666666666e+06,
       "freq": 0,
       "phase": 0,
       "h_pauli_mat": "XI",
@@ -24,19 +14,19 @@
       "tag": "noise1",
       "type": "noise",
       "enable": true,
-      "amplitude":1,
-      "h_pauli_mat": "IZ",
+      "amplitude":1e3,
+      "h_pauli_mat": "ZI",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ11#.csv"
+      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoise#.csv"
     },
     {
       "tag": "noise2",
       "type": "noise",
       "enable": true,
-      "amplitude":1e-2,
-      "h_pauli_mat": "ZI",
-      "lag_time": 1e-6,
-      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ21#.csv"
+      "amplitude":1e3,
+      "h_pauli_mat": "IZ",
+      "lag_time": 0,
+      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoise#.csv"
     }
   ]
 }

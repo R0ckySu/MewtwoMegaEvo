@@ -3,17 +3,14 @@
     {
       "tag": "X1pi",
       "hamiltonians": ["X1"],
-      "pulse_width": 5e-6
-    },
-    {
-      "tag": "X2pi",
-      "hamiltonians": ["X2"],
-      "pulse_width": 5e-6
+      "pulse_width": 1.5e-07,
+      "ext_shaped_sig_path":""
     },
     {
       "tag": "F",
       "hamiltonians": [],
-      "pulse_width": 1e-4
+      "pulse_width": 1e-4,
+      "ext_shaped_sig_path":""
     }
   ]
 }

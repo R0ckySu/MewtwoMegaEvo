@@ -1,15 +1,22 @@
 {
-  "task_name": "CPMG",
+  "task_name": "2QSingletQNS",
   "log_level": 4,
   "job_slicing_strategy":"linspace",
   "record_unitary": false,
   "record_all_meas": true,
+  "enable_param_parallel_mode":false,
   "system_dim": 4,
-  "observables": ["YI","IY"],
-  "init_states": ["YI","IY"],
-  "iterations" : 16,
+  "observables": ["YI"],
+  "init_states": ["YI"],
+  "repeat" : 16,
   "step_size": 1e-8,
-  "sequence": "[F(T/4)-X2pi-F(T/4)-X1pi-F(T/4)-X2pi-F(T/4)-X1pi-M]^10",
-  "sweep_param_name":"Gate:F:pulse_width",
-  "sweep_val_file":"param_vec"
+  "sequence": "[F(T/4)-X1pi-F(T/2)-X1pi-F(T/4)-M]^10",
+  "sweep_param_info": [
+    {
+      "class":"Gate",
+      "tag":"F",
+      "property":"pulse_width",
+      "param_name":"tau"
+    }
+  ]
 }

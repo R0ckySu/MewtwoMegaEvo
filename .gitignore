@@ -39,3 +39,4 @@ cmake-build-debug/
 
 */sim_results/*
 */NoiseData/*
+*/config_files/*
