@@ -1,0 +1,10 @@
+{
+  "tag":"PinkNoise",
+  "channels":64,
+  "start_idx":0,
+  "time_step":1e-9,
+  "alpha":0.9,
+  "length":1e6,
+  "amplitude":1e3,
+  "export_dir":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/"
+}
