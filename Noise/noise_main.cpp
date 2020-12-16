@@ -3,9 +3,10 @@
 //
 #include <iostream>
 #include <getopt.h>
-#include "Noise/NoiseBasic.h"
+#include <unistd.h>
+#include "NoiseBasic.h"
 
-const char* short_options = "g:i:o:c:t:";
+const char* short_options = "c:";
 const struct option long_options[] = {
         {"config_file", 1, NULL,'c'},
         {nullptr,         0, nullptr, 0}

@@ -9,17 +9,12 @@ include_directories(./3rd_party_libs/include)
 link_directories(./3rd_party_libs/lib)
 
 add_executable(MewtwoMegaEvo
-                main.cpp command_arg_parser.h Noise/NoiseBasic.cpp Noise/NoiseBasic.h)
-
-add_executable(NoiseGen
-        noise_main.cpp
-        Noise/NoiseBasic.h Noise/NoiseBasic.cpp
-                )
+                main.cpp command_arg_parser.h)
 
 add_subdirectory(QSimTask)
+add_subdirectory(Noise)
 
 target_link_libraries(MewtwoMegaEvo PRIVATE QSimTask)
-target_link_libraries(NoiseGen PUBLIC nlohmann_json::nlohmann_json)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)

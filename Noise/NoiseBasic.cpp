@@ -3,8 +3,6 @@
 //
 
 #include "NoiseBasic.h"
-#include <sys/stat.h>
-#include <dirent.h>
 #include <iostream>
 #include <fstream>
 #include <armadillo>
@@ -124,6 +122,7 @@ void NoiseBasic::generate_colored_noise() {
 
         std::string fileName = std::string(export_dir).append(tag).append("#").append(std::to_string(i+start_idx)).append(".csv");
         one_f_noise_cut.save(fileName,arma::csv_ascii);
-        std::cout << "Noise: noise data write to:" << fileName << std::endl;
+        printf("Noise: noise data write to:%s\n",fileName.c_str());
+//        std::cout << "Noise: noise data write to:" << fileName << std::endl;
     }
 }
