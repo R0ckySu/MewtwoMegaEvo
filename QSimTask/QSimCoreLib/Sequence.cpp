@@ -6,6 +6,7 @@
 #include <regex>
 #include "Utils.h"
 
+/****************************************************/
 Sequence::Sequence() {
     sequential_gate_list = std::vector<Gate *>();
     measurement_time_point_vec = arma::vec();
@@ -70,12 +71,23 @@ void Sequence::append_sequence(const Sequence & seq) {
     }
 }
 
-void Sequence::load_sequence(double _step_size, std::string sequence_string,
-                             std::map<std::string, Gate *> gate_prototype_map) {
+void Sequence::load_sequence(double _step_size,
+                        std::string sequence_string,
+                        std::map<std::string, std::string> symbol_alias,
+                        std::map<std::string, Gate *> gate_prototype_map) {
     step_size = _step_size;
 
+    // Replace string alias from the symbol_alia map
+    std::string preprocessed_seq_str = sequence_string;
+    if (symbol_alias.begin() != symbol_alias.end()) {
+        for (const auto& symbol_alias_pair : symbol_alias) {
+            preprocessed_seq_str = find_and_replace_string(symbol_alias_pair.first,symbol_alias_pair.second,preprocessed_seq_str);
+        }
+    }
+    std::cout << "Sequence: Symbol alias replaced! processed seq str:\n" << preprocessed_seq_str << std::endl;
+
     // Decode symbolic sequence
-    auto gate_info_pair_vec = symbolic_sequence_str_parser(sequence_string);
+    auto gate_info_pair_vec = symbolic_sequence_str_parser(preprocessed_seq_str);
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
@@ -89,4 +101,3 @@ void Sequence::load_sequence(double _step_size, std::string sequence_string,
 
     generate_switching_sig();
 }
-

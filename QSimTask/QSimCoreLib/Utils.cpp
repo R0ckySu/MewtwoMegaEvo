@@ -295,3 +295,15 @@ std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(cons
     }
     return std::make_pair(tag, param);
 }
+
+std::string find_and_replace_string(const std::string& str_to_find, const std::string& str_to_rep, std::string original_str){
+    std::string replaced_str = original_str;
+    std::string::size_type pos = 0;
+    std::string::size_type srclen = str_to_find.size();
+    std::string::size_type dstlen = str_to_rep.size();
+    while ((pos = replaced_str.find(str_to_find, pos)) != std::string::npos) {
+        replaced_str.replace(pos, srclen, str_to_rep);
+        pos += dstlen;
+    }
+    return replaced_str;
+};

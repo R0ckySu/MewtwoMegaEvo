@@ -46,14 +46,14 @@ void QSimTask::launch_task() {
 void QSimTask::sweeping_repeat_parallel() {
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
         std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id)).append("_meas");
-        std::string result_param_str = param_schedule.get_param_val_string_for_ith_param(i);
+        std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
 
         //Reload sweeping param and generate a new prototype set from original one
         SimPrototypes *reloaded_prototype = reload_prototypes_with_sweeping_parameter(i);
 
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
-        seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->gate_prototype_map);
+        seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->sequence_symbol_alias_map,reloaded_prototype->gate_prototype_map);
 //        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
         int total_num_steps = seq->get_total_num_steps();
 
@@ -81,7 +81,7 @@ void QSimTask::sweeping_repeat_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
-            delete noise_hamiltonian_time_dep;
+//            delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
@@ -109,14 +109,14 @@ void QSimTask::sweeping_param_parallel() {
     #pragma omp parallel for default(none) shared(start_pos_for_this_job,end_pos_for_this_job,result_file_name)
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
 
-        std::string result_param_str = param_schedule.get_param_val_string_for_ith_param(i);
+        std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
 
         //Reload sweeping param and generate a new prototype set from original one
         SimPrototypes *reloaded_prototype = reload_prototypes_with_sweeping_parameter(i);
 
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
-        seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->gate_prototype_map);
+        seq-> load_sequence(step_size, sim_configs["sequence"], reloaded_prototype->sequence_symbol_alias_map, reloaded_prototype->gate_prototype_map);
 //        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
         int total_num_steps = seq->get_total_num_steps();
 
@@ -143,7 +143,7 @@ void QSimTask::sweeping_param_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
-            delete noise_hamiltonian_time_dep;
+//            delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
@@ -180,7 +180,7 @@ void QSimTask::load_sim_configs() {
 
     param_schedule = ParamScheduler();
     param_schedule.load_param_info_table_from_json(sim_configs["sweep_param_info"]);
-    param_schedule.load_param_val_from_folder(config_file_folder);
+    param_schedule.load_param_from_file(config_file_folder);
 
     step_size = sim_configs["step_size"];
     iterations = sim_configs["repeat"];
@@ -300,15 +300,19 @@ SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
         auto type_name = param_schedule.param_info_table.at(i).at("class");
         auto tag = param_schedule.param_info_table.at(i).at("tag");
         auto property_name = param_schedule.param_info_table.at(i).at("prop");
-        auto val_name = param_schedule.param_info_table.at(i).at("val_name");
-        auto param_val = param_schedule.param_val_map.at(val_name).at(index);
-        task_log(std::string("Reloading:").append(type_name).append(":").append(tag).append(" on field:").append(property_name).append(" vector filename:").append(val_name),1);
+
+        task_log(std::string("Reloading:").append(type_name).append(":").append(tag).append(" on field:").append(property_name),1);
 
         if (type_name == "Gate") {
+            auto val_name = param_schedule.param_info_table.at(i).at("val_file");
+            auto param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
             Gate * gate_obj = reloaded_prototypes->gate_prototype_map[tag];
             rttr::property parametric_prop = rttr::type::get(*gate_obj).get_property(property_name);
             parametric_prop.set_value(*gate_obj,param_val);
+            std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
         } else if (type_name == "Hamiltonian") {
+            auto val_name = param_schedule.param_info_table.at(i).at("val_file");
+            auto param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
             Hamiltonian * hamiltonian_obj;
             if (reloaded_prototypes->ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->ctrl_hamiltonian_prototype_map.end()){
                 hamiltonian_obj = reloaded_prototypes->ctrl_hamiltonian_prototype_map[tag];
@@ -317,9 +321,13 @@ SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
             }
             rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
             parametric_prop.set_value(*hamiltonian_obj,param_val);
+            std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
+        } else if (type_name == "Sequence") {
+            auto string_file_name = param_schedule.param_info_table.at(i).at("string_file");
+            auto param_string = param_schedule.param_string_vec_map.at(string_file_name).at(index);
+            reloaded_prototypes->sequence_symbol_alias_map[tag] = param_string;
+            std::cout << "QSimTask: Parameter " << ", with string=" << string_file_name << " is reloaded" << std::endl;
         }
-
-        std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
     }
 
     return reloaded_prototypes;

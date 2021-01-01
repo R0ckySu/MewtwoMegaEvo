@@ -13,6 +13,7 @@ struct SimPrototypes {
     std::map<gate_tag_type, Gate *> gate_prototype_map;
     std::map<hamiltonian_tag_type, Hamiltonian *> ctrl_hamiltonian_prototype_map;
     std::map<hamiltonian_tag_type, Noise_Hamiltonian *> noise_hamiltonian_prototype_map;
+    std::map<std::string, std::string> sequence_symbol_alias_map;
 };
 
 

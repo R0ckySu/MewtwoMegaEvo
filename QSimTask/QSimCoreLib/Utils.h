@@ -79,4 +79,6 @@ std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (s
 
 std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(const std::string& gate_str);
 
+std::string find_and_replace_string(const std::string& str_to_find, const std::string& str_to_rep, std::string original_str);
+
 #endif //MEWTWOMEGAEVO_UTILS_H
