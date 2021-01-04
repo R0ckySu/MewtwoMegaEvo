@@ -63,6 +63,9 @@ void NoiseBasic::load_config_from_path(std::string config_path) {
     amp = config["amplitude"];
     noise_length = config["length"];
     export_dir = config["export_dir"];
+
+    std::string copyConfigFileCommand = std::string("cp -v ").append(config_path).append(" ").append(export_dir).append("/").append(tag).append("_config.json");
+    system(copyConfigFileCommand.c_str());
 }
 
 void NoiseBasic::generate_colored_noise() {

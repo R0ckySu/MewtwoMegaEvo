@@ -114,4 +114,12 @@ void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, 
         param_str << sliced_vec;
         std::cout<< std::string("Job sliced, ").append(param_val_item.first).append(": param vec:\n").append(param_str.str()) << std::endl;
     }
+
+    for (auto param_string_item : param_string_vec_map) {
+        std::vector<std::string> sliced_vec = {param_string_item.second.begin()+start_pos_for_this_job,param_string_item.second.begin()+end_pos_for_this_job};
+        param_string_item.second = sliced_vec;
+//        std::stringstream param_str;
+//        param_str << sliced_vec;
+//        std::cout<< std::string("Job sliced, ").append(param_val_item.first).append(": param vec:\n").append(param_str.str()) << std::endl;
+    }
 }
