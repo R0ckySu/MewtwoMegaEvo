@@ -56,6 +56,7 @@ void QSimTask::sweeping_repeat_parallel() {
         seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->sequence_symbol_alias_map,reloaded_prototype->gate_prototype_map);
 //        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
         int total_num_steps = seq->get_total_num_steps();
+        task_log(std::string("Total length of the sequence:").append(std::to_string(total_num_steps)),2);
 
         //Launch Solver from
         std::vector<arma::cx_cube> rho_multi_temp = std::vector<arma::cx_cube>(rho_inits.size());
@@ -179,6 +180,7 @@ void QSimTask::load_sim_configs() {
     job_slicing_strategy = sim_configs["job_slicing_strategy"];
 
     param_schedule = ParamScheduler();
+//    param_schedule.param_span_exp = sim_configs["sweep_param_span_expression"];
     param_schedule.load_param_info_table_from_json(sim_configs["sweep_param_info"]);
     param_schedule.load_param_from_file(config_file_folder);
 
@@ -270,7 +272,8 @@ void QSimTask::load_hamiltonian_configs() {
                 auto *mw = new MW_Hamiltonian(h_prototypes_def, config_file_folder);
                 ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,mw));
             } else if(hamiltonian_type == "awg") {
-
+                auto *awg_h = new AWG_Hamiltonian(h_prototypes_def, config_file_folder);
+                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,awg_h));
             } else if(hamiltonian_type == "noise") {
                 auto *noise = new Noise_Hamiltonian(h_prototypes_def, config_file_folder);
                 noise_hamiltonian_prototype_map.insert(std::make_pair(tag,noise));
@@ -287,10 +290,6 @@ void QSimTask::load_hamiltonian_configs() {
 
     simulation_prototypes.ctrl_hamiltonian_prototype_map = ctrl_hamiltonian_prototype_map;
     simulation_prototypes.noise_hamiltonian_prototype_map = noise_hamiltonian_prototype_map;
-}
-
-void QSimTask::measument_solver() {
-    task_log("Finished measurements!",1);
 }
 
 SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {

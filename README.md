@@ -57,11 +57,11 @@ for gate configuration and hamiltonian configuration, and alias symbol in sequen
 sweeping. The parameter vector is loaded from external text file within the same config directory. 
 
 Multiple parameter sweeping is also supported by just adding more sweepable parameter information into the list. All the 
-specified fields on the list will be updated after each cycle and simulation will restart with the renewed parameter value 
-until finishing the last parameter in the vector. But those parameter vectors have to be the same length. 
+specified fields on the list will be updated after each cycle and simulation will restart with the renewed parameter value. 
+But those parameter vectors for the different fields have to be the same length. 
 
 Further, to make multi-dimensional parametric sweeping, each parameter vector (are not necessarily to be the same length) 
-has to be spanned to be n-dimensional grid. 
+has to be spanned to be n-dimensional grid. (Providing matlab function ParamSpan.m for processing multi-dimensional param vector)
 
 ### Parallelization
 Mewtwo has implemented different levels and strategies of parallelization for various purposes of time-dependent simulations.

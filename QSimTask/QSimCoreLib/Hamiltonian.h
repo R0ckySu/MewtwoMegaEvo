@@ -54,13 +54,31 @@ public:
 };
 
 /**********************************************************************************************************************/
+class Gated_Hamiltonian: public Hamiltonian {
+public:
+    Gated_Hamiltonian();
+    explicit Gated_Hamiltonian(nlohmann::json h_config, std::string config_path);
+    Gated_Hamiltonian(const Hamiltonian &h, const Gated_Hamiltonian &g);
 
-class MW_Hamiltonian: public Hamiltonian {
+    double rising_time;
+    double falling_time;
+
+    void add_signal(arma::vec _sig) override;
+    void load_waveform() override;
+    void fetch_H(arma::cx_cube* H0) override;
+    void clean_up_on_reload() override;
+    std::string description() override;
+    Gated_Hamiltonian* clone() override;
+};
+
+
+/**********************************************************************************************************************/
+
+class MW_Hamiltonian: public Gated_Hamiltonian {
 public:
     MW_Hamiltonian();
     explicit MW_Hamiltonian(nlohmann::json h_config, std::string config_path);
-//    ~MW_Hamiltonian();
-    MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m);
+    MW_Hamiltonian(const Gated_Hamiltonian &g, const MW_Hamiltonian &m);
 
     double freq;
     double phase;
@@ -69,19 +87,26 @@ public:
     void fetch_H(arma::cx_cube* H0) override;
     void clean_up_on_reload() override;
     std::string description() override;
-
     MW_Hamiltonian* clone() override;
-private:
-    double get_amplitude(double time) const;
 
-RTTR_ENABLE(Hamiltonian);
+RTTR_ENABLE(Gated_Hamiltonian);
 };
 
 /**********************************************************************************************************************/
 
-class AWG_Hamiltonian: public Hamiltonian {
-//    virtual arma::cx_vec load_waveform() override;
-RTTR_ENABLE(Hamiltonian);
+class AWG_Hamiltonian: public Gated_Hamiltonian {
+public:
+    AWG_Hamiltonian();
+    explicit AWG_Hamiltonian(nlohmann::json h_config, std::string config_path);
+    AWG_Hamiltonian(const Gated_Hamiltonian &g, const AWG_Hamiltonian &a);
+
+    void load_waveform() override;
+    void fetch_H(arma::cx_cube* H0) override;
+    void clean_up_on_reload() override;
+    std::string description() override;
+    AWG_Hamiltonian* clone() override;
+
+RTTR_ENABLE(Gated_Hamiltonian);
 };
 
 /**********************************************************************************************************************/

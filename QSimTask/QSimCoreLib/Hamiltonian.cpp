@@ -12,6 +12,10 @@ RTTR_REGISTRATION{
             .property("amplitude",&Hamiltonian::amplitude)
             .property("h_mat",&Hamiltonian::h_mat);
 
+    rttr::registration::class_<Gated_Hamiltonian>("Gated_Hamiltonian")
+            .property("falling_time",&Gated_Hamiltonian::falling_time)
+            .property("rising_time",&Gated_Hamiltonian::rising_time);
+
     rttr::registration::class_<MW_Hamiltonian>("MW_Hamiltonian")
             .property("amplitude",&MW_Hamiltonian::amplitude)
             .property("freq",&MW_Hamiltonian::freq)
@@ -58,7 +62,8 @@ Hamiltonian::Hamiltonian(nlohmann::json h_config, std::string config_path) {
     amplitude = h_config["amplitude"];
     std::string h_string = h_config["h_pauli_mat"];
     h_mat.load_from_symbol(h_string,config_path);
-    external_waveform_path = h_config["waveform_path"];;
+    external_waveform_path = h_config["waveform_path"];
+    std::cout << tag << ":\n" << h_mat.mat << std::endl;
 }
 
 Hamiltonian::~Hamiltonian() {
@@ -126,12 +131,74 @@ void Static_Hamiltonian::load_waveform() {
 
 /**********************************************************************************************************************/
 
+Gated_Hamiltonian::Gated_Hamiltonian() {
+    rising_time = 0;
+    falling_time = 0;
+}
+
+Gated_Hamiltonian::Gated_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config,config_path) {
+    rising_time = h_config["rising_time"];
+    falling_time = h_config["falling_time"];
+}
+
+Gated_Hamiltonian::Gated_Hamiltonian(const Hamiltonian &h, const Gated_Hamiltonian &a): Hamiltonian(h) {
+    rising_time = a.rising_time;
+    falling_time = a.falling_time;
+}
+
+Gated_Hamiltonian *Gated_Hamiltonian::clone() {
+    return new Gated_Hamiltonian(*this);
+}
+
+void Gated_Hamiltonian::load_waveform() {
+    Hamiltonian::load_waveform();
+    if (rising_time != 0.0 && falling_time != 0.0) {
+        int rising_sig_length = floor(rising_time/step_size) + 1;
+        int falling_sig_length = floor(falling_time/step_size) + 1;
+
+        arma::vec rising_sig = arma::linspace(0,1,rising_sig_length);
+        arma::vec falling_sig = arma::linspace(1,0,falling_sig_length);
+
+        if (switching_signal.size() != 0) {
+            for (int i = 1; i < switching_signal.size() - 1; ++i) {
+                if ((switching_signal.at(i) == 1.0) && (switching_signal.at(i - 1) == 0.0)) {
+                    //Rising edge condition
+                    switching_signal.subvec(i-1, i + rising_sig_length - 2) = rising_sig;
+                }
+
+                if ((switching_signal.at(i - 1) == 1.0) && (switching_signal.at(i) == 0.0)) {
+                    //Falling edge condition
+                    switching_signal.subvec(i - 1, i + falling_sig_length - 2) = falling_sig;
+                }
+            }
+        }
+    }
+}
+
+void Gated_Hamiltonian::fetch_H(arma::cx_cube *H0) {
+    Hamiltonian::fetch_H(H0);
+}
+
+void Gated_Hamiltonian::clean_up_on_reload() {
+    Hamiltonian::clean_up_on_reload();
+}
+
+std::string Gated_Hamiltonian::description() {
+    return Hamiltonian::description();
+}
+
+void Gated_Hamiltonian::add_signal(arma::vec _sig) {
+    Hamiltonian::add_signal(_sig);
+}
+
+/**********************************************************************************************************************/
+
 MW_Hamiltonian::MW_Hamiltonian() {
     freq = 0;
     phase = 0;
 }
 
-MW_Hamiltonian::MW_Hamiltonian(const Hamiltonian &h, const MW_Hamiltonian &m): Hamiltonian(h) {
+MW_Hamiltonian::MW_Hamiltonian(const Gated_Hamiltonian &g, const MW_Hamiltonian &m): Gated_Hamiltonian(g) {
     freq = m.freq;
     phase = m.phase;
 }
@@ -140,17 +207,13 @@ MW_Hamiltonian *MW_Hamiltonian::clone() {
     return new MW_Hamiltonian(*this);
 }
 
-MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path) : Hamiltonian(h_config, config_path)  {
+MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path) : Gated_Hamiltonian(h_config, config_path)  {
     freq = h_config["freq"];
     phase = h_config["phase"];
 }
 
-//MW_Hamiltonian::~MW_Hamiltonian() {
-////    Hamiltonian::~Hamiltonian();
-//}
-
 void MW_Hamiltonian::load_waveform() {
-    Hamiltonian::load_waveform();
+    Gated_Hamiltonian::load_waveform();
     if(switching_signal.size()) {
         const arma::cx_double j = arma::cx_double(0,1);
         if(freq == 0.){
@@ -179,7 +242,7 @@ void MW_Hamiltonian::load_waveform() {
 }
 
 void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
-    Hamiltonian::fetch_H(H0);
+    Gated_Hamiltonian::fetch_H(H0);
     arma::cx_vec wave_form_conj = arma::conj(wave_form);
     arma::cx_mat matrix_element_up = arma::trimatu(h_mat.mat);
     arma::cx_mat matrix_element_down = arma::trimatu(h_mat.mat,1).t();
@@ -194,13 +257,46 @@ std::string MW_Hamiltonian::description() {
 }
 
 void MW_Hamiltonian::clean_up_on_reload() {
-    Hamiltonian::clean_up_on_reload();
+    Gated_Hamiltonian::clean_up_on_reload();
 }
 
 /**********************************************************************************************************************/
-Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {
+
+AWG_Hamiltonian::AWG_Hamiltonian() {}
+
+AWG_Hamiltonian::AWG_Hamiltonian(nlohmann::json h_config, std::string config_path) : Gated_Hamiltonian(h_config,config_path) {}
+
+AWG_Hamiltonian::AWG_Hamiltonian(const Gated_Hamiltonian &g, const AWG_Hamiltonian &a): Gated_Hamiltonian(g) {
 
 }
+
+void AWG_Hamiltonian::load_waveform() {
+    Gated_Hamiltonian::load_waveform();
+    wave_form = arma::cx_vec(M_PI * amplitude * switching_signal * step_size, arma::zeros(switching_signal.size()));
+//    std::cout << "waveform of:"<< tag << "\n" << wave_form << std::endl;
+}
+
+void AWG_Hamiltonian::fetch_H(arma::cx_cube *H0) {
+    Gated_Hamiltonian::fetch_H(H0);
+    for (int i = 0; i < H0->n_slices; ++i) {
+        H0->slice(i) += h_mat.mat * wave_form(i);
+    }
+}
+
+std::string AWG_Hamiltonian::description() {
+    return "AWG Hamiltonian";
+}
+
+AWG_Hamiltonian *AWG_Hamiltonian::clone() {
+    return new AWG_Hamiltonian(*this);
+}
+
+void AWG_Hamiltonian::clean_up_on_reload() {
+    Gated_Hamiltonian::clean_up_on_reload();
+}
+
+/**********************************************************************************************************************/
+Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {}
 
 Noise_Hamiltonian::Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &m): Hamiltonian(h) {
     shift_time = m.shift_time;

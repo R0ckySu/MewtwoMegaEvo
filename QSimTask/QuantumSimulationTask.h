@@ -57,7 +57,6 @@ public:
     }
 
     virtual SimPrototypes* reload_prototypes_with_sweeping_parameter(int index);
-    void measument_solver();
     virtual void sweeping_repeat_parallel();
     virtual void sweeping_param_parallel();
     virtual void launch_task();
