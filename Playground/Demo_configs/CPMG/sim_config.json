@@ -16,7 +16,7 @@
       "class":"Gate",
       "tag":"F",
       "property":"pulse_width",
-      "param_name":"param_vec"
+      "val_file":"param_vec"
     }
   ]
 }

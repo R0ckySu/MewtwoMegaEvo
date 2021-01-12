@@ -4,91 +4,81 @@
       "tag": "Ez1",
       "type": "static",
       "enable": true,
-      "amplitude":3.1415926e7,
-      "h_pauli_mat": "IZ",
+      "amplitude": 1e9,
+      "h_pauli_mat": "ZI",
       "waveform_path":""
     },
     {
       "tag": "Ez2",
       "type": "static",
       "enable": true,
-      "amplitude":6.28e7,
-      "h_pauli_mat": "ZI",
-      "waveform_path":""
-    },
-    {
-      "tag": "Exchange",
-      "type": "static",
-      "enable": true,
-      "amplitude":6.28e6,
-      "h_pauli_mat": "J",
-      "waveform_path":""
-    },
-    {
-      "tag": "X1u",
-      "type": "mw",
-      "enable": true,
-      "amplitude":1e6,
-      "rising_time":0,
-      "falling_time":0,
-      "freq": 2.1099e+07,
-      "phase": 0,
-      "h_pauli_mat": "XI",
-      "waveform_path":""
-    },
-    {
-      "tag": "X1d",
-      "type": "mw",
-      "enable": true,
-      "amplitude":1e6,
-      "rising_time":0,
-      "falling_time":0,
-      "freq": 1.9099e+07,
-      "phase": 0,
-      "h_pauli_mat": "XI",
-      "waveform_path":""
-    },
-    {
-      "tag": "X2u",
-      "type": "mw",
-      "enable": true,
-      "amplitude":1e6,
-      "rising_time":0,
-      "falling_time":0,
-      "freq": 1.0901e+07,
-      "phase": 0,
-      "h_pauli_mat": "IX",
-      "waveform_path":""
-    },
-    {
-      "tag": "X2d",
-      "type": "mw",
-      "enable": true,
-      "amplitude":1e6,
-      "rising_time":0,
-      "falling_time":0,
-      "freq": 9.9010e+06,
-      "phase": 0,
-      "h_pauli_mat": "IX",
-      "waveform_path":""
-    },
-    {
-      "tag": "noise1",
-      "type": "noise",
-      "enable": false,
-      "amplitude":1e6,
+      "amplitude": 0.998e9,
       "h_pauli_mat": "IZ",
-      "lag_time": 0,
-      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/Pink0MeanNoise#.csv"
+      "waveform_path":""
     },
     {
-      "tag": "noise2",
+      "tag": "X1",
+      "type": "mw",
+      "enable": true,
+      "amplitude":5e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 1e9,
+      "phase": 0,
+      "h_pauli_mat": "XI",
+      "waveform_path":""
+    },
+    {
+      "tag": "Y1",
+      "type": "mw",
+      "enable": true,
+      "amplitude":5e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 1e9,
+      "phase": 0,
+      "h_pauli_mat": "YI",
+      "waveform_path":""
+    },
+    {
+      "tag": "X2",
+      "type": "mw",
+      "enable": true,
+      "amplitude":5e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq":  0.998e9,
+      "phase": 0,
+      "h_pauli_mat": "IX",
+      "waveform_path":""
+    },
+    {
+      "tag": "J1",
+      "type": "awg",
+      "enable": true,
+      "amplitude":1e6,
+      "rising_time":0,
+      "falling_time":0,
+      "h_pauli_mat": "J_mat",
+      "waveform_path":""
+    },
+    {
+      "tag": "noise11",
       "type": "noise",
       "enable": false,
-      "amplitude":1e6,
+      "amplitude":1,
       "h_pauli_mat": "ZI",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNon0NoiseOnRotFrame_Y#.csv"
+      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNoise2#.csv"
+    },
+    {
+      "tag": "noise12",
+      "type": "noise",
+      "enable": false,
+      "amplitude":1,
+      "h_pauli_mat": "ZI",
+      "lag_time": 7e-7,
+      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNoise2#.csv"
     }
   ]
 }

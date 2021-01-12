@@ -16,13 +16,13 @@
       "class":"Hamiltonian",
       "tag":"X1d",
       "property":"freq",
-      "param_name":"freq_vec"
+      "val_file":"freq_vec"
     },
     {
       "class":"Hamiltonian",
       "tag":"X2d",
       "property":"freq",
-      "param_name":"freq_vec"
+      "val_file":"freq_vec"
     }
   ]
 }

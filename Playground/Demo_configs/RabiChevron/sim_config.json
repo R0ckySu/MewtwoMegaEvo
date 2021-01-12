@@ -16,7 +16,7 @@
       "class":"Hamiltonian",
       "tag":"X1",
       "property":"freq",
-      "param_name":"param_vec"
+      "val_file":"param_vec"
     }
   ]
 }

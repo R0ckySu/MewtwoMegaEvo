@@ -5,6 +5,8 @@
       "type": "mw",
       "enable": true,
       "amplitude":1e5,
+      "rising_time":0,
+      "falling_time":0,
       "freq": 0,
       "phase": 0,
       "h_pauli_mat": "X",

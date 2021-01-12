@@ -1,0 +1,34 @@
+{  
+  "gate_defs": [
+    {
+      "tag": "X1pi",
+      "hamiltonians": ["X1"],
+      "pulse_width": 1e-07,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "Y1pi",
+      "hamiltonians": ["Y1"],
+      "pulse_width": 1e-07,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "X2pi",
+      "hamiltonians": ["X2"],
+      "pulse_width": 1e-07,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "Jgate",
+      "hamiltonians": ["J1"],
+      "pulse_width": 1e-6,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "F",
+      "hamiltonians": [],
+      "pulse_width": 1e-6,
+      "ext_shaped_sig_path":""
+    }
+  ]
+}
