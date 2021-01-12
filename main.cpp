@@ -11,5 +11,8 @@ int main(int argc, char *argv[]) {
 //    std::cout << matlab_cmd << std::endl;
 //    system(matlab_cmd.c_str());
 
+    std::string matlab_cmd = std::string("Please run in matlab:\n \"LoadMeasMarkerData('").append(sim_task->result_exact_path).append("')\"");
+    std::cout << matlab_cmd << std::endl;
+
     return 0;
 }
