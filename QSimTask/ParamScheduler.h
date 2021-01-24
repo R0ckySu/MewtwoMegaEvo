@@ -29,6 +29,7 @@
 struct ParamScheduler {
     ParamScheduler();
     int num_of_params;
+//    std::string param_span_exp;
     std::vector<std::map<std::string, std::string>> param_info_table;
     std::map<std::string, arma::vec> param_val_vec_map;
     std::map<std::string, std::vector<std::string>> param_string_vec_map;

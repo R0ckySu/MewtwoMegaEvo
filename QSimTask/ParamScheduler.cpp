@@ -26,7 +26,7 @@ void ParamScheduler::load_param_info_table_from_json(std::vector<nlohmann::json>
         } else if (prama_info_item.find("string_file") != prama_info_item.end()) {
             param_item_map.insert(std::make_pair("string_file",std::string(prama_info_item["string_file"])));
         } else {
-            std::cout<< "ParamScheduler: Error! Can not find parameter file name for tag: " << prama_info_item["tag"] << ", neither with key val_file nor string_file!" << std::endl;
+            std::cout<< "ParamScheduler:: Error! Can not find parameter file name for tag: " << prama_info_item["tag"] << ", neither with key val_file nor string_file!" << std::endl;
         }
         param_info_table.push_back(param_item_map);
     }
@@ -45,6 +45,7 @@ std::string ParamScheduler::get_param_string_for_ith_param(int param_idx) {
             param_str.append("#").append(string_file_name).append("=").append(str_sym);
         }
     }
+    std::cout << "Param Str:" << param_str << std::endl;
     return param_str;
 }
 
@@ -73,9 +74,16 @@ void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, 
     if ((num_job_group > num_of_params) || (job_id>num_job_group)) {
         num_job_group = 1;
         job_id = 0;
-        std::cout << std::string("Wrong slicing parameters!") << std::endl;
+        std::cout << std::string("ParamScheduler:: Wrong slicing parameters!") << std::endl;
         return;
     }
+
+    if (job_id >= num_job_group) {
+        std::cout << "ParamScheduler:: Error: Job id starts from 0, ends at n-1!" << std::endl;
+    }
+
+    std::cout << "ParamScheduler:: Num of job group:" << num_job_group << ", Job id:" << job_id << std::endl;
+    std::cout << "ParamScheduler:: Total Num of Params:" << num_of_params << ", Slicing strategy:" <<job_slicing_strategy << std::endl;
 
     int start_pos_for_this_job = 0;
     int end_pos_for_this_job = 0;
@@ -107,19 +115,26 @@ void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, 
         end_pos_for_this_job = index_ends_list.at(job_id+1)-1;
     }
 
+    std::cout << "ParamScheduler:: Start Pos:" << start_pos_for_this_job << "\n End Pos:" << end_pos_for_this_job << std::endl;
+
     for (auto param_val_item : param_val_vec_map) {
         arma::vec sliced_vec = param_val_item.second.subvec(start_pos_for_this_job,end_pos_for_this_job);
-        param_val_item.second = sliced_vec;
+//        param_val_item.second = sliced_vec;
+        param_val_vec_map[param_val_item.first] = sliced_vec;
         std::stringstream param_str;
         param_str << sliced_vec;
-        std::cout<< std::string("Job sliced, ").append(param_val_item.first).append(": param vec:\n").append(param_str.str()) << std::endl;
+        std::cout<< std::string("ParamScheduler:: Job sliced, ").append(param_val_item.first).append(": param val vec:\n").append(param_str.str()) << std::endl;
     }
 
     for (auto param_string_item : param_string_vec_map) {
-        std::vector<std::string> sliced_vec = {param_string_item.second.begin()+start_pos_for_this_job,param_string_item.second.begin()+end_pos_for_this_job};
-        param_string_item.second = sliced_vec;
-//        std::stringstream param_str;
-//        param_str << sliced_vec;
-//        std::cout<< std::string("Job sliced, ").append(param_val_item.first).append(": param vec:\n").append(param_str.str()) << std::endl;
+        std::vector<std::string> original_vec = std::vector<std::string>(param_string_item.second);
+        std::vector<std::string> sliced_vec = std::vector<std::string>();//= std::vector<std::string>(original_vec.begin()+start_pos_for_this_job,original_vec.begin()+end_pos_for_this_job);
+        std::cout << "ParamScheduler::Job sliced, str param:" << param_string_item.first << std::endl;
+        for (int i = start_pos_for_this_job; i <= end_pos_for_this_job; ++i) {
+            sliced_vec.push_back(original_vec.at(i));
+            std::cout << original_vec.at(i) << std::endl;
+        }
+        param_string_vec_map[param_string_item.first] = sliced_vec;
     }
+    num_of_params = end_pos_for_this_job - start_pos_for_this_job + 1;
 }

@@ -34,6 +34,7 @@ void QSimTask::launch_task() {
     int max_num_of_threads = omp_get_max_threads();
     task_log(std::string("QSimTask: Device has ").append(std::to_string(max_num_of_threads)).append(" threads."),1);
     if(enable_param_parallel_mode) {
+        param_schedule.process_prameter_vec_with_job_slicing_strategy(job_id,num_job_group,job_slicing_strategy);
         task_log("QSimTask: Task started, sweeping parallelized along parameters",1);
         sweeping_param_parallel();
     } else {
