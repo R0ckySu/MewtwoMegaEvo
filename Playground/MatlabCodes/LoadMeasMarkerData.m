@@ -61,7 +61,6 @@ function dataset = LoadMeasMarkerData(data_path)
                 dataset.measND.(observable_array{o_idx}).(init_state_array{i_idx}) = cell2mat(meas_markerND);
                 dataset.measND.time_pointND = cell2mat(time_vecND);
             end
-
         end
     end
 

@@ -1,13 +1,13 @@
-function dataset = LoadMeasAllDataSet(data_path)
+function dataset = LoadMeasAllDataSet(data_path,varargin)
+    %% Initialisation
     dataset = struct();
     dataset.meas_all = struct();
     dataset.meas = struct();
-    
     folder_name = strsplit(data_path,'/');
     folder_name = folder_name{end};
     
+    %% Load .json configs
     config_folder_name = [filesep,'config_files'];
-    
     configFile = strcat(data_path,config_folder_name,filesep,'sim_config.json')
     fid = fopen(configFile);
     raw = fread(fid,inf);
@@ -16,9 +16,11 @@ function dataset = LoadMeasAllDataSet(data_path)
     configInfo = jsondecode(str);
     dataset.configInfo = configInfo;
     
+    %% Extract h5 field information
     observable_array = configInfo.observables;
     init_state_array = configInfo.init_states;
     
+    %% Get file name patter for job sliced tasks
     meas_all_hdf5_filename_pattern = [configInfo.task_name,'[0-9]+_Job#[0-9]+_meas_all$'];
     
     result_dir = dir(data_path);

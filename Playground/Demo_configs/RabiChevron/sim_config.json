@@ -4,6 +4,7 @@
   "job_slicing_strategy":"linspace",
   "record_unitary": false,
   "record_all_meas": true,
+  "record_all_density_mat": true,
   "enable_param_parallel_mode":true,
   "system_dim": 2,
   "observables": ["Z"],
