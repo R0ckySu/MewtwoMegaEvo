@@ -11,6 +11,9 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
     spanned_param_dic = containers.Map; % Container for storing the spanned param vector
     unique_param_dic = containers.Map;  % Container for storing the unique param vector (distilled from spanned vec)
     series_of_params = length(param_json_info_array);
+    if (series_of_params == 1) 
+        param_json_info_array = {param_json_info_array};
+    end
     param_space_dims = zeros(series_of_params,1);
     total_num_params = 0;
     param_name_key_ordered_list = cell(series_of_params,1);
@@ -31,7 +34,7 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
             elseif (total_num_params ~= length(param_vec))
                 %'Length of the spanned param vecs dont agree with each other!'
             end            
-        else
+        elseif (isfield(param_json_info_array{i},'string_file'))
             param_file_name = param_json_info_array{i}.string_file;
             param_name_key_ordered_list{i} = param_file_name;
             param_vec = fileread([param_data_source_dir,filesep,param_file_name]);
