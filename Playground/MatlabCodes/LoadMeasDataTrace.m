@@ -7,7 +7,7 @@ function dataset = LoadMeasDataTrace(data_path)
     dataset = struct();
     dataset.data_path = data_path;
     dataset.meas_all_ND = struct();
-    folder_name = strsplit(data_path,'/');
+    folder_name = strsplit(data_path,filesep);
     folder_name = folder_name{end};
     
     %% Load .json configs
