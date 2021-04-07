@@ -10,6 +10,7 @@ function spanned_params = ParamSpan(param_data_source_dir,param_name_cell_array)
     for i=1:num_params
         param_vec = fileread([param_data_source_dir,filesep,param_name_cell_array{i}]);
         param_vec = strsplit(param_vec,'\n');
+        param_vec =  param_vec(~cellfun('isempty', param_vec));
         params_cell_array = [params_cell_array;{param_vec}];
     end
     
