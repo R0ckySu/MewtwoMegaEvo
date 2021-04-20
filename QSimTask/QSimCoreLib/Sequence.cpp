@@ -24,6 +24,8 @@ void Sequence::generate_switching_sig() {
     gate_switching_map = std::map<gate_tag_type, arma::vec>();
     std::vector<double> meas_time_point_temp = std::vector<double>();
 
+    std::cout << "Sequence: switching sig length: " << get_total_num_steps() << std::endl;
+
     for (int i = 0; i < sequential_gate_list.size(); ++i) {
         Gate *gate_unit = sequential_gate_list.at(i);
         // Record virtual measurement gate time.
@@ -35,10 +37,12 @@ void Sequence::generate_switching_sig() {
             continue;
         }
 
-        if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
+        std::cout << "Sequence:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << gate_unit->get_end_index() << std::endl;
 
+        if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
             gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
         } else {
+            std::cout << "Sequence:" << gate_unit->tag << " generating new switching" << std::endl;
             arma::vec new_switching = arma::vec(get_total_num_steps()).fill(0);
             new_switching.subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
             std::pair<gate_tag_type, arma::vec> new_gate_swicthing_entry = std::pair<gate_tag_type, arma::vec>(gate_unit->tag,new_switching);
@@ -46,8 +50,7 @@ void Sequence::generate_switching_sig() {
         }
     }
 
-//    std::cout << "Gate X1pi 1:10: \n"<< gate_switching_map["X1pi"].subvec(1,10) << std::endl;
-
+//    std::cout << "Gate Jgate: \n"<< gate_switching_map["Jgate"] << std::endl;
     measurement_time_point_vec = arma::vec(meas_time_point_temp);
 }
 
@@ -100,4 +103,8 @@ void Sequence::load_sequence(double _step_size,
     }
 
     generate_switching_sig();
+}
+
+int Sequence::get_total_num_steps() {
+    return ceil(end_time/step_size);
 }

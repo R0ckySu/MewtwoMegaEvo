@@ -19,7 +19,7 @@ public:
     void append_sequence(const Sequence & seq);
     void generate_switching_sig();
     void load_sequence(double _step_size, std::string sequence_string,std::map<std::string,std::string> symbol_alias, std::map<std::string, Gate *> gate_prototype_map);
-
+    int get_total_num_steps();
 private:
     arma::vec time_vec;
     std::vector<Gate *> sequential_gate_list;
