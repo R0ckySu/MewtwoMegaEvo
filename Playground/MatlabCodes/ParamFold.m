@@ -19,6 +19,9 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
     param_name_key_ordered_list = cell(series_of_params,1);
     param_name_to_index_map = containers.Map;
     
+    axis_label_dic = containers.Map;
+    axis_vec_dic = containers.Map;
+    
     %% Load spanned n-D grid param vec and distill into its unique param vec
     for i=1:series_of_params
         file_name = '';
@@ -27,8 +30,11 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
             param_name_key_ordered_list{i} = param_file_name;
             param_vec = csvread([param_data_source_dir,filesep,param_file_name]);
             spanned_param_dic(param_file_name) = param_vec;
-            unique_param_dic(replace(param_file_name,'_span','')) = unique(param_vec);
+            unique_param_dic(replace(param_file_name,'_span','')) = unique(param_vec,'stable');
             param_space_dims(i) = numel(unique_param_dic(replace(param_file_name,'_span','')));
+            axis_vec_dic(param_file_name) = unique(param_vec,'stable');
+            axis_label_dic(param_file_name) = strjoin({param_json_info_array{i}.class,param_json_info_array{i}.tag,param_json_info_array{i}.property},'.');
+
             if (total_num_params == 0)
                 total_num_params = length(param_vec);
             elseif (total_num_params ~= length(param_vec))
@@ -39,8 +45,21 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
             param_name_key_ordered_list{i} = param_file_name;
             param_vec = fileread([param_data_source_dir,filesep,param_file_name]);
             param_vec = strsplit(param_vec,'\n');
+            param_vec =  param_vec(~cellfun('isempty', param_vec));
+            
+            if (isnumeric(str2num(param_vec{1})))
+                num_vec = linspace(1,length(param_vec),length(param_vec));
+                for j = 1: length(param_vec)
+                    num_vec(j) = str2num(param_vec{j}); 
+                end
+                axis_vec_dic(param_file_name) = unique(num_vec,'stable');
+            else
+                axis_vec_dic(param_file_name) = linspace(1,length(unique(param_vec)),length(unique(param_vec)));
+            end
+            axis_label_dic(param_file_name) = strjoin({param_json_info_array{i}.class,param_json_info_array{i}.tag,param_json_info_array{i}.property},'.');
+            
             spanned_param_dic(param_file_name) = param_vec;
-            unique_param_dic(replace(param_file_name,'_span','')) = unique(param_vec);
+            unique_param_dic(replace(param_file_name,'_span','')) = unique(param_vec,'stable');
             param_space_dims(i) = numel(unique_param_dic(replace(param_file_name,'_span','')));  
             if (total_num_params == 0)
                 total_num_params = length(param_vec);
@@ -83,5 +102,8 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
     folded_param_info.field_name_to_index_map = param_name_to_index_map;
     folded_param_info.unique_params = unique_param_dic;
     folded_param_info.param_space_dims = param_space_dims;
+    folded_param_info.param_key_ordered = param_name_key_ordered_list;
+    folded_param_info.axis_label_dic = axis_label_dic;
+    folded_param_info.axis_vec_dic = axis_vec_dic;
 end
 

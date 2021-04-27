@@ -18,12 +18,15 @@ function dataset = LoadMeasMarkerData(data_path)
     configInfo = jsondecode(str);
     
     param_multi_dim_info = ParamFold([data_path,config_folder_name],configInfo.sweep_param_info);
-    dataset.sweep_param_info = param_multi_dim_info;
     param_name_strs = param_multi_dim_info.field_names;
 
     dataset.configInfo = configInfo;
     observable_array = configInfo.observables;
     init_state_array = configInfo.init_states;
+    
+    dataset.draw = struct('field',cell(length(observable_array),length(init_state_array)));
+    
+    num_meas_markers = 1;
     
     
     %% Get field name lookup table for job sliced tasks
@@ -34,9 +37,9 @@ function dataset = LoadMeasMarkerData(data_path)
         dataset.measND.(observable_array{o_idx}) = struct();
         for i_idx = 1:length(init_state_array)
             % Loop over initial state symbols
-            meas_markerND = cell(flip(param_multi_dim_info.param_space_dims'));
-            time_vecND = cell(flip(param_multi_dim_info.param_space_dims'));
-
+            meas_markerND = cell(param_multi_dim_info.param_space_dims');
+            time_vecND = cell(param_multi_dim_info.param_space_dims');
+            
             size_of_last_data =0;
             can_transform_cell_array_to_mat = true;
 
@@ -45,6 +48,8 @@ function dataset = LoadMeasMarkerData(data_path)
                 time_point_vec = h5read([data_path,filesep,fieldName_jobid_LUT(['/',param_name_strs{j}])],['/',param_name_strs{j},'/','time_vec']);
 
                 meas_markerND{j} = meas_data_row';
+                num_meas_markers = length(meas_data_row);
+
                 time_vecND{j} = time_point_vec';
 
                 if (j==1)
@@ -61,8 +66,18 @@ function dataset = LoadMeasMarkerData(data_path)
                 dataset.measND.(observable_array{o_idx}).(init_state_array{i_idx}) = cell2mat(meas_markerND);
                 dataset.measND.time_pointND = cell2mat(time_vecND);
             end
+            
         end
     end
+    
+    if (num_meas_markers>1)
+        param_multi_dim_info.axis_vec_dic('meas_marker') = linspace(1,num_meas_markers,num_meas_markers);
+        param_multi_dim_info.param_space_dims = [param_multi_dim_info.param_space_dims;length(meas_markerND)];
+        param_multi_dim_info.axis_label_dic('meas_marker') = 'Sequence.ith meas marker';
+        param_multi_dim_info.param_key_ordered{length(param_multi_dim_info.param_space_dims)} = 'meas_marker';
+    end
+    
+    dataset.sweep_param_info = param_multi_dim_info;
 
     dataset
     save([dataset.data_path,filesep,dataset.task_name,'_organised'],'dataset');
