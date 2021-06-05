@@ -1,0 +1,11 @@
+{
+  "tag":"PinkNoise0",
+  "channels":16,
+  "start_idx":0,
+  "time_step":1e-9,
+  "mode":"colored",
+  "alpha":0.9,
+  "length":1e5,
+  "amplitude":2e5,
+  "export_dir":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNoiseTest/"
+}

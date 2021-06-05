@@ -5,7 +5,8 @@
 #include "NoiseBasic.h"
 #include <iostream>
 #include <fstream>
-#include <armadillo>
+//#include <exprtk/exprtk.hpp>
+#include <muparserx/mpParser.h>
 
 inline arma::vec _fft_freq(int n, double f){
     // n = number of points
@@ -59,16 +60,58 @@ void NoiseBasic::load_config_from_path(std::string config_path) {
     channels = config["channels"];
     start_idx = config["start_idx"];
     time_step = config["time_step"];
-    alpha = config["alpha"];
     amp = config["amplitude"];
     noise_length = config["length"];
     export_dir = config["export_dir"];
+    noise_gen_mode = config["mode"];
+
+    if (noise_gen_mode == NOISE_MODE_ARB) {
+        arb_noise_expr = config["noise_expr"];
+    } else if (noise_gen_mode == NOISE_MODE_COLORED) {
+        alpha = config["alpha"];
+    }
 
     std::string copyConfigFileCommand = std::string("cp -v ").append(config_path).append(" ").append(export_dir).append("/").append(tag).append("_config.json");
     system(copyConfigFileCommand.c_str());
 }
 
-void NoiseBasic::generate_colored_noise() {
+void NoiseBasic::generate_arb_noise_amp_func() {
+
+    mup::Value freq = 0.000001;
+    mup::ParserX p;
+    p.DefineVar("f", mup::Variable(&freq));
+    p.SetExpr(arb_noise_expr);
+
+    int new_steps = 10*noise_length;
+    arma::vec freq_vec = _fft_freq(new_steps, 1/time_step);
+    // Make sure the dc component is zero.
+    double zero_freq_val = 0;
+    try
+    {   zero_freq_val = p.Eval().GetFloat();
+        std::cout << p.Eval() << std::endl;
+    }
+    catch (mup::ParserError &e)
+    {
+        std::cout << e.GetMsg() << std::endl;
+    }
+
+    if (zero_freq_val > 1) {
+        freq_vec(0) = 1e300;
+    } else {
+        freq_vec(0) = 1e-300;
+    }
+
+    arma::cx_vec arb_noise_func = arma::cx_vec(freq_vec.n_elem);
+    for (int i = 0; i < freq_vec.n_elem; ++i) {
+        freq = freq_vec.at(i);
+        arb_noise_func.at(i) = p.Eval().GetComplex();
+//        std::cout << arb_noise_func.at(i) << std::endl;
+    }
+
+    gen_reamped_white_noise_with_spec_func(arb_noise_func);
+}
+
+void NoiseBasic::generate_colored_noise_amp_func() {
     // Due to the discretisation of the fourier transform, we want the noise to not we a frequency component of the simulation,
     // e.g. when we would take the fourrier components of a signal of 100 ns with steps of 1 ns
     // f1 = 1e7
@@ -95,13 +138,33 @@ void NoiseBasic::generate_colored_noise() {
     // 1/f amplitude
     arma::vec freq_amp = _fft_freq(new_steps, 1/time_step);
     // Make sure the dc component is zero.
-    if (alpha > 0) {
+    if (alpha < 1) {
         freq_amp(0) = 1e300;
     } else {
         freq_amp(0) = 1e-300;
     }
 
-    #pragma omp parallel for default(none) shared(new_steps,freq_amp,amp,time_step,tag,channels,start_idx,alpha,noise_length,export_dir)
+    arma::vec amp_func = arma::pow(arma::abs(1/freq_amp),alpha/2.);
+    gen_reamped_white_noise_with_spec_func(arma::cx_vec(amp_func,arma::zeros(amp_func.n_elem,1)));
+}
+
+void NoiseBasic::generate_noise() {
+    if (noise_gen_mode == NOISE_MODE_COLORED) {
+        generate_colored_noise_amp_func();
+    } else if (noise_gen_mode == NOISE_MODE_ARB) {
+        generate_arb_noise_amp_func();
+    }
+}
+
+void NoiseBasic::gen_reamped_white_noise_with_spec_func(arma::cx_vec amp_func) {
+    int new_steps = amp_func.size();
+    std::string fileName = std::string(export_dir).append(tag);
+
+    std::string spec_amp_file_name = std::string(fileName).append("_spectrum_amp.csv");
+    amp_func.save(spec_amp_file_name,arma::csv_ascii);
+    printf("Noise: noise spectrum amp write to:%s\n",spec_amp_file_name.c_str());
+
+    #pragma omp parallel for default(none) shared(fileName,new_steps,amp_func,amp,time_step,tag,channels,start_idx,alpha,noise_length,export_dir)
     for (int i = 0; i < channels; ++i) {
         arma::vec one_f_noise_long;
         // Note % in armadillo, shur product!
@@ -115,7 +178,7 @@ void NoiseBasic::generate_colored_noise() {
         arma::cx_vec fft_white_noise = arma::fft(white_noise);
         // Note % in armadillo, shur product!
         // note devide alpha by 2 since 1/f relation is related to the power spectrum and ~ V**2
-        fft_white_noise = fft_white_noise%arma::pow(arma::abs(1/freq_amp),alpha/2.);
+        fft_white_noise = fft_white_noise%amp_func;
         one_f_noise_long = arma::real(arma::ifft(fft_white_noise));
 
         arma::vec one_f_noise_cut(noise_length);
@@ -123,9 +186,9 @@ void NoiseBasic::generate_colored_noise() {
 
         one_f_noise_cut = one_f_noise_long.subvec(arma::span(random_start_pos,random_start_pos+noise_length-1));
 
-        std::string fileName = std::string(export_dir).append(tag).append("#").append(std::to_string(i+start_idx)).append(".csv");
-        one_f_noise_cut.save(fileName,arma::csv_ascii);
-        printf("Noise: noise data write to:%s\n",fileName.c_str());
+        std::string ith_noise_fileName = std::string(fileName).append("#").append(std::to_string(i+start_idx)).append(".csv");
+        one_f_noise_cut.save(ith_noise_fileName,arma::csv_ascii);
+        printf("Noise: noise data write to:%s\n",ith_noise_fileName.c_str());
 //        std::cout << "Noise: noise data write to:" << fileName << std::endl;
     }
 }

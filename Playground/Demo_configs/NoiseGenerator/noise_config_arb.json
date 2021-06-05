@@ -5,8 +5,7 @@
   "time_step":1e-9,
   "mode":"arb",
   "noise_expr": "abs(f)^(-0.9)+0.0001*log(f)",
-  "alpha":0.9,
-  "length":1e6,
+  "length":1e5,
   "amplitude":2e5,
   "export_dir":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/ArbNoiseTest/"
 }

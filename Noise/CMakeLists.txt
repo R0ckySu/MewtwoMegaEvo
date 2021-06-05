@@ -12,6 +12,7 @@ add_executable(NoiseGen
 target_link_libraries(NoiseGen PUBLIC nlohmann_json::nlohmann_json)
 target_link_libraries(NoiseGen PUBLIC omp)
 target_link_libraries(NoiseGen PUBLIC armadillo)
+target_link_libraries(NoiseGen PUBLIC muparserx)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)

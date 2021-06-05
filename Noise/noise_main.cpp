@@ -31,5 +31,5 @@ int main(int argc, char *argv[]) {
         }
     }
     noise->load_config_from_path(default_config_file);
-    noise->generate_colored_noise();
+    noise->generate_noise();
 }
