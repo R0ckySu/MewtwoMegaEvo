@@ -54,7 +54,7 @@ void QSimTask::sweeping_repeat_parallel() {
 
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
-        seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->sequence_symbol_alias_map,reloaded_prototype->gate_prototype_map);
+        seq-> load_sequence(step_size, sim_configs["sequence"],reloaded_prototype->sequence_symbol_alias_map,reloaded_prototype->gate_prototypes.gate_prototype_map);
 //        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
         int total_num_steps = seq->get_total_num_steps();
         task_log(std::string("Total length of the sequence:").append(std::to_string(total_num_steps)),2);
@@ -66,15 +66,21 @@ void QSimTask::sweeping_repeat_parallel() {
         }
 
         //Ctrl time-dep hamiltonian doesn't change per noise iteration.
-        auto ctrl_hamiltonian_time_dep = compile_time_dep_ctrl_hamiltonian(reloaded_prototype->ctrl_hamiltonian_prototype_map,reloaded_prototype->gate_prototype_map, *seq);
+        HamiltonianCompiler h_comp = HamiltonianCompiler();
+        h_comp.system_dim = system_dimension;
+        h_comp.step_size = step_size;
+        h_comp.h_prototype_ptr = reloaded_prototype->hamiltonian_prototypes;
+        h_comp.load_ctrl_signals_from_sequence(*seq, reloaded_prototype->gate_prototypes);
+
+        auto ctrl_hamiltonian_time_dep = h_comp.compile_ctrl_hamiltonian();
 
         std::vector<double > randomstartlist = generate_random_num_list(iterations,3);
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
-        #pragma omp parallel for default(none) shared(reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp) private(solver_obj)
+        #pragma omp parallel for default(none) shared(h_comp,reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp) private(solver_obj)
         for (int noise_idx = 0; noise_idx < iterations; ++noise_idx) {
             //Load Noise Hamiltonian
-            arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
+            arma::cx_cube *noise_hamiltonian_time_dep = h_comp.compile_noise_hamiltonian(noise_idx, randomstartlist);
 
             //Load all prepared info to solver
             solver_obj.rho_t_multi = &rho_multi_temp;
@@ -127,7 +133,7 @@ void QSimTask::sweeping_param_parallel() {
 
         //Generate sequence based on the Gate prototypes and sequence string
         Sequence *seq = new Sequence();
-        seq-> load_sequence(step_size, sim_configs["sequence"], reloaded_prototype->sequence_symbol_alias_map, reloaded_prototype->gate_prototype_map);
+        seq-> load_sequence(step_size, sim_configs["sequence"], reloaded_prototype->sequence_symbol_alias_map, reloaded_prototype->gate_prototypes.gate_prototype_map);
 //        save_gate_switching_map(seq->gate_switching_map,seq->time_vec,result_exact_path,result_param_str);
         int total_num_steps = seq->get_total_num_steps();
 
@@ -138,14 +144,19 @@ void QSimTask::sweeping_param_parallel() {
         }
 
         //Ctrl time-dep hamiltonian
-        auto ctrl_hamiltonian_time_dep = compile_time_dep_ctrl_hamiltonian(reloaded_prototype->ctrl_hamiltonian_prototype_map,reloaded_prototype->gate_prototype_map, *seq);
+        HamiltonianCompiler h_comp = HamiltonianCompiler();
+        h_comp.system_dim = system_dimension;
+        h_comp.step_size = step_size;
+        h_comp.h_prototype_ptr = reloaded_prototype->hamiltonian_prototypes;
+        h_comp.load_ctrl_signals_from_sequence(*seq, reloaded_prototype->gate_prototypes);
+        auto ctrl_hamiltonian_time_dep = h_comp.compile_ctrl_hamiltonian();
 
         std::vector<double > randomstartlist = generate_random_num_list(iterations,3);
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
         for (int noise_idx = start_pos_for_this_job; noise_idx < end_pos_for_this_job; ++noise_idx) {
             //Load Noise Hamiltonian
-            arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
+            arma::cx_cube *noise_hamiltonian_time_dep =  h_comp.compile_noise_hamiltonian(noise_idx, randomstartlist);
 
             //Load all prepared info to solver
             solver_obj.rho_t_multi = &rho_multi_temp;
@@ -257,19 +268,9 @@ void QSimTask::load_gate_configs() {
     task_log("Loading Gate prototypes",1);
     std::string gate_configfile_path = std::string(config_file_folder).append("/gate_config.json");
     gate_configs = load_config_from_path(gate_configfile_path);
-    auto gate_prototype_map = std::map<gate_tag_type,Gate *>();
-
-    std::vector<nlohmann::json> gate_defs = gate_configs["gate_defs"];
-    for (auto & gate_def : gate_defs) {
-        Gate *gate_new = new Gate(gate_def,step_size);
-        gate_prototype_map.insert(std::make_pair(gate_new->tag, gate_new));
-    }
-
-    // Virtual Measurement marker gate. Tagged by "M", 0 pulse_width;
-    auto *meas_marker_new = new MeasurementMarker();
-    gate_prototype_map.insert(std::make_pair(meas_marker_new->tag,meas_marker_new));
-
-    simulation_prototypes.gate_prototype_map = gate_prototype_map;
+    GatePrototypes g_proto = GatePrototypes(gate_configs, config_file_folder);
+    g_proto.time_step = step_size;
+    simulation_prototypes.gate_prototypes = g_proto;
 }
 
 void QSimTask::load_hamiltonian_configs() {
@@ -277,42 +278,22 @@ void QSimTask::load_hamiltonian_configs() {
 
     std::string hamiltonian_configfile_path = std::string(config_file_folder).append("/hamiltonian_config.json");
     hamiltonian_configs = load_config_from_path(hamiltonian_configfile_path);
-    auto ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type,Hamiltonian *>();
-    auto noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type,Noise_Hamiltonian *>();
+    HamiltonianPrototypes h_prototype = HamiltonianPrototypes(hamiltonian_configs, config_file_folder);
+    simulation_prototypes.hamiltonian_prototypes = h_prototype;
 
-    std::vector<nlohmann::json> h_prototypes_defs = hamiltonian_configs["hamiltonian_prototype_defs"];
-    //TODO: Implement by reflection(RTTR) will be a more elegant solution!
-    for (auto & h_prototypes_def : h_prototypes_defs) {
-        std::string tag = h_prototypes_def["tag"];
-        std::string hamiltonian_type = h_prototypes_def["type"];
-        bool enable = h_prototypes_def["enable"];
-        if (enable) {
-            task_log(std::string("Loading Hamiltonian tag:").append(tag),2);
-            if (hamiltonian_type == "static") {
-                auto *h_staic = new Static_Hamiltonian(h_prototypes_def, config_file_folder);
-                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, h_staic));
-            } else if(hamiltonian_type == "mw") {
-                auto *mw = new MW_Hamiltonian(h_prototypes_def, config_file_folder);
-                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,mw));
-            } else if(hamiltonian_type == "awg") {
-                auto *awg_h = new AWG_Hamiltonian(h_prototypes_def, config_file_folder);
-                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,awg_h));
-            } else if(hamiltonian_type == "noise") {
-                auto *noise = new Noise_Hamiltonian(h_prototypes_def, config_file_folder);
-                noise_hamiltonian_prototype_map.insert(std::make_pair(tag,noise));
-            }
-        }
-    }
+//    for (auto const &ctrl_H_item:simulation_prototypes.hamiltonian_prototypes.awg_hamiltonian_prototype_map) {
+//        ctrl_H_item.second->step_size = step_size;
+//    }
+//    for (auto const &ctrl_H_item:simulation_prototypes.hamiltonian_prototypes.static_hamiltonian_prototype_map) {
+//        ctrl_H_item.second->step_size = step_size;
+//    }
+//    for (auto const &ctrl_H_item:simulation_prototypes.hamiltonian_prototypes.noise_hamiltonian_prototype_map) {
+//        ctrl_H_item.second->step_size = step_size;
+//    }
+//    for (auto const &ctrl_H_item:simulation_prototypes.hamiltonian_prototypes.mw_hamiltonian_prototype_map) {
+//        ctrl_H_item.second->step_size = step_size;
+//    }
 
-    for (auto const &ctrl_H_item:ctrl_hamiltonian_prototype_map) {
-        ctrl_H_item.second->step_size = step_size;
-    }
-    for (auto const &noise_H_item:noise_hamiltonian_prototype_map) {
-        noise_H_item.second->step_size = step_size;
-    }
-
-    simulation_prototypes.ctrl_hamiltonian_prototype_map = ctrl_hamiltonian_prototype_map;
-    simulation_prototypes.noise_hamiltonian_prototype_map = noise_hamiltonian_prototype_map;
 }
 
 SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
@@ -328,21 +309,12 @@ SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
         if (type_name == "Gate") {
             auto val_name = param_schedule.param_info_table.at(i).at("val_file");
             auto param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
-            Gate * gate_obj = reloaded_prototypes->gate_prototype_map[tag];
-            rttr::property parametric_prop = rttr::type::get(*gate_obj).get_property(property_name);
-            parametric_prop.set_value(*gate_obj,param_val);
+            reloaded_prototypes->gate_prototypes.update_prototype_with(tag, property_name, param_val);
             std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
         } else if (type_name == "Hamiltonian") {
             auto val_name = param_schedule.param_info_table.at(i).at("val_file");
-            auto param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
-            Hamiltonian * hamiltonian_obj;
-            if (reloaded_prototypes->ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->ctrl_hamiltonian_prototype_map.end()){
-                hamiltonian_obj = reloaded_prototypes->ctrl_hamiltonian_prototype_map[tag];
-            } else if (reloaded_prototypes->noise_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->noise_hamiltonian_prototype_map.end()) {
-                hamiltonian_obj = reloaded_prototypes->noise_hamiltonian_prototype_map[tag];
-            }
-            rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
-            parametric_prop.set_value(*hamiltonian_obj,param_val);
+            double param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
+            reloaded_prototypes->hamiltonian_prototypes.update_prototype_with(tag, property_name, param_val);
             std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
         } else if (type_name == "Sequence") {
             auto string_file_name = param_schedule.param_info_table.at(i).at("string_file");
@@ -374,48 +346,75 @@ void QSimTask::task_log(std::string message, int log_level) {
     }
 }
 
-arma::cx_cube*
-QSimTask::compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map,
-                                            std::map<gate_tag_type, Gate *> gate_map, Sequence seq) {
+//arma::cx_cube*
+//QSimTask::compile_time_dep_ctrl_hamiltonian(HamiltonianPrototypes hamiltonian_prototypes,
+//                                            std::map<gate_tag_type, Gate *> gate_map, Sequence seq) {
+//
+//    for (const auto& gate_item : gate_map) {
+//        auto gate_proto_tag = gate_item.first;
+//        auto gate_proto_obj = gate_item.second;
+//
+//        for (const auto& binded_hamiltonian_tag : gate_proto_obj->hamiltonian_tags_list) {
+//            hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
+//        }
+//    }
+//
+//    auto * ctrl_hamiltonian_time_dep = new arma::cx_cube(system_dimension,system_dimension,seq.get_total_num_steps());
+//    ctrl_hamiltonian_time_dep->fill(0);
+//    for (const auto& hamiltonian_item : hamiltonian_prototype_map) {
+//        hamiltonian_item.second->num_of_steps = seq.get_total_num_steps();
+//        hamiltonian_item.second->step_size = step_size;
+//        hamiltonian_item.second->load_waveform();
+//        hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
+//    }
+//    task_log(" Control Hamiltonians preloaded",2);
+//
+//    return ctrl_hamiltonian_time_dep;
+//}
 
-    for (const auto& gate_item : gate_map) {
-        auto gate_proto_tag = gate_item.first;
-        auto gate_proto_obj = gate_item.second;
-
-        for (const auto& binded_hamiltonian_tag : gate_proto_obj->hamiltonian_tags_list) {
-            hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
-        }
-    }
-
-    auto * ctrl_hamiltonian_time_dep = new arma::cx_cube(system_dimension,system_dimension,seq.get_total_num_steps());
-    ctrl_hamiltonian_time_dep->fill(0);
-    for (const auto& hamiltonian_item : hamiltonian_prototype_map) {
-        hamiltonian_item.second->num_of_steps = seq.get_total_num_steps();
-        hamiltonian_item.second->step_size = step_size;
-        hamiltonian_item.second->load_waveform();
-        hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
-    }
-    task_log(" Control Hamiltonians preloaded",2);
-
-    return ctrl_hamiltonian_time_dep;
-}
-
-arma::cx_cube* QSimTask::compile_time_dep_noise_hamiltonian (
-        std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,
-        int noise_idx,
-        std::vector<double> random_start_pos_factor,
-        int total_num_steps) {
-
-    arma::cx_cube *noise_hamiltonian_time_dep = new arma::cx_cube(system_dimension,system_dimension,total_num_steps);
-    noise_hamiltonian_time_dep->fill(0);
-    for (const auto& noise_hamiltonian_item : hamiltonian_prototype_map) {
-        auto * noise_h_temp = new Noise_Hamiltonian(*noise_hamiltonian_item.second);
-        noise_h_temp->num_of_steps = total_num_steps;
-        noise_h_temp->step_size = step_size;
-        noise_h_temp->randomStartPosFactor = random_start_pos_factor.at(noise_idx);
-        noise_h_temp->load_ext_waveform(noise_idx);
-        noise_h_temp->fetch_H(noise_hamiltonian_time_dep);
-    }
-
-    return noise_hamiltonian_time_dep;
-}
+//arma::cx_cube*
+//QSimTask::compile_time_dep_ctrl_hamiltonian_self_adaptive_frame(HamiltonianPrototypes hamiltonian_prototypes,
+//                                            std::map<gate_tag_type, Gate *> gate_map, Sequence seq) {
+//
+//    for (const auto& gate_item : gate_map) {
+//        auto gate_proto_tag = gate_item.first;
+//        auto gate_proto_obj = gate_item.second;
+//
+//        for (const auto& binded_hamiltonian_tag : gate_proto_obj->hamiltonian_tags_list) {
+//            hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
+//        }
+//    }
+//
+//    auto * frame_hamiltonian_time_dep = new arma::cx_cube(system_dimension,system_dimension,seq.get_total_num_steps());
+////    frame_hamiltonian_time_dep->fill(0);
+////    for (const auto& hamiltonian_item : hamiltonian_prototype_map) {
+////        if (hamiltonian_item.second.ty || typeof(hamiltonian_item.second) == Static_Hamiltonian)
+////        hamiltonian_item.second->num_of_steps = seq.get_total_num_steps();
+////        hamiltonian_item.second->step_size = step_size;
+////        hamiltonian_item.second->load_waveform();
+////        hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
+////    }
+////    task_log(" Control Hamiltonians preloaded",2);
+//
+//    return frame_hamiltonian_time_dep;
+//}
+//
+//arma::cx_cube* QSimTask::compile_time_dep_noise_hamiltonian (
+//        std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,
+//        int noise_idx,
+//        std::vector<double> random_start_pos_factor,
+//        int total_num_steps) {
+//
+//    arma::cx_cube *noise_hamiltonian_time_dep = new arma::cx_cube(system_dimension,system_dimension,total_num_steps);
+//    noise_hamiltonian_time_dep->fill(0);
+//    for (const auto& noise_hamiltonian_item : hamiltonian_prototype_map) {
+//        auto * noise_h_temp = new Noise_Hamiltonian(*noise_hamiltonian_item.second);
+//        noise_h_temp->num_of_steps = total_num_steps;
+//        noise_h_temp->step_size = step_size;
+//        noise_h_temp->randomStartPosFactor = random_start_pos_factor.at(noise_idx);
+//        noise_h_temp->load_ext_waveform(noise_idx);
+//        noise_h_temp->fetch_H(noise_hamiltonian_time_dep);
+//    }
+//
+//    return noise_hamiltonian_time_dep;
+//}

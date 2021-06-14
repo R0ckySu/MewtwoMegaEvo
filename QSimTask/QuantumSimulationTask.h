@@ -9,7 +9,7 @@
 
 #include "QSimCoreLib/QSimCore.h"
 #include "ParamScheduler.h"
-#include "SimPrototypes.h"
+#include "QSimCoreLib/SimPrototypes.h"
 
 #define CONFIG_FOLDER_NAME "config_files"
 #define OUTPUT_FOLDER_NAME "sim_results"
@@ -62,6 +62,8 @@ public:
     virtual void sweeping_param_parallel();
     virtual void launch_task();
 
+
+    arma::cx_cube* compile_time_dep_ctrl_hamiltonian_self_adaptive_frame(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
     arma::cx_cube* compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
     arma::cx_cube* compile_time_dep_noise_hamiltonian(std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,int noise_idx, std::vector<double> random_start_pos_factor, int total_num_steps);
 private:

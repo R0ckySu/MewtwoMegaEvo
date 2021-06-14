@@ -13,5 +13,8 @@
 #include "Measurement.h"
 #include "VonNeumannSolver.h"
 #include "Utils.h"
+#include "HamiltonianCompiler.h"
+#include "SimPrototypes.h"
+
 
 #endif //MEWTWOMEGAEVO_QSIMCORE_H

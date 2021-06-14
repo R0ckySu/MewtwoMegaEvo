@@ -28,6 +28,7 @@ void Sequence::generate_switching_sig() {
 
     for (int i = 0; i < sequential_gate_list.size(); ++i) {
         Gate *gate_unit = sequential_gate_list.at(i);
+        //std::cout << "Sequence: add gate" << gate_unit->tag << std::endl;
         // Record virtual measurement gate time.
         if (gate_unit->tag == std::string("M")) {
             meas_time_point_temp.push_back(gate_unit->start_time);
@@ -37,14 +38,18 @@ void Sequence::generate_switching_sig() {
             continue;
         }
 
-        std::cout << "Sequence:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << gate_unit->get_end_index() << std::endl;
+        int end_index = gate_unit->get_end_index();
+        if (gate_unit->hold_on) {
+            end_index = get_total_num_steps()-1;
+        }
+        std::cout << "Sequence:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << end_index << std::endl;
 
         if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
-            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
+            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),end_index).fill(gate_unit->gate_amp);
         } else {
             std::cout << "Sequence:" << gate_unit->tag << " generating new switching" << std::endl;
             arma::vec new_switching = arma::vec(get_total_num_steps()).fill(0);
-            new_switching.subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
+            new_switching.subvec(gate_unit->get_start_index(),end_index).fill(gate_unit->gate_amp);
             std::pair<gate_tag_type, arma::vec> new_gate_swicthing_entry = std::pair<gate_tag_type, arma::vec>(gate_unit->tag,new_switching);
             gate_switching_map.insert(new_gate_swicthing_entry);
         }
@@ -94,8 +99,11 @@ void Sequence::load_sequence(double _step_size,
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
+        //std::cout << "Sequence: Decoding gate:" << gate_tag << std::endl;
+
         if ( *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
             // Gate found
+
             Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
             if (!gate_param_str.empty()) {gate_new->decode_param_str(gate_param_str);}
             append_gate(*gate_new);

@@ -13,6 +13,7 @@
 
 enum GateParamPosMap{
     T_pos = 0,
+    Amp_pos = 1,
 };
 
 typedef std::string gate_tag_type;
@@ -25,6 +26,8 @@ public:
     //Copy constructor
     Gate(const TimingBasic &t,const Gate &g);
 
+    double gate_amp = 1;
+    bool hold_on = false;
     gate_tag_type tag;
     std::vector<hamiltonian_tag_type> hamiltonian_tags_list;
     std::string ext_shaped_sig_path;

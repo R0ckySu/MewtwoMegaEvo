@@ -20,7 +20,6 @@ public:
 
     arma::vec times_vec;
     arma::vec switching_signal;
-
     double amplitude;
     symbolic_matrix h_mat;
     arma::cx_vec wave_form;
@@ -82,6 +81,8 @@ public:
 
     double freq;
     double phase;
+
+    arma::vec rotating_frame_freq; // Time-dep rotating frame frequency
 
     void load_waveform() override;
     void fetch_H(arma::cx_cube* H0) override;
