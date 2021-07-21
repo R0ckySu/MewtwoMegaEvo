@@ -11,10 +11,18 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
     spanned_param_dic = containers.Map; % Container for storing the spanned param vector
     unique_param_dic = containers.Map;  % Container for storing the unique param vector (distilled from spanned vec)
     series_of_params = length(param_json_info_array);
+    param_space_dims = zeros(series_of_params,1);
     if (series_of_params == 1) 
         param_json_info_array = {param_json_info_array};
     end
-    param_space_dims = zeros(series_of_params,1);
+    if (isstruct(param_json_info_array))
+        param_array_temp = [];
+        for i = 1:length(param_json_info_array)
+            param_array_temp = [param_array_temp, {param_json_info_array(i)}];
+        end
+        param_json_info_array = param_array_temp;
+    end
+    
     total_num_params = 0;
     param_name_key_ordered_list = cell(series_of_params,1);
     param_name_to_index_map = containers.Map;

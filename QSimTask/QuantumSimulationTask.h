@@ -33,6 +33,7 @@ public:
     nlohmann::json hamiltonian_configs;
 
     bool enable_param_parallel_mode = false;
+    bool enable_dynamic_frame = false;
     bool will_record_unitary;
     bool will_record_all_measurement;
     bool will_record_density_mat;
@@ -63,9 +64,9 @@ public:
     virtual void launch_task();
 
 
-    arma::cx_cube* compile_time_dep_ctrl_hamiltonian_self_adaptive_frame(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
-    arma::cx_cube* compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
-    arma::cx_cube* compile_time_dep_noise_hamiltonian(std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,int noise_idx, std::vector<double> random_start_pos_factor, int total_num_steps);
+//    arma::cx_cube* compile_time_dep_ctrl_hamiltonian_self_adaptive_frame(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
+//    arma::cx_cube* compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
+//    arma::cx_cube* compile_time_dep_noise_hamiltonian(std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,int noise_idx, std::vector<double> random_start_pos_factor, int total_num_steps);
 private:
     static nlohmann::json load_config_from_path(const std::string& path);
     void task_log(std::string message, int log_level);

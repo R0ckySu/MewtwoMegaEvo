@@ -23,13 +23,10 @@ target_link_libraries(QSimCoreLib PUBLIC armadillo)
 target_link_libraries(QSimCoreLib PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(QSimCoreLib PUBLIC librttr_core.a)
 
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS -g)
-set(CMAKE_C_FLAGS  -g)
+#set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_CXX_FLAGS -g)
+#set(CMAKE_C_FLAGS  -g)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)
-
-#set(CMAKE_CXX_FLAGS -O3)
-#set(CMAKE_C_FLAGS -O3)
 

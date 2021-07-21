@@ -29,6 +29,7 @@
 class VonNeumannSolver {
 public:
     bool will_record_unitary = false;
+    bool dynamic_frame_mode = false;
     int total_repeat_num = 1; //Do not use it for iteration control!!!
 
     arma::cx_cube propagator;
@@ -38,6 +39,8 @@ public:
     std::vector<arma::cx_cube> *rho_t_multi;
     arma::cx_cube *ctrl_hamiltonian_time_dep;
     arma::cx_cube *noise_hamiltonian_time_dep;
+    std::pair<arma::uvec *, arma::cx_cube *> phase_info_pair_time_dep;
+    std::pair<arma::uvec *, arma::cx_cube *> basis_trans_pair_time_dep;
 
     VonNeumannSolver();
     ~VonNeumannSolver();

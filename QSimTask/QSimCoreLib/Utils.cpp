@@ -117,6 +117,13 @@ namespace qmt{
     }
 
 
+    arma::cx_mat eig_matrix_exp(arma::cx_mat input_matrix) {
+        arma::cx_vec E_eig_temp;
+        arma::cx_mat U_eig_temp;
+        arma::eig_gen(E_eig_temp, U_eig_temp, input_matrix);
+        return U_eig_temp * arma::diagmat(arma::exp(E_eig_temp)) * arma::inv(U_eig_temp);;
+    }
+
     arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix) {
         // ok, but can be more efficient using the pade method.
         // uses now matrix scaling in combination with a taylor

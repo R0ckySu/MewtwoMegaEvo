@@ -44,7 +44,18 @@ void VonNeumannSolver::calculate_evolution() {
     arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
     std::complex<double> ii = std::complex<double>(0,1);
     for (int i = 0; i < hamiltonian_all.n_slices; ++i) {
-        exp_hamiltonians.slice(i) = qmt::custom_matrix_exp(ii * hamiltonian_all.slice(i));
+
+        if (dynamic_frame_mode) {
+            arma::uvec idx = arma::find(*phase_info_pair_time_dep.first-i==0);
+            if (idx.n_elem == 1) {
+                exp_hamiltonians.slice(i) = (*phase_info_pair_time_dep.second).slice(idx.at(0)) * qmt::custom_matrix_exp(-ii * hamiltonian_all.slice(i));
+            } else {
+                exp_hamiltonians.slice(i) = qmt::custom_matrix_exp(-ii * hamiltonian_all.slice(i));
+            }
+        } else {
+            exp_hamiltonians.slice(i) = qmt::custom_matrix_exp(-ii * hamiltonian_all.slice(i));
+        }
+
         if (will_record_unitary) {
             propagator.slice(i+1) = exp_hamiltonians.slice(i) * propagator.slice(i);
             propagator_dagger.slice(i+1) = propagator_dagger.slice(i)*exp_hamiltonians.slice(i).t();
@@ -58,6 +69,8 @@ void VonNeumannSolver::calculate_evolution() {
                 rho_t_multi_temp.at(k).slice(j) = rho0_multi->at(k).mat;
             } else {
                 rho_t_multi_temp.at(k).slice(j) = exp_hamiltonians.slice(j-1) * rho_t_multi_temp.at(k).slice(j-1) * exp_hamiltonians.slice(j-1).t();
+//                std::cout << "VonNeumannSolver:: at pos:"  <<  j-1 << "  rho = \n" << rho_t_multi_temp.at(k).slice(j-1) << std::endl;
+//                std::cout << "VonNeumannSolver:: at pos:"  <<  j-1 << "  expm(H) = \n" << exp_hamiltonians.slice(j-1).t() << std::endl;
             }
         }
     }

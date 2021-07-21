@@ -25,6 +25,9 @@ public:
     arma::cx_vec wave_form;
     std::string external_waveform_path;
 
+    arma::cx_cube h_mat_under_time_dep_frame;
+    arma::uvec frame_trans_time_pos;
+
     Hamiltonian();
     explicit Hamiltonian(nlohmann::json h_config, std::string config_path);
     Hamiltonian(const Hamiltonian &h);
@@ -33,6 +36,7 @@ public:
     virtual void add_signal(arma::vec _sig);
     virtual void load_waveform();   //Generating waveform
     virtual void fetch_H(arma::cx_cube* H0);
+
     virtual void load_ext_waveform(int param_index);
     virtual std::string description();
 
@@ -82,13 +86,16 @@ public:
     double freq;
     double phase;
 
-    arma::vec rotating_frame_freq; // Time-dep rotating frame frequency
+    arma::cube freq_mask_time_dep; // Time-dep rotating frame frequency
 
     void load_waveform() override;
     void fetch_H(arma::cx_cube* H0) override;
     void clean_up_on_reload() override;
     std::string description() override;
     MW_Hamiltonian* clone() override;
+
+    void load_and_fetch_H_with_dynamic_frame(arma::cx_cube* H0);
+//    void load_waveform_with_time_dep_rot_frame();
 
 RTTR_ENABLE(Gated_Hamiltonian);
 };

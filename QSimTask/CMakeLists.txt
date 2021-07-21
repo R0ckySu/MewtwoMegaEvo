@@ -8,7 +8,7 @@ add_library(
         QSimTask STATIC
         QuantumSimulationTask.h QuantumSimulationTask.cpp
         ParamScheduler.h ParamScheduler.cpp
-        SimPrototypes.h SimPrototypes.cpp)
+        )
 
 add_subdirectory(QSimCoreLib)
 
@@ -17,8 +17,6 @@ target_link_libraries(QSimTask PRIVATE omp)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)
-#set(CMAKE_CXX_FLAGS -O3)
-#set(CMAKE_C_FLAGS -O3)
 
 #set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_FLAGS -g)

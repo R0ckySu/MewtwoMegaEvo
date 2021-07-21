@@ -42,7 +42,7 @@ void Sequence::generate_switching_sig() {
         if (gate_unit->hold_on) {
             end_index = get_total_num_steps()-1;
         }
-        std::cout << "Sequence:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << end_index << std::endl;
+        std::cout << "Sequence:: gate tag:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << end_index << std::endl;
 
         if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
             gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),end_index).fill(gate_unit->gate_amp);
@@ -99,7 +99,7 @@ void Sequence::load_sequence(double _step_size,
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
-        //std::cout << "Sequence: Decoding gate:" << gate_tag << std::endl;
+        std::cout << "Sequence: Decoding gate:" << gate_tag << std::endl;
 
         if ( *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
             // Gate found

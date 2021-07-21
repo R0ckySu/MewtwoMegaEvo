@@ -13,6 +13,7 @@ RTTR_REGISTRATION{
             .property("h_mat",&Hamiltonian::h_mat);
 
     rttr::registration::class_<Gated_Hamiltonian>("Gated_Hamiltonian")
+            .property("amplitude",&Gated_Hamiltonian::amplitude)
             .property("falling_time",&Gated_Hamiltonian::falling_time)
             .property("rising_time",&Gated_Hamiltonian::rising_time);
 
@@ -22,7 +23,8 @@ RTTR_REGISTRATION{
             .property("phase",&MW_Hamiltonian::phase);
 
     rttr::registration::class_<Noise_Hamiltonian>("Noise_Hamiltonian")
-            .property("shift_time",&Noise_Hamiltonian::shift_time);
+            .property("shift_time",&Noise_Hamiltonian::shift_time)
+            .property("amplitude",&MW_Hamiltonian::amplitude);
 };
 
 /*********************************************Hamiltonian Classes******************************************************/
@@ -59,6 +61,7 @@ Hamiltonian::Hamiltonian(const Hamiltonian &h) {
 }
 
 Hamiltonian::Hamiltonian(nlohmann::json h_config, std::string config_path) {
+    tag = h_config["tag"];
     amplitude = h_config["amplitude"];
     std::string h_string = h_config["h_pauli_mat"];
     h_mat.load_from_symbol(h_string,config_path);
@@ -214,6 +217,7 @@ MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path)
 
 void MW_Hamiltonian::load_waveform() {
     Gated_Hamiltonian::load_waveform();
+    std::cout << "MW_Hamiltonian: Loading waveform" << std::endl;
     if(switching_signal.size()) {
         const arma::cx_double j = arma::cx_double(0,1);
         if(freq == 0.){
@@ -225,9 +229,9 @@ void MW_Hamiltonian::load_waveform() {
         }
         else {
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
-            for (int i = 0; i < switching_signal.size(); ++i){
+            for (int i = 0; i < switching_signal.size(); ++i) {
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*2.*M_PI + phase));
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*M_PI + phase));
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
@@ -243,6 +247,7 @@ void MW_Hamiltonian::load_waveform() {
 
 void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
     Gated_Hamiltonian::fetch_H(H0);
+    std::cout << "MW_Hamiltonian: Fetching Hamiltonian" << std::endl;
     arma::cx_vec wave_form_conj = arma::conj(wave_form);
     arma::cx_mat matrix_element_up = arma::trimatu(h_mat.mat);
     arma::cx_mat matrix_element_down = arma::trimatu(h_mat.mat,1).t();
@@ -260,6 +265,51 @@ void MW_Hamiltonian::clean_up_on_reload() {
     Gated_Hamiltonian::clean_up_on_reload();
 }
 
+void MW_Hamiltonian::load_and_fetch_H_with_dynamic_frame(arma::cx_cube *H0) {
+    const arma::cx_double j = arma::cx_double(0,1);
+
+    // Generating Waveform for each transition section
+    for (int i = 0; i < frame_trans_time_pos.n_elem; ++i) {
+
+        // Cancelling out the freq of the rotating frame
+        arma::mat mw_freq_mat = arma::zeros(h_mat.mat.n_cols,h_mat.mat.n_rows);
+        std::cout << "--------------------\n MW_Hamiltonian: frame trans pos:" << frame_trans_time_pos.at(i) << std::endl;
+        std::cout << "MW_Hamiltonian: h_mat:\n" << h_mat_under_time_dep_frame.slice(i) << std::endl;
+        arma::uvec non0inH = arma::find(arma::abs(arma::trimatu(h_mat_under_time_dep_frame.slice(i))) > 0.01);
+        mw_freq_mat.elem(non0inH) += 1;
+        mw_freq_mat = mw_freq_mat * freq;
+        arma::mat freq_diff_to_RF = freq_mask_time_dep.slice(i)- mw_freq_mat;
+        freq_diff_to_RF.elem(find(arma::abs(freq_diff_to_RF) > 1/step_size)) -= freq_diff_to_RF.elem(find(arma::abs(freq_diff_to_RF) > 1/step_size));
+        std::cout << "MW_Hamiltonian: MW freq mask mat:\n" << freq_mask_time_dep.slice(i) << std::endl;
+        std::cout << "MW_Hamiltonian: MW freq diff mat:\n" << freq_diff_to_RF << std::endl;
+
+//        arma::uvec non0_freq_pos = arma::find(arma::abs(arma::trimatu(freq_diff_to_RF))>0);
+//        std::cout << "MW_Hamiltonian: MW freq diff mat:\n" << non0_freq_pos << std::endl;
+
+        uint start_pos = frame_trans_time_pos.at(i);
+        uint end_pos = start_pos;
+        if (i == (frame_trans_time_pos.n_elem-1)) {
+            end_pos = H0->n_slices-1;
+        } else {
+            end_pos = frame_trans_time_pos.at(i+1)-1;
+        }
+//        wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
+
+        for (int non0_elem_idx = 0; non0_elem_idx < non0inH.n_elem; ++non0_elem_idx) {
+            uint col_idx = floor(non0inH.at(non0_elem_idx)/h_mat.mat.n_rows);
+            uint row_idx = non0inH.at(non0_elem_idx) - col_idx*h_mat.mat.n_rows;
+            double freq_rf =  freq_diff_to_RF.at(row_idx,col_idx);
+            std::cout << "MW_Hamiltonian: MW oscillator at freq:" << freq_rf  << " start:" << start_pos << " end:" << end_pos << std::endl;
+
+            for (int time_idx = start_pos; time_idx <= end_pos; ++time_idx) {
+                arma::cx_double sig = M_PI * h_mat_under_time_dep_frame(row_idx,col_idx,i) * step_size * amplitude*switching_signal.at(time_idx)*std::exp(j*(M_PI * step_size * time_idx *freq_rf + phase));
+                H0->at(row_idx, col_idx, time_idx) += sig;
+                H0->at(col_idx, row_idx, time_idx) += std::conj(sig);
+            }
+        }
+    }
+}
+
 /**********************************************************************************************************************/
 
 AWG_Hamiltonian::AWG_Hamiltonian() {}
@@ -272,8 +322,8 @@ AWG_Hamiltonian::AWG_Hamiltonian(const Gated_Hamiltonian &g, const AWG_Hamiltoni
 
 void AWG_Hamiltonian::load_waveform() {
     Gated_Hamiltonian::load_waveform();
-    wave_form = arma::cx_vec(M_PI * amplitude * switching_signal * step_size, arma::zeros(switching_signal.size()));
-//    std::cout << "waveform of:"<< tag << "\n" << wave_form << std::endl;
+    wave_form = arma::cx_vec(  M_PI*step_size * amplitude * switching_signal, arma::zeros(switching_signal.size()));
+//    std::cout << "waveform of:"<< tag << "\n" << "amp:" << amplitude << "step size" << step_size << std::endl;
 }
 
 void AWG_Hamiltonian::fetch_H(arma::cx_cube *H0) {

@@ -39,6 +39,10 @@ namespace qmt{
  * Matrix exponent approximated by Pade approximation
  * */
     arma::cx_mat custom_matrix_exp(arma::cx_mat input_matrix);
+/*
+ * Matrix exponent approximated by Eigen decompo, LOW efficiency
+ * */
+    arma::cx_mat eig_matrix_exp(arma::cx_mat input_matrix);
 };
 
 std::vector<std::string> str_split(std::string s, char delimiter);

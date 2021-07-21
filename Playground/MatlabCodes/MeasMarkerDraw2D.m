@@ -6,7 +6,7 @@ function figure_handle = MeasMarkerDraw2D(data_set, vargin)
     num_i = length(init_state_array);
     
     figure_handle = figure;
-    figure_handle.Position = [0 0 540*num_o 400*num_i];
+    figure_handle.Position = [0 0 540*num_i 400*num_o];
     
     for o_idx =1:num_o
         for i_idx = 1:num_i
