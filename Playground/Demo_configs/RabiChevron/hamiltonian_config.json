@@ -4,7 +4,7 @@
       "tag": "system",
       "type": "static",
       "enable": true,
-      "amplitude":3.1415926e6,
+      "amplitude": 2e9,
       "h_pauli_mat": "Z",
       "waveform_path":""
     },
@@ -15,7 +15,7 @@
       "amplitude":1e5,
       "rising_time":0,
       "falling_time":0,
-      "freq": 0,
+      "freq": 2e9,
       "phase": 0,
       "h_pauli_mat": "X",
       "waveform_path":""

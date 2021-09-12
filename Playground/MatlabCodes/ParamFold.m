@@ -81,7 +81,7 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
             param_list_temp = spanned_param_dic(param_name_key_ordered_list{j});
             param_val_temp = '';
             if(isnumeric(param_list_temp))
-                param_val_temp = num2str(param_list_temp(i),'%10.4e');
+                param_val_temp = num2str(param_list_temp(i),'%10.6e');
             else
                 param_val_temp = param_list_temp{i};
             end

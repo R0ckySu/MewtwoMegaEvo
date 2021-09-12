@@ -37,7 +37,7 @@ std::string ParamScheduler::get_param_string_for_ith_param(int param_idx) {
     for (int i = 0; i < param_info_table.size(); ++i) {
         if (param_info_table.at(i).find("val_file") != param_info_table.at(i).end()) {
             std::string val_name = param_info_table.at(i)["val_file"];
-            std::string val_string = double_to_fixprecision_str(param_val_vec_map.at(val_name).at(param_idx), 4);
+            std::string val_string = double_to_fixprecision_str(param_val_vec_map.at(val_name).at(param_idx), 6);
             param_str.append("#").append(val_name).append("=").append(val_string);
         } else if(param_info_table.at(i).find("string_file") != param_info_table.at(i).end()) {
             std::string string_file_name = param_info_table.at(i)["string_file"];
