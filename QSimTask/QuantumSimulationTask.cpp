@@ -117,7 +117,7 @@ void QSimTask::sweeping_param_parallel() {
     int end_pos_for_this_job = noise_index_ends_list.at(job_id+1);
     task_log(std::string("Noise index start:").append(std::to_string(start_pos_for_this_job)).append(" index ends:").append(std::to_string(end_pos_for_this_job)),1);
 
-    #pragma omp parallel for default(none) shared(start_pos_for_this_job,end_pos_for_this_job,result_file_name)
+    #pragma omp parallel for shared(start_pos_for_this_job,end_pos_for_this_job,result_file_name)
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
 
         std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
