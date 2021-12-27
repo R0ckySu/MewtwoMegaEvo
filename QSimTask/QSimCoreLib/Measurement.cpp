@@ -58,6 +58,31 @@ void MeasurementManager::measure_density_mat_at_indices(std::vector<arma::cx_cub
     }
 }
 
+void MeasurementManager::save_result_to_h5(const std::string& path, const std::string& sub_group_name, const int param_idx, const std::map<std::string, std::any> param_info) {
+    //Storing data in hdf5 format
+    std::string param_idx_str = std::string("/#").append(std::to_string(param_idx));
+
+    for (const auto& O_entry: meas_result_set) {
+        observable_name_type O_symbol = O_entry.first;
+        for (const auto& rho_entry : O_entry.second) {
+            init_state_name_type  rho_sym = rho_entry.first;
+            std::string h5field_name = std::string(sub_group_name).append(param_idx_str).append("/").append(O_symbol).append("/").append(rho_sym);
+            rho_entry.second.save(arma::hdf5_name(path,h5field_name,arma::hdf5_opts::append));
+        }
+    }
+
+    std::string h5field_name = std::string(sub_group_name).append(param_idx_str).append("/").append("time_vec");
+    measurement_time_point_vec.save(arma::hdf5_name(std::string(path),h5field_name,arma::hdf5_opts::append));
+
+    //Clean up containers after storage;
+    for (auto& O_entry: meas_result_set) {
+        for (auto& rho_entry : O_entry.second) {
+            arma::vec().swap(rho_entry.second);
+        }
+    }
+    arma::vec().swap(measurement_time_point_vec);
+}
+
 void MeasurementManager::save_result_to_folder(const std::string& path, const std::string& param_label) {
     //Storing data in hdf5 format
     for (const auto& O_entry: meas_result_set) {

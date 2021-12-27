@@ -1,6 +1,6 @@
 project(QSimTask VERSION 1.0.0)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 #add_executable(QSimCoreLibTest QSimLibTest.cpp)
 
@@ -8,12 +8,15 @@ add_library(
         QSimTask STATIC
         QuantumSimulationTask.h QuantumSimulationTask.cpp
         ParamScheduler.h ParamScheduler.cpp
-        SimPrototypes.h SimPrototypes.cpp)
+        SimPrototypes.h SimPrototypes.cpp
+)
 
 add_subdirectory(QSimCoreLib)
 
 target_link_libraries(QSimTask PRIVATE QSimCoreLib)
 target_link_libraries(QSimTask PRIVATE omp)
+target_link_libraries(QSimTask PRIVATE hdf5)
+target_link_libraries(QSimTask PRIVATE h5cpp)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)

@@ -90,20 +90,23 @@ void QSimTask::sweeping_repeat_parallel() {
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
         meas_manager.step_size = step_size;
         std::string result_file_name_meas = std::string(result_file_name).append("_meas");
+//        param_schedule.save_param_list_to_h5(result_file_name_meas);
         meas_manager.measure_from_density_mat_with_time_points(rho_multi_temp,seq->measurement_time_point_vec);
-        meas_manager.save_result_to_folder(result_file_name_meas,result_param_str);
+//        meas_manager.save_result_to_folder(result_file_name_meas,result_param_str);
+        meas_manager.save_result_to_h5(result_file_name, std::string("meas_marker"), i, param_schedule.get_param_dict_for_ith_param(i));
         task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param:").append(result_param_str),1);
 
         if (will_record_all_measurement) {
             meas_manager.measure_from_density_mat_with_all_time_points(rho_multi_temp);
-            meas_manager.save_result_to_folder(std::string(result_file_name_meas).append("_all"),result_param_str);
+            meas_manager.save_result_to_h5(result_file_name, std::string("meas_all"), i, param_schedule.get_param_dict_for_ith_param(i));
+//            meas_manager.save_result_to_folder(std::string(result_file_name_meas).append("_all"),result_param_str);
         }
 
-        std::string result_file_name_dm = std::string(result_file_name).append("_dm");
         if (will_record_density_mat) {
+            std::string field_name = std::string("rho_all/#").append(std::to_string(i)).append("/");
             for (int j = 0; j < rho_multi_temp.size(); ++j) {
-                std::string field_name = std::string(result_param_str).append("/").append(rho_inits.at(j).symbol_name);
-                rho_multi_temp.at(j).save(arma::hdf5_name(result_file_name_dm,field_name,arma::hdf5_opts::append));
+                std::string sub_field_name = field_name.append(rho_inits.at(j).symbol_name);
+                rho_multi_temp.at(j).save(arma::hdf5_name(result_file_name,sub_field_name,arma::hdf5_opts::append));
             }
         }
     }
@@ -162,28 +165,31 @@ void QSimTask::sweeping_param_parallel() {
         meas_manager.step_size = step_size;
         meas_manager.measure_from_density_mat_with_time_points(rho_multi_temp,seq->measurement_time_point_vec);
 
-        std::string result_file_name_meas = std::string(result_file_name).append("_meas");
+//        std::string result_file_name_meas = std::string(result_file_name).append("_meas");
+//        param_schedule.save_param_list_to_h5(result_file_name_meas);
         #pragma omp critical
         {
-            meas_manager.save_result_to_folder(result_file_name_meas,result_param_str);
+            meas_manager.save_result_to_h5(result_file_name, std::string("meas_marker"),i, param_schedule.get_param_dict_for_ith_param(i));
+//            meas_manager.save_result_to_folder(result_file_name_meas,result_param_str);
         };
-        task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param:").append(result_param_str),1);
+        task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(result_param_str),1);
 
         if (will_record_all_measurement) {
             meas_manager.measure_from_density_mat_with_all_time_points(rho_multi_temp);
             #pragma omp critical
             {
-                meas_manager.save_result_to_folder(std::string(result_file_name_meas).append("_all"), result_param_str);
+                meas_manager.save_result_to_h5(result_file_name, std::string("meas_all"),i, param_schedule.get_param_dict_for_ith_param(i));
+//                meas_manager.save_result_to_folder(std::string(result_file_name).append("_all"), result_param_str);
             }
         }
 
-        std::string result_file_name_dm = std::string(result_file_name).append("_dm");
         if (will_record_density_mat) {
             #pragma omp critical
             {
+                std::string field_name = std::string("rho_all/#").append(std::to_string(i)).append("/");
                 for (int j = 0; j < rho_multi_temp.size(); ++j) {
-                    std::string field_name = std::string(result_param_str).append("/").append(rho_inits.at(j).symbol_name);
-                    rho_multi_temp.at(j).save(arma::hdf5_name(result_file_name_dm,field_name,arma::hdf5_opts::append));
+                    std::string sub_field_name = field_name.append(rho_inits.at(j).symbol_name);
+                    rho_multi_temp.at(j).save(arma::hdf5_name(result_file_name,sub_field_name,arma::hdf5_opts::append));
                 }
             }
         }
@@ -228,6 +234,7 @@ void QSimTask::load_sim_configs() {
         std::string copyConfigFileCommand = std::string("cp -v ").append(config_file_folder).append("/* ").append(new_config_file_folder);
         system(copyConfigFileCommand.c_str());
     }
+    param_schedule.save_param_list_to_h5(get_result_file_name());
 
     // Load initial states
     rho_inits = std::vector<symbolic_matrix>();
@@ -418,4 +425,9 @@ arma::cx_cube* QSimTask::compile_time_dep_noise_hamiltonian (
     }
 
     return noise_hamiltonian_time_dep;
+}
+
+std::string QSimTask::get_result_file_name() {
+    std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
+    return result_file_name;
 }

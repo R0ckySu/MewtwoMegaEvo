@@ -3,6 +3,7 @@
 //
 #include <armadillo>
 #include "Utils.h"
+#include <any>
 
 typedef std::string observable_name_type;
 typedef std::string init_state_name_type;
@@ -26,6 +27,7 @@ public:
     void measure_from_density_mat_with_all_time_points(std::vector<arma::cx_cube> rho_multi);
     void measure_from_density_mat_with_time_points(std::vector<arma::cx_cube> rho_multi, arma::vec time_points);
     void save_result_to_folder(const std::string& path, const std::string& param_label);
+    void save_result_to_h5(const std::string& path, const std::string& sub_group_name, const int param_idx, const std::map<std::string, std::any> param_info);
 private:
     std::vector<int> get_time_index(arma::vec time_points);
     void measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi, std::vector<int> time_indices);

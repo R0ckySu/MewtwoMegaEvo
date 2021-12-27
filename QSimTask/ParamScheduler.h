@@ -9,6 +9,7 @@
 #include <vector>
 #include <armadillo>
 #include <nlohmann/json.hpp>
+#include <any>
 
 #define JOB_SLICING_LOGSPACE "logspace"
 #define JOB_SLICING_INVLOGSPACE "inv_logspace"
@@ -38,6 +39,8 @@ struct ParamScheduler {
     void load_param_from_file(std::string folder);
     void process_prameter_vec_with_job_slicing_strategy(int job_id, int num_job_group, std::string job_slicing_strategy);
     std::string get_param_string_for_ith_param(int param_idx);
+    std::map<std::string, std::any> get_param_dict_for_ith_param(int param_idx);
+    void save_param_list_to_h5(const std::string& path);
 };
 
 #endif //MEWTWOMEGAEVO_PARAMSCHEDULER_H

@@ -5,6 +5,7 @@
 #include "ParamScheduler.h"
 #include "QSimCoreLib/Utils.h"
 #include <fstream>
+#include <h5cpp/hdf5.hpp>
 
 ParamScheduler::ParamScheduler() {
     num_of_params = 0;
@@ -49,6 +50,21 @@ std::string ParamScheduler::get_param_string_for_ith_param(int param_idx) {
     return param_str;
 }
 
+std::map<std::string, std::any> ParamScheduler::get_param_dict_for_ith_param(int param_idx) {
+    std::map<std::string, std::any> param_info;
+    for (int i = 0; i < param_info_table.size(); ++i) {
+        if (param_info_table.at(i).find("val_file") != param_info_table.at(i).end()) {
+            std::string val_name = param_info_table.at(i)["val_file"];
+            param_info[val_name] = param_val_vec_map.at(val_name).at(param_idx);
+        } else if(param_info_table.at(i).find("string_file") != param_info_table.at(i).end()) {
+            std::string string_file_name = param_info_table.at(i)["string_file"];
+            std::string str_sym = param_string_vec_map.at(string_file_name).at(param_idx);
+            param_info[string_file_name] = str_sym;
+        }
+    }
+    return param_info;
+}
+
 void ParamScheduler::load_param_from_file(std::string folder) {
     for (auto param_info_item : param_info_table) {
         if (param_info_item.find("val_file") != param_info_item.end()) {
@@ -65,6 +81,7 @@ void ParamScheduler::load_param_from_file(std::string folder) {
             while (getline(sym_str_file_stream,str_temp)){
                 sym_string_list.push_back(str_temp);
             }
+            num_of_params = sym_string_list.size();
             param_string_vec_map.insert(std::make_pair(param_info_item.at("string_file"), sym_string_list));
         }
     }
@@ -137,4 +154,24 @@ void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, 
         param_string_vec_map[param_string_item.first] = sliced_vec;
     }
     num_of_params = end_pos_for_this_job - start_pos_for_this_job + 1;
+}
+
+void ParamScheduler::save_param_list_to_h5(const std::string &path) {
+    hdf5::file::File f = hdf5::file::create(path, hdf5::file::AccessFlags::TRUNCATE);
+    // create a group
+    hdf5::node::Group root_group = f.root();
+
+    for (int i = 0; i < param_info_table.size(); ++i) {
+        if (param_info_table.at(i).find("val_file") != param_info_table.at(i).end()) {
+            std::string val_name = param_info_table.at(i)["val_file"];
+            std::vector<double> attrdata = arma::conv_to<std::vector<double>>::from(param_val_vec_map[val_name]);
+            auto attribute = root_group.attributes.create<double>(val_name,hdf5::Dimensions{1, static_cast<unsigned long long>(num_of_params)});
+            attribute.write(attrdata);
+        } else if(param_info_table.at(i).find("string_file") != param_info_table.at(i).end()) {
+            std::string string_file_name = param_info_table.at(i)["string_file"];
+            std::vector<std::string> attrdata = param_string_vec_map[string_file_name];
+            auto attribute = root_group.attributes.create<double>(string_file_name,hdf5::Dimensions{1, static_cast<unsigned long long>(num_of_params)});
+            attribute.write(attrdata);
+        }
+    }
 }
