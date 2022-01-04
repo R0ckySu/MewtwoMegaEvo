@@ -1,0 +1,23 @@
+{
+  "task_name": "FBT1QSim",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_unitary": false,
+  "record_all_meas": false,
+  "record_all_density_mat": false,
+  "enable_param_parallel_mode":true,
+  "system_dim": 2,
+  "observables": ["Zp","Zm"],
+  "init_states": ["rho0"],
+  "repeat" : 1,
+  "step_size": 1e-8,
+  "sequence": "$S-M",
+  "sweep_param_info": [
+    {
+      "class":"Sequence",
+      "tag":"$S",
+      "property":"",
+      "string_file":"Dacong7982_seqlist"
+    }
+  ]
+}
