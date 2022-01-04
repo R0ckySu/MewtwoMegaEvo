@@ -170,7 +170,7 @@ void ParamScheduler::save_param_list_to_h5(const std::string &path) {
         } else if(param_info_table.at(i).find("string_file") != param_info_table.at(i).end()) {
             std::string string_file_name = param_info_table.at(i)["string_file"];
             std::vector<std::string> attrdata = param_string_vec_map[string_file_name];
-            auto attribute = root_group.attributes.create<double>(string_file_name,hdf5::Dimensions{1, static_cast<unsigned long long>(num_of_params)});
+            auto attribute = root_group.attributes.create<std::string>(string_file_name,hdf5::Dimensions{1, static_cast<unsigned long long>(num_of_params)});
             attribute.write(attrdata);
         }
     }

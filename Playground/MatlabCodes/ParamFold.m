@@ -47,7 +47,7 @@ function folded_param_info = ParamFold(param_data_source_dir,param_json_info_arr
             param_vec = strsplit(param_vec,'\n');
             param_vec =  param_vec(~cellfun('isempty', param_vec));
             
-            if (isnumeric(str2num(param_vec{1})))
+            if length(str2num(param_vec{1})) && (isnumeric(str2num(param_vec{1})))
                 num_vec = linspace(1,length(param_vec),length(param_vec));
                 for j = 1: length(param_vec)
                     num_vec(j) = str2num(param_vec{j}); 
