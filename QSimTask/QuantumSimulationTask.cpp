@@ -89,26 +89,12 @@ void QSimTask::sweeping_repeat_parallel() {
 
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
         meas_manager.step_size = step_size;
-        std::string result_file_name_meas = std::string(result_file_name).append("_meas");
-//        param_schedule.save_param_list_to_h5(result_file_name_meas);
+        meas_manager.will_record_density_mat = will_record_density_mat;
+        meas_manager.will_record_all_time_points_meas = will_record_all_measurement;
+        std::string result_file_name_meas = std::string(result_file_name);
         meas_manager.measure_from_density_mat_with_time_points(rho_multi_temp,seq->measurement_time_point_vec);
-//        meas_manager.save_result_to_folder(result_file_name_meas,result_param_str);
-        meas_manager.save_result_to_h5(result_file_name, std::string("meas_marker"), i, param_schedule.get_param_dict_for_ith_param(i));
-        task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param:").append(result_param_str),1);
-
-        if (will_record_all_measurement) {
-            meas_manager.measure_from_density_mat_with_all_time_points(rho_multi_temp);
-            meas_manager.save_result_to_h5(result_file_name, std::string("meas_all"), i, param_schedule.get_param_dict_for_ith_param(i));
-//            meas_manager.save_result_to_folder(std::string(result_file_name_meas).append("_all"),result_param_str);
-        }
-
-        if (will_record_density_mat) {
-            std::string field_name = std::string("rho_all/#").append(std::to_string(i)).append("/");
-            for (int j = 0; j < rho_multi_temp.size(); ++j) {
-                std::string sub_field_name = field_name.append(rho_inits.at(j).symbol_name);
-                rho_multi_temp.at(j).save(arma::hdf5_name(result_file_name,sub_field_name,arma::hdf5_opts::append));
-            }
-        }
+        meas_manager.save_result_to_h5(result_file_name, i, param_schedule.get_param_dict_for_ith_param(i));
+        task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param idx:").append(std::to_string(i)),1);
     }
 }
 
@@ -162,37 +148,16 @@ void QSimTask::sweeping_param_parallel() {
         task_log("Solver job done!",1);
 
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
+        meas_manager.will_record_density_mat = will_record_density_mat;
+        meas_manager.will_record_all_time_points_meas = will_record_all_measurement;
         meas_manager.step_size = step_size;
         meas_manager.measure_from_density_mat_with_time_points(rho_multi_temp,seq->measurement_time_point_vec);
 
-//        std::string result_file_name_meas = std::string(result_file_name).append("_meas");
-//        param_schedule.save_param_list_to_h5(result_file_name_meas);
         #pragma omp critical
         {
-            meas_manager.save_result_to_h5(result_file_name, std::string("meas_marker"),i, param_schedule.get_param_dict_for_ith_param(i));
-//            meas_manager.save_result_to_folder(result_file_name_meas,result_param_str);
+            meas_manager.save_result_to_h5(result_file_name,i, param_schedule.get_param_dict_for_ith_param(i));
         };
-        task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(result_param_str),1);
-
-        if (will_record_all_measurement) {
-            meas_manager.measure_from_density_mat_with_all_time_points(rho_multi_temp);
-            #pragma omp critical
-            {
-                meas_manager.save_result_to_h5(result_file_name, std::string("meas_all"),i, param_schedule.get_param_dict_for_ith_param(i));
-//                meas_manager.save_result_to_folder(std::string(result_file_name).append("_all"), result_param_str);
-            }
-        }
-
-        if (will_record_density_mat) {
-            #pragma omp critical
-            {
-                std::string field_name = std::string("rho_all/#").append(std::to_string(i)).append("/");
-                for (int j = 0; j < rho_multi_temp.size(); ++j) {
-                    std::string sub_field_name = field_name.append(rho_inits.at(j).symbol_name);
-                    rho_multi_temp.at(j).save(arma::hdf5_name(result_file_name,sub_field_name,arma::hdf5_opts::append));
-                }
-            }
-        }
+        task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(std::to_string(i)),1);
     }
 }
 
