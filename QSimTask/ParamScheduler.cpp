@@ -157,7 +157,7 @@ void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, 
 }
 
 void ParamScheduler::save_param_list_to_h5(const std::string &path) {
-    hdf5::file::File f = hdf5::file::create(path, hdf5::file::AccessFlags::TRUNCATE);
+    hdf5::file::File f = hdf5::file::create(path, hdf5::file::AccessFlags::Truncate);
     // create a group
     hdf5::node::Group root_group = f.root();
 
