@@ -260,6 +260,12 @@ void MW_Hamiltonian::clean_up_on_reload() {
     Gated_Hamiltonian::clean_up_on_reload();
 }
 
+MW_Hamiltonian::~MW_Hamiltonian() {
+    arma::cx_vec().swap(wave_form);
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
+}
+
 /**********************************************************************************************************************/
 
 AWG_Hamiltonian::AWG_Hamiltonian() {}
@@ -342,4 +348,8 @@ Noise_Hamiltonian *Noise_Hamiltonian::clone() {
     return new Noise_Hamiltonian(*this);
 }
 
-Noise_Hamiltonian::~Noise_Hamiltonian() = default;
+Noise_Hamiltonian::~Noise_Hamiltonian() {
+    arma::cx_vec().swap(wave_form);
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
+}

@@ -79,7 +79,7 @@ public:
     MW_Hamiltonian();
     explicit MW_Hamiltonian(nlohmann::json h_config, std::string config_path);
     MW_Hamiltonian(const Gated_Hamiltonian &g, const MW_Hamiltonian &m);
-
+    ~MW_Hamiltonian();
     double freq;
     double phase;
 

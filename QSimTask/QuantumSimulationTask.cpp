@@ -83,7 +83,7 @@ void QSimTask::sweeping_repeat_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
-//            delete noise_hamiltonian_time_dep;
+            delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
@@ -95,6 +95,9 @@ void QSimTask::sweeping_repeat_parallel() {
         meas_manager.measure_from_density_mat_with_time_points(rho_multi_temp,seq->measurement_time_point_vec);
         meas_manager.save_result_to_h5(result_file_name, i, param_schedule.get_param_dict_for_ith_param(i));
         task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param idx:").append(std::to_string(i)),1);
+
+        delete ctrl_hamiltonian_time_dep;
+        delete seq;
     }
 }
 
@@ -143,7 +146,7 @@ void QSimTask::sweeping_param_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
-//            delete noise_hamiltonian_time_dep;
+            delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
@@ -158,6 +161,9 @@ void QSimTask::sweeping_param_parallel() {
             meas_manager.save_result_to_h5(result_file_name,i, param_schedule.get_param_dict_for_ith_param(i));
         };
         task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(std::to_string(i)),1);
+
+        delete ctrl_hamiltonian_time_dep;
+        delete seq;
     }
 }
 
