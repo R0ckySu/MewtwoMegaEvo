@@ -30,9 +30,12 @@ Gate::Gate(nlohmann::json gate_config, double _step_size) {
     hamiltonian_tags_list = h_tag_list;
     ext_shaped_sig_path = gate_config["ext_shaped_sig_path"];
     if (!ext_shaped_sig_path.empty()) {
-        ext_shaped_sig = arma::vec().load(ext_shaped_sig_path);
+        std::cout << "Gate: " << tag << " load shaped sig from: " << ext_shaped_sig_path << std::endl;
+        ext_shaped_sig = arma::vec().fill(0);
+        ext_shaped_sig.load(ext_shaped_sig_path, arma::file_type::csv_ascii);
         double ext_sig_pulse_width = step_size * ext_shaped_sig.size();
         this->set_pulse_width(ext_sig_pulse_width);
+//        std::cout << "Gate: " << tag << " shaped signal:\n " << ext_shaped_sig << std::endl;
     } else {
         this->set_pulse_width(gate_config["pulse_width"]);
     }

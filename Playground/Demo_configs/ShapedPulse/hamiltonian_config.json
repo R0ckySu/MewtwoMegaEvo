@@ -1,0 +1,45 @@
+{
+  "hamiltonian_prototype_defs": [
+    {
+      "tag": "system",
+      "type": "static",
+      "enable": false,
+      "amplitude": 2e9,
+      "h_pauli_mat": "Z",
+      "waveform_path":""
+    },
+    {
+      "tag": "X1",
+      "type": "mw",
+      "enable": true,
+      "amplitude":2.5e5,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 0,
+      "phase": 0,
+      "h_pauli_mat": "X",
+      "waveform_path":""
+    },
+    {
+      "tag": "Z1",
+      "type": "mw",
+      "enable": true,
+      "amplitude": 2.5e7,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 0,
+      "phase": 0,
+      "h_pauli_mat": "Z",
+      "waveform_path":""
+    },
+    {
+      "tag": "noise1",
+      "type": "noise",
+      "enable": false,
+      "amplitude":1,
+      "h_pauli_mat": "Z",
+      "lag_time": 0,
+      "waveform_path":"./NoiseData/PinkNoise_amp_2e4_samp_10ns/PinkNoise_amp_2e4_samp_10ns#.csv"
+    }
+  ]
+}

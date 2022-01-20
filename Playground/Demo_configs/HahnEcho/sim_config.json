@@ -1,0 +1,23 @@
+{
+  "task_name": "Hahn1Q",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_unitary": false,
+  "record_all_meas": false,
+  "record_all_density_mat": false,
+  "enable_param_parallel_mode":false,
+  "system_dim": 2,
+  "observables": ["Zp","Zm"],
+  "init_states": ["rho0"],
+  "repeat" : 40,
+  "step_size": 1e-8,
+  "sequence": "x-F-x-x-F-x-M",
+  "sweep_param_info": [
+    {
+      "class":"Gate",
+      "tag":"F",
+      "property":"pulse_width",
+      "val_file":"tau"
+    }
+  ]
+}

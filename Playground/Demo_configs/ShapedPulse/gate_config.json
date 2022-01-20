@@ -1,0 +1,22 @@
+{ 
+  "gate_defs": [
+    {
+      "tag": "x",
+      "hamiltonians": ["X1"],
+      "pulse_width": 1e-5,
+      "ext_shaped_sig_path":"/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/x_shape_sig"
+    },
+    {
+      "tag": "z",
+      "hamiltonians": ["Z1"],
+      "pulse_width": 1e-8,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "F",
+      "hamiltonians": [],
+      "pulse_width": 5e-6,
+      "ext_shaped_sig_path":""
+    }
+  ]
+}
