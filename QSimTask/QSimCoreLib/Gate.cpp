@@ -67,6 +67,10 @@ TimingDesc Gate::description() {
     return desc;
 }
 
+Gate::~Gate() {
+    arma::vec().swap(ext_shaped_sig);
+}
+
 /**********************************************************************************************************************/
 
 //std::vector<std::string> FID::decode_param_str(std::string params) {

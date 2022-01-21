@@ -21,6 +21,7 @@ class Gate: public TimingBasic {
 public:
     //Initialiser
     Gate();
+    ~Gate();
     explicit Gate(nlohmann::json gate_config, double _step_size);
     //Copy constructor
     Gate(const TimingBasic &t,const Gate &g);

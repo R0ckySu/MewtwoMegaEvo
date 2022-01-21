@@ -39,14 +39,17 @@ void Sequence::generate_switching_sig() {
 
         std::cout << "Sequence:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << gate_unit->get_end_index() << std::endl;
 
-        if (gate_switching_map.find(gate_unit->tag) != gate_switching_map.end()) {
-            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
-        } else {
+        if (gate_switching_map.find(gate_unit->tag) == gate_switching_map.end()) {
             std::cout << "Sequence:" << gate_unit->tag << " generating new switching" << std::endl;
             arma::vec new_switching = arma::vec(get_total_num_steps()).fill(0);
-            new_switching.subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
             std::pair<gate_tag_type, arma::vec> new_gate_swicthing_entry = std::pair<gate_tag_type, arma::vec>(gate_unit->tag,new_switching);
             gate_switching_map.insert(new_gate_swicthing_entry);
+        }
+
+        if (empty(gate_unit->ext_shaped_sig_path)) {
+            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(1);
+        } else {
+            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()) = gate_unit->ext_shaped_sig;
         }
     }
 

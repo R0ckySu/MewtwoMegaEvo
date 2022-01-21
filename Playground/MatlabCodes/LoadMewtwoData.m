@@ -33,15 +33,21 @@ function dataset = LoadMewtwoData(data_path)
         % Loop over observable symbols
         dataset.meas_marker.(observable_array{o_idx}) = struct();
         for i_idx = 1:length(init_state_array)
-            data_cell_array_collect = [];
+            data_cell_array_collect_meas_marker = [];
+            data_cell_array_collect_rho_marker = [];
             for f_idx = 1:length(all_valid_file_names)
                 for p_idx = 0:param_collect_struct.num_of_params_for_each_file(f_idx)-1
                     dataset_name = ['/meas_marker','/#',num2str(p_idx),'/',observable_array{o_idx},'/',init_state_array{i_idx}];
                     data_temp = h5read([data_path,filesep, all_valid_file_names{f_idx}],dataset_name);
-                    data_cell_array_collect = [data_cell_array_collect, {data_temp}];
+                    data_cell_array_collect_meas_marker = [data_cell_array_collect_meas_marker, {data_temp}];
+
+                    dataset_name = ['/rho_marker','/#',num2str(p_idx),'/',init_state_array{i_idx}];
+                    data_temp = h5read([data_path,filesep, all_valid_file_names{f_idx}],dataset_name);
+                    data_cell_array_collect_rho_marker = [data_cell_array_collect_rho_marker, {data_temp.real+1i*data_temp.imag}];
                 end
             end
-            dataset.meas_marker.(observable_array{o_idx}).(init_state_array{i_idx}) = data_cell_array_collect;
+            dataset.meas_marker.(observable_array{o_idx}).(init_state_array{i_idx}) = data_cell_array_collect_meas_marker;
+            dataset.rho_marker.(init_state_array{i_idx}) = data_cell_array_collect_rho_marker;
         end
     end
 
