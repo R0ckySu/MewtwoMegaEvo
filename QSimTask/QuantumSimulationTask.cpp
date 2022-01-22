@@ -35,11 +35,13 @@ void QSimTask::launch_task() {
     task_log(std::string("QSimTask: Device has ").append(std::to_string(max_num_of_threads)).append(" threads."),1);
     if(enable_param_parallel_mode) {
         param_schedule.process_prameter_vec_with_job_slicing_strategy(job_id,num_job_group,job_slicing_strategy);
+        param_schedule.save_param_list_to_h5(get_result_file_name());
         task_log("QSimTask: Task started, sweeping parallelized along parameters",1);
         sweeping_param_parallel();
     } else {
         task_log("QSimTask: Task started, sweeping parallelized along repeat",1);
         param_schedule.process_prameter_vec_with_job_slicing_strategy(job_id,num_job_group,job_slicing_strategy);
+        param_schedule.save_param_list_to_h5(get_result_file_name());
         sweeping_repeat_parallel();
     }
 }
@@ -205,7 +207,7 @@ void QSimTask::load_sim_configs() {
         std::string copyConfigFileCommand = std::string("cp -v ").append(config_file_folder).append("/* ").append(new_config_file_folder);
         system(copyConfigFileCommand.c_str());
     }
-    param_schedule.save_param_list_to_h5(get_result_file_name());
+
 
     // Load initial states
     rho_inits = std::vector<symbolic_matrix>();
