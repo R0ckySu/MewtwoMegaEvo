@@ -7,13 +7,20 @@ function param_info_h5 = CollecrH5ParamList(data_path, file_name_list)
 %         info = h5info(file_name); 
         info = h5info(file_name, '/param_lists'); 
 %         param_info_temp = [info.Attributes];
-        if f_idx == 1
-            param_names = {info.Datasets.Name};
-        end
+        num_of_params_in_slice = 0;
+        
+        param_names = {info.Datasets.Name};
         for p_idx = 1:length(param_names)
-            param_info_h5.(param_names{p_idx}) = h5read(file_name, ['/param_lists/',param_names{p_idx}]);
+            loaded_param_list = h5read(file_name, ['/param_lists/',param_names{p_idx}]);
+            if f_idx == 1
+                param_info_h5.(param_names{p_idx}) = loaded_param_list;
+            else
+                param_info_h5.(param_names{p_idx}) = [param_info_h5.(param_names{p_idx}); loaded_param_list];
+            end
+            num_of_params_in_slice = length(loaded_param_list);
         end
-        num_of_params_for_each_file(f_idx) = length(param_info_h5.(param_names{1}));
+        
+        num_of_params_for_each_file(f_idx) = num_of_params_in_slice;
     end
     param_info_h5.param_names = param_names;
     param_info_h5.num_of_params_for_each_file = num_of_params_for_each_file;
