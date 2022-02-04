@@ -10,6 +10,7 @@
 RTTR_REGISTRATION{
     rttr::registration::class_<Hamiltonian>("Hamiltonian")
             .property("amplitude",&Hamiltonian::amplitude)
+            .property("waveform_path", &Hamiltonian::external_waveform_path)
             .property("h_mat",&Hamiltonian::h_mat);
 
     rttr::registration::class_<Gated_Hamiltonian>("Gated_Hamiltonian")
@@ -307,6 +308,7 @@ Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {}
 Noise_Hamiltonian::Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &m): Hamiltonian(h) {
     shift_time = m.shift_time;
     randomStartPosFactor = m.randomStartPosFactor;
+    external_waveform_path = m.external_waveform_path;
 }
 
 Noise_Hamiltonian::Noise_Hamiltonian(nlohmann::json noise_config, std::string config_path) : Hamiltonian(noise_config, config_path)  {

@@ -313,17 +313,25 @@ SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
             parametric_prop.set_value(*gate_obj,param_val);
             std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
         } else if (type_name == "Hamiltonian") {
-            auto val_name = param_schedule.param_info_table.at(i).at("val_file");
-            auto param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
             Hamiltonian * hamiltonian_obj;
             if (reloaded_prototypes->ctrl_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->ctrl_hamiltonian_prototype_map.end()){
                 hamiltonian_obj = reloaded_prototypes->ctrl_hamiltonian_prototype_map[tag];
             } else if (reloaded_prototypes->noise_hamiltonian_prototype_map.find(tag) != reloaded_prototypes->noise_hamiltonian_prototype_map.end()) {
                 hamiltonian_obj = reloaded_prototypes->noise_hamiltonian_prototype_map[tag];
             }
-            rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
-            parametric_prop.set_value(*hamiltonian_obj,param_val);
-            std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
+            if (param_schedule.param_info_table.at(i).count("val_file")) {
+                auto val_name = param_schedule.param_info_table.at(i).at("val_file");
+                auto param_val = param_schedule.param_val_vec_map.at(val_name).at(index);
+                rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
+                parametric_prop.set_value(*hamiltonian_obj,param_val);
+                std::cout << "QSimTask: Parameter " << ", with val=" << std::to_string(param_val) << " is reloaded" << std::endl;
+            } else if(param_schedule.param_info_table.at(i).count("string_file")) {
+                auto string_file_name = param_schedule.param_info_table.at(i).at("string_file");
+                auto param_string = param_schedule.param_string_vec_map.at(string_file_name).at(index);
+                rttr::property parametric_prop = rttr::type::get(*hamiltonian_obj).get_property(property_name);
+                parametric_prop.set_value(*hamiltonian_obj,param_string);
+                std::cout << "QSimTask: Parameter " << ", with string=" << param_string << " is reloaded" << std::endl;
+            }
         } else if (type_name == "Sequence") {
             auto string_file_name = param_schedule.param_info_table.at(i).at("string_file");
             auto param_string = param_schedule.param_string_vec_map.at(string_file_name).at(index);
