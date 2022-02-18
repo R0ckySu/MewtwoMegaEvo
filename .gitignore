@@ -40,6 +40,6 @@ cmake-build-debug/
 
 */sim_results/*
 */NoiseData/*
-*/config_files/*
+Playground/config_files/*
 */MewtwoMegaEvo
 */NoiseGen
