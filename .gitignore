@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+*.asv
 
 *.dSYM
 cmake-build-debug/
@@ -40,3 +41,5 @@ cmake-build-debug/
 */sim_results/*
 */NoiseData/*
 */config_files/*
+*/MewtwoMegaEvo
+*/NoiseGen
