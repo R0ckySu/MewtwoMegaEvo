@@ -15,8 +15,8 @@ add_subdirectory(QSimCoreLib)
 
 target_link_libraries(QSimTask PRIVATE QSimCoreLib)
 target_link_libraries(QSimTask PRIVATE omp)
+target_link_libraries(QSimTask PRIVATE hdf5_cpp)
 target_link_libraries(QSimTask PRIVATE hdf5)
-target_link_libraries(QSimTask PRIVATE h5cpp)
 
 set(CMAKE_CXX_FLAGS -fopenmp)
 set(CMAKE_C_FLAGS -fopenmp)

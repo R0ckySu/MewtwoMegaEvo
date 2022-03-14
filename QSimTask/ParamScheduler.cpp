@@ -5,6 +5,7 @@
 #include "ParamScheduler.h"
 #include "QSimCoreLib/Utils.h"
 #include <fstream>
+#include "H5Cpp.h"
 #include <h5cpp/hdf5.hpp>
 
 ParamScheduler::ParamScheduler() {
@@ -157,40 +158,47 @@ void ParamScheduler::process_prameter_vec_with_job_slicing_strategy(int job_id, 
 }
 
 void ParamScheduler::save_param_list_to_h5(const std::string &path) {
-    hdf5::file::File f = hdf5::file::create(path, hdf5::file::AccessFlags::Truncate);
-    // create a group
-    hdf5::node::Group root_group = f.root();
-    hdf5::node::Group param_group = root_group.create_group("param_lists");
+    H5::H5File f(path.c_str(), H5F_ACC_TRUNC);
+    H5::Group param_group = f.createGroup("/param_lists");
+
+    H5::StrType datatype(H5::PredType::NATIVE_CHAR);
+    datatype.setOrder(H5T_ORDER_LE);
 
     for (auto param_val_item : param_val_vec_map) {
-        std::string val_name = param_val_item.first;
         std::vector<double> attrdata = arma::conv_to<std::vector<double>>::from(param_val_item.second);
-        hdf5::node::Dataset dataset = param_group.create_dataset(val_name,hdf5::datatype::create<double>(),
-                                                                 hdf5::dataspace::create(attrdata));
-        dataset.write(attrdata);
+        double arr[attrdata.size()];
+        // Copy all elements of vector to array
+        std::copy(attrdata.begin(),attrdata.end(),arr);
+
+        hsize_t dimsf[1];              // dataset dimensions
+        dimsf[0] = attrdata.size();
+        H5::DataSpace dataspace( 1, dimsf );
+        H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
+        std::string val_name = param_val_item.first;
+        H5::DataSet d = param_group.createDataSet(val_name.c_str(), datatype, dataspace);
+        d.write(arr, H5::PredType::NATIVE_DOUBLE);
     }
 
     for (auto param_string_item : param_string_vec_map) {
-        std::string string_file_name = param_string_item.first;
+        std::string str_name = param_string_item.first;
         std::vector<std::string> attrdata = param_string_item.second;
-        hdf5::node::Dataset dataset = param_group.create_dataset(string_file_name,hdf5::datatype::create<std::string>(),
-                                                                 hdf5::dataspace::create(attrdata));
-        dataset.write(attrdata);
+        std::vector<const char*> c_strs;
+        std::transform(std::begin(attrdata), std::end(attrdata),
+                       std::back_inserter(c_strs), std::mem_fn(&std::string::c_str));
+
+        hsize_t dimsf[1];              // dataset dimensions
+        dimsf[0] = attrdata.size();
+        H5::DataSpace dataspace( 1, dimsf);
+
+        auto dtype = H5Tcopy (H5T_C_S1);
+        H5Tset_size(dtype, H5T_VARIABLE);
+
+
+        H5::DataSet d = param_group.createDataSet(str_name.c_str(), dtype, dataspace);
+        d.write(c_strs.data(), dtype);
+        d.close();
     }
 
-//    for (int i = 0; i < param_info_table.size(); ++i) {
-//        if (param_info_table.at(i).find("val_file") != param_info_table.at(i).end()) {
-//            std::string val_name = param_info_table.at(i)["val_file"];
-//            std::vector<double> attrdata = arma::conv_to<std::vector<double>>::from(param_val_vec_map[val_name]);
-//            hdf5::node::Dataset dataset = param_group.create_dataset(val_name,hdf5::datatype::create<double>(),
-//                                                              hdf5::dataspace::create(attrdata));
-//            dataset.write(attrdata);
-//        } else if(param_info_table.at(i).find("string_file") != param_info_table.at(i).end()) {
-//            std::string string_file_name = param_info_table.at(i)["string_file"];
-//            std::vector<std::string> attrdata = param_string_vec_map[string_file_name];
-//            hdf5::node::Dataset dataset = param_group.create_dataset(string_file_name,hdf5::datatype::create<std::string>(),
-//                                                                    hdf5::dataspace::create(attrdata));
-//            dataset.write(attrdata);
-//        }
-//    }
+    param_group.close();
+    f.close();
 }
