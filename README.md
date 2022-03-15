@@ -22,7 +22,7 @@ In a nutshell, the core functionality of this software is to solve the time-depe
 5. Json (nlohmann::json Fetched by CMake, No need to install manually)
 6. [RTTR](https://www.rttr.org) Allows C++ do run time reflection with this lib 
 7. [muparserx](https://beltoforion.de/en/muparserx/index.php#idIntro) math expression parser.
-8. [exprtk](https://github.com/ArashPartow/exprtk) Will be replaced by muparserx.
+8. [exprtk](https://github.com/ArashPartow/exprtk) Math expression parser, will be replaced by muparserx in future update.
 
 ## Quick Start Guide
 1. In your command line prompt, go to the playground of MewtwoMegaEvo
@@ -61,12 +61,12 @@ Copy the last line of the output:
 LoadMeasMarkerData('/*****/Playground/sim_results/*******')
 ````
 
-6. Open Matlab, run the follows commands to plot the results:
+6. Open Matlab, run the following commands to plot the results:
 ````
 data=LoadMewtwoData('/*****/Playground/sim_results/*******');
 figure;
 imagesc(XData=data.collected_param_list.param_vec, CData=cell2mat(data.meas_marker.Z.Z));
-xlabel('Mod Freq');ylabel('ith Meas Marker');
+xlabel('Mod Freq');ylabel('i^{th} Meas Marker');
 ````
 
 ## Design and Features
@@ -457,3 +457,13 @@ need to span different parameters to different dimensions. ParamSpan() can span 
 multidimensional parameter lists by meshgrid. For e.x., if we have 3 different parameter list, with length of M, N, K, need to be swept from 
 different dimensions. ParamSpan is exporting 3 parameter list with same length of (M * N * K). We can replace the file names 
 with the exported files in the sim_config.json to perform the multidimensional sweeping. String or numerical parameter lists are all accepted.
+
+## Roadmap for future version
+### Dynamic time resolution simulation
+Dynamic time resolution simulation is a technique allows us to have different zones of time resolution in a single simulation.
+This is especially useful when the amplitude of pulsed Hamiltonians are several orders of magnitude different. This would burn horrible 
+scale of the memory resources and makes the seemingly easy simulation super hard. For e.x., if we have AWG_Hamiltonian in THz regime, while 
+microwave Hamiltonian in GHz regime, and the total simulation time is around few ms, we will need 10^9 steps for just a single shot!
+However, the AWG Hamiltonian may only be pulsed for few ns, which means we are wasting tremendous computation resource! <br/>
+To make it possible, we will need context switching strategy for different time resolution zones.
+### Webbased User Interface
