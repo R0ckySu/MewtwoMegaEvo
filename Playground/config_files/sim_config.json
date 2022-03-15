@@ -1,22 +1,23 @@
 {
-  "task_name": "2QSingletQNS",
+  "task_name": "RabiChevron",
   "log_level": 4,
   "job_slicing_strategy":"linspace",
   "record_unitary": false,
-  "record_all_meas": true,
-  "enable_param_parallel_mode":false,
-  "system_dim": 4,
-  "observables": ["YI"],
-  "init_states": ["YI"],
-  "repeat" : 16,
-  "step_size": 1e-8,
-  "sequence": "[F(T/4)-X1pi-F(T/2)-X1pi-F(T/4)-M]^10",
+  "record_all_meas": false,
+  "record_all_density_mat": false,
+  "enable_param_parallel_mode":true,
+  "system_dim": 2,
+  "observables": ["Z"],
+  "init_states": ["Z"],
+  "repeat" : 1,
+  "step_size": 1e-10,
+  "sequence": "[Xpi(T/20)-M]^80",
   "sweep_param_info": [
     {
-      "class":"Gate",
-      "tag":"F",
-      "property":"pulse_width",
-      "param_name":"tau"
+      "class":"Hamiltonian",
+      "tag":"X1",
+      "property":"freq",
+      "val_file":"param_vec"
     }
   ]
 }

@@ -14,16 +14,60 @@ In a nutshell, the core functionality of this software is to solve the time-depe
 3. CMake 3.21+
 4. make 4.2.1
 
-### Required Library dependencies
+### Required Libraries
 1. [HDF5](https://www.hdfgroup.org/solutions/hdf5/) (Required by Armadillo, install before Armadillo)
-2.0 Math libs Required by Armadillo: Intel-MKL(Recommand for x86) Or OpenBlas+LAPACK(ARM)
-2.1 [Armadillo](http://arma.sourceforge.net/download.html) 10.1.0+ (confirm the symbol ARMA_USE_HDF5 in armadillo_bits/config.hpp is defined before compile the lib)
-2. openMP (Embeded in gcc, No need to install manually)
-3. Json (nlohmann::json Fetched by CMake, No need to install manually)
-4. [RTTR](https://www.rttr.org) Allows C++ do run time reflection with this lib 
-5. [muparserx](https://beltoforion.de/en/muparserx/index.php#idIntro) math expression parser.
-6. [exprtk](https://github.com/ArashPartow/exprtk) Will be replaced by muparserx.
+2. Math libs Required by Armadillo: Intel-MKL(Recommand for x86) Or OpenBlas+LAPACK(ARM)
+3. [Armadillo](http://arma.sourceforge.net/download.html) 10.1.0+ (confirm the symbol ARMA_USE_HDF5 in armadillo_bits/config.hpp is defined before compile the lib)
+4. openMP (Embeded in gcc, No need to install manually)
+5. Json (nlohmann::json Fetched by CMake, No need to install manually)
+6. [RTTR](https://www.rttr.org) Allows C++ do run time reflection with this lib 
+7. [muparserx](https://beltoforion.de/en/muparserx/index.php#idIntro) math expression parser.
+8. [exprtk](https://github.com/ArashPartow/exprtk) Will be replaced by muparserx.
 
+## Quick Start Guide
+1. In your command line prompt, go to the playground of MewtwoMegaEvo
+
+```shell
+cd $MEWTWOINSTALLPATH$/MewtwoMegaEvo/Playground
+```
+2. On the playground, you will see the following folders and files:
+````
+/Playground|
+           |- /config_files     #Default path for MewtwoMegaEvo fetch configuration json files
+           |- /Demo_configs     #Provide demo configurations, covers most of the functionality of this software
+           |- /MatlabFunctions  #Provide Matlab tool functions for data postprocessing in matlab.
+           |- /NoiseData        #Default noise data export folder for noise generator. (If not exist pls create one)
+           |- /sim_results      #Default folder for storing simulation results. (If not exist pls create one)
+           |- job_slice.sh      #Shell script for HPC player, can slice giant task into pieces of independent child-tasks.
+           |- MewtwoMegaEvo     #Simulator software
+           |- NoiseGen          #Arbituary noise generator
+           |- noise_config.json #Default noise generation configuration json file
+````
+
+3. Prepare the configuration files by copying demo configurations to \config_files, let's take Rabi-Cheveron as example
+````shell
+rm ./config_files/*
+cp ./Demo_configs/RabiChevron/* ./config_files/
+````
+
+4. Now we are ready to play!
+````shell
+./MewtwoMegaEvo
+````
+
+5. When simulator finish its job, data will be dumpped to './sim_results'. <br/>
+Copy the last line of the output: 
+````
+LoadMeasMarkerData('/*****/Playground/sim_results/*******')
+````
+
+6. Open Matlab, run the follows commands to plot the results:
+````
+data=LoadMewtwoData('/*****/Playground/sim_results/*******');
+figure;
+imagesc(XData=data.collected_param_list.param_vec, CData=cell2mat(data.meas_marker.Z.Z));
+xlabel('Mod Freq');ylabel('ith Meas Marker');
+````
 
 ## Design and Features
 ![archetechture](docs/archetechture.png)
@@ -83,11 +127,11 @@ divide the whole task into groups with same size. If the complexity growing with
 For example, if a parametric sweeping task has n parameters to sweep through. The whole task can be sliced into several 
 groups by the strategies listed in the table below, so that HPC users can submit each sliced job to different HPC nodes.
 
-Provided the number of the groups (jobs) you wish to submit in the [command arg (-g & -i)](#Command-args), and specify 
+Provided the number of the groups (jobs) you wish to slice in the [command arg (-g & -i)](#Command-args), and specify 
 the strategy in the sim_config.json, then the simulation running on each job will know the range of the parameter vector
 they are responsible for.
 
- e.x.: Task with n parameters will be sliced into g groups, then the end index of each job will be:
+ e.x.: Task with n parameters will be sliced into g groups, then the end parameter index of each job will be:
  
 | strategy  | End index list for each job |
 | ----------- | ----------- | 
@@ -96,9 +140,8 @@ they are responsible for.
 | inv_logspace | n - round(logspace(0,log10(n),g)), repeated indices shift by +1 (Only non-repeated integers are perserved)|
 
 ### Arb Noise Generator
-NoiseGen is the noise generator for generating Gaussian noise with arbituary spectrum function. Two generation modes, arb and colored are 
-provided to generate general simple colored noise and arbituary spectrum noise by providing symbolic function. Noise channels are generated 
-in parallel, which is super efficient.
+NoiseGen is the noise generator for generating Gaussian noise. Two generation modes, arb and colored are 
+provided to generate general simple colored noise and arbituary spectrum noise by providing symbolic function.
 
 ## User guide
 ### Command args
@@ -161,22 +204,21 @@ sim_config.json provides all the general configurations of the simulation.
   ]
 }
 ```
-| field name  | description                                                                                                                                                |
-| ----------- |------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| task_name | Defines task name, which will be the name prefix of the exported data folder                                                                               |
-| log_level | Controls the level of detail of the log output. Larger num will output more detailed log (Not fully implemented yet)                                       |
-| job_slicing_strategy | "logspace", "linspace", "inv_logspace" See [Job slicing for HPC](#Job-slicing-for-high-performance-computer)                                               |
-| record_unitary | Set true will output all of the unitary matrix generated on simulation (Time consuming)                                                                    |
-| record_all_meas | Set true, measurement will be taken at every time point.                                                                                                   |
-| record_all_density_mat | Set true, record density matrix for each init state configuration.                                                                                         |
-| system_dim | Defines the dimension of the Hilbert space                                                                                                                 |
-| observables | List of the observables (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                   |
-| init_states | List of the density matrices at t=0 (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                       |
-| repeat | Defines the num of repeat. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian)                                    |
-| step_size | Time resolution of the simulation in second.                                                                                                               |
-| sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations))                                                      |
-| sweep_param_info | All the numeric fields in the gate and hamiltonian config files could be charged with parametric sweeping. See [parametric sweeping](#Parametric-Sweeping) |
-
+| field name  | description                                                                                                                                                                                         |
+| ----------- |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| task_name | Defines task name, which will be the name prefix of the exported data folder                                                                                                                        |
+| log_level | Controls the level of detail of the log output. Larger num will output more detailed log (Not fully implemented yet)                                                                                |
+| job_slicing_strategy | "logspace", "linspace", "inv_logspace" See [Job slicing for HPC](#Job-slicing-for-high-performance-computer)                                                                                        |
+| record_unitary | Set true will output all of the unitary matrix generated on simulation (Time consuming)                                                                                                             |
+| record_all_meas | Set true, measurement will be taken at every time point.                                                                                                                                            |
+| record_all_density_mat | Set true, record density matrix for each init state configuration.                                                                                                                                  |
+| system_dim | Defines the dimension of the Hilbert space                                                                                                                                                          |
+| observables | List of the observables (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                                                            |
+| init_states | List of the density matrices at t=0 (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                                                |
+| repeat | Defines the num of repeat. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian)                                                                             |
+| step_size | Time resolution of the simulation in second.                                                                                                                                                        |
+| sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations))                                                                                               |
+| sweep_param_info | All the numeric fields in the gate and hamiltonian config files could be charged with parametric sweeping. Limited string fields can also be swept. See [parametric sweeping](#Parametric-Sweeping) |
 
 #### gate_config.json
 gate_config.json provides all the gate prototypes for building symbolic sequences for our simulation task.
@@ -295,12 +337,13 @@ The field in the configurations you wish to perform parametric sweeping is locat
   }
 ```
 
-| sweep_param_info field name  | description                                             |
-| ----------- |---------------------------------------------------------|
-|class| can provide param sweep for Sequence/Gate/Hamiltonian obj |
-|tag| tag locates the object for sweeping parameter to load   |
-|property| specify the property to be swept                        |
-|val_file/string_file| specify the file name of the parameter list             |
+| sweep_param_info field name | description                                                                                  |
+|-----------------------------|----------------------------------------------------------------------------------------------|
+| class                       | can provide param sweep for Sequence/Gate/Hamiltonian obj                                    |
+| tag                         | tag locates the object for sweeping parameter to load                                        |
+| property                    | specify the property to be swept                                                             |
+| val_file                    | specify the file name of the numerical parameter list                                        |
+| string_file                 | specify the file name of string list (Only Sequence symbol and waveform_path of Hamiltonian) |
 
 ##### Sweeping Symbolic sequence by parametric alias
 
@@ -343,7 +386,11 @@ NOTE: Symbol "M" is reserved as measurement marker.
 ##### Noise Hamiltonian
 
 ### Output data
-Output result data will be saved as HDF5 file.
+Output result data from each job will be saved as one HDF5 file.
+1. meas_marker records the measurement result at the position of the meas marker "M".
+2. When record_all_density_mat is enabled, density matrix at the "M" will also be recorded.
+3. When record_all_meas is enabled, 'meas_all' and 'rho_all' will dump the data for every single time point.
+4. param_list keeps the list of the parameters that the job has swept.
 
 Data structure:
 ```
@@ -394,3 +441,18 @@ Data structure:
 | length      | set the length of the noise signal for each channel                                                                      |
 | amplitude   | set the amplitude of the noise signal                                                                                    |
 | export_dir  | set the export path for the generated noise data                                                                         |
+
+### Matlab Scripts
+This software package also provide matlab tool functions to make data postprocessing easier.
+To use the matlab functions, we can add './Playground/MatlabFunctions/' into the matlab path environment.
+
+#### LoadMewtwoData()
+Since all of the data are saved in HDF5 format. This matlab function will allows us to load the data struct with 
+a single line of the function call. For the job-sliced tasks, data are dumped in different files in the same folder. 
+This function can also glue all the data from different hdf5 file all together and presented as single matlab struct.
+#### ParamSpan()
+One of the important feature of this software package is multi-parameter sweeping simulation. However, sometimes we 
+need to span different parameters to different dimensions. ParamSpan() can span multiple 1D parameter lists into 
+multidimensional parameter lists by meshgrid. For e.x., if we have 3 different parameter list, with length of M, N, K, need to be swept from 
+different dimensions. ParamSpan is exporting 3 parameter list with same length of (M * N * K). We can replace the file names 
+with the exported files in the sim_config.json to perform the multidimensional sweeping. String or numerical parameter lists are all accepted.

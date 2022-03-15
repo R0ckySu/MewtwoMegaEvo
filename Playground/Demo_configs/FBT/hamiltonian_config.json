@@ -35,11 +35,11 @@
     {
       "tag": "noise1",
       "type": "noise",
-      "enable": false,
+      "enable": true,
       "amplitude":1,
       "h_pauli_mat": "Z",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/NoiseData/PinkNoise_amp_2e3_samp_10ns/PinkNoise_amp_2e3_samp_10ns#.csv"
+      "waveform_path":"./NoiseData/PinkNoise_amp_2e4_samp_10ns/PinkNoise_amp_2e4_samp_10ns#.csv"
     }
   ]
 }

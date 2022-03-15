@@ -138,7 +138,7 @@ void NoiseBasic::generate_colored_noise_amp_func() {
     // 1/f amplitude
     arma::vec freq_amp = _fft_freq(new_steps, 1/time_step);
     // Make sure the dc component is zero.
-    if (alpha < 1) {
+    if (alpha > 0) {
         freq_amp(0) = 1e300;
     } else {
         freq_amp(0) = 1e-300;

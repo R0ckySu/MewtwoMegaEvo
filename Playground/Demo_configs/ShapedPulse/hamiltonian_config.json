@@ -35,7 +35,7 @@
     {
       "tag": "noise1",
       "type": "noise",
-      "enable": false,
+      "enable": true,
       "amplitude":1,
       "h_pauli_mat": "Z",
       "lag_time": 0,

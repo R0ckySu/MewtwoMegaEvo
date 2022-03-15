@@ -1,12 +1,12 @@
 {
-  "tag":"ArbNoise0",
-  "channels":16,
+  "tag":"PinkNoise_amp_8e4_samp_10ns",
+  "channels":1,
   "start_idx":0,
-  "time_step":1e-9,
-  "mode":"arb",
-  "noise_expr": "abs(f)^(-0.9)+0.0001*log(f)",
+  "time_step":1e-8,
+  "mode":"colored",
+  "noise_expr": "",
   "alpha":0.9,
-  "length":1e6,
-  "amplitude":2e5,
-  "export_dir":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/ArbNoiseTest/"
+  "length":2e5,
+  "amplitude":8e4,
+  "export_dir":"./NoiseData/PinkNoise_amp_8e4_samp_10ns/"
 }

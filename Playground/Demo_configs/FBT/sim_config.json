@@ -5,11 +5,11 @@
   "record_unitary": false,
   "record_all_meas": false,
   "record_all_density_mat": false,
-  "enable_param_parallel_mode":true,
+  "enable_param_parallel_mode":false,
   "system_dim": 2,
   "observables": ["Zp","Zm"],
   "init_states": ["rho0"],
-  "repeat" : 1,
+  "repeat" : 10,
   "step_size": 1e-8,
   "sequence": "$S-M",
   "sweep_param_info": [

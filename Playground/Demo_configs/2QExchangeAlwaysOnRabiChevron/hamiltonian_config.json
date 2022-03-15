@@ -79,7 +79,7 @@
       "amplitude":1e6,
       "h_pauli_mat": "IZ",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/Pink0MeanNoise#.csv"
+      "waveform_path":"./NoiseData/Pink0MeanNoise#.csv"
     },
     {
       "tag": "noise2",
@@ -88,7 +88,7 @@
       "amplitude":1e6,
       "h_pauli_mat": "ZI",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNon0NoiseOnRotFrame_Y#.csv"
+      "waveform_path":"./NoiseData/PinkNon0NoiseOnRotFrame_Y#.csv"
     }
   ]
 }

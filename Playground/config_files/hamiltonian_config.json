@@ -1,32 +1,33 @@
 {
   "hamiltonian_prototype_defs": [
     {
+      "tag": "system",
+      "type": "static",
+      "enable": true,
+      "amplitude": 2e9,
+      "h_pauli_mat": "Z",
+      "waveform_path":""
+    },
+    {
       "tag": "X1",
       "type": "mw",
       "enable": true,
-      "amplitude":6.666666666666666e+06,
-      "freq": 0,
+      "amplitude":1e5,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 2e9,
       "phase": 0,
-      "h_pauli_mat": "XI",
+      "h_pauli_mat": "X",
       "waveform_path":""
     },
     {
       "tag": "noise1",
       "type": "noise",
-      "enable": true,
-      "amplitude":1e3,
-      "h_pauli_mat": "ZI",
+      "enable": false,
+      "amplitude":1e1,
+      "h_pauli_mat": "Z",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoise#.csv"
-    },
-    {
-      "tag": "noise2",
-      "type": "noise",
-      "enable": true,
-      "amplitude":1e3,
-      "h_pauli_mat": "IZ",
-      "lag_time": 0,
-      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoise#.csv"
+      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ11#.csv"
     }
   ]
 }

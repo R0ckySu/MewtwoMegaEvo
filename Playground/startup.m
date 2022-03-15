@@ -1,3 +1,3 @@
-addpath ./MatlabCodes/
+addpath ./MatlabFunctions/
 
 Constants
