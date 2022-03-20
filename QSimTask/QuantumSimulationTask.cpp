@@ -24,10 +24,10 @@ QSimTask::QSimTask() {
     result_output_folder = std::string(current_path).append("/").append(OUTPUT_FOLDER_NAME);
     job_id = 0;
     num_job_group = 1;
+    noise_sig_cache = ExtSigCache();
 }
 
 QSimTask::~QSimTask() {
-
 }
 
 void QSimTask::launch_task() {
@@ -166,6 +166,7 @@ void QSimTask::sweeping_param_parallel() {
 
         delete ctrl_hamiltonian_time_dep;
         delete seq;
+//        noise_sig_cache.clean_cache();
     }
 }
 
@@ -398,6 +399,7 @@ arma::cx_cube* QSimTask::compile_time_dep_noise_hamiltonian (
     noise_hamiltonian_time_dep->fill(0);
     for (const auto& noise_hamiltonian_item : hamiltonian_prototype_map) {
         auto * noise_h_temp = new Noise_Hamiltonian(*noise_hamiltonian_item.second);
+        noise_h_temp->ext_sig_cache = &noise_sig_cache;
         noise_h_temp->num_of_steps = total_num_steps;
         noise_h_temp->step_size = step_size;
         noise_h_temp->randomStartPosFactor = random_start_pos_factor.at(noise_idx);

@@ -10,6 +10,7 @@
 #include "QSimCoreLib/QSimCore.h"
 #include "ParamScheduler.h"
 #include "SimPrototypes.h"
+#include "QSimCoreLib/ExtSigCache.h"
 
 #define CONFIG_FOLDER_NAME "config_files"
 #define OUTPUT_FOLDER_NAME "sim_results"
@@ -27,6 +28,7 @@ public:
     std::string task_time_stamp;
     std::string config_file_folder;
     std::string result_output_folder;
+    ExtSigCache noise_sig_cache;
 
     nlohmann::json sim_configs;
     nlohmann::json gate_configs;

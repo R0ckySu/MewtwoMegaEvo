@@ -8,6 +8,7 @@
 #include <rttr/rttr_enable.h>
 #include "nlohmann/json.hpp"
 #include "Utils.h"
+#include "ExtSigCache.h"
 
 typedef std::string hamiltonian_tag_type;
 
@@ -25,6 +26,7 @@ public:
     symbolic_matrix h_mat;
     arma::cx_vec wave_form;
     std::string external_waveform_path;
+    ExtSigCache* ext_sig_cache;
 
     Hamiltonian();
     explicit Hamiltonian(nlohmann::json h_config, std::string config_path);

@@ -13,7 +13,9 @@ add_library(
         Sequence.cpp
         TimingBasic.cpp TimingBasic.h
         Utils.cpp
-        Measurement.cpp)
+        Measurement.cpp
+        ExtSigCache.cpp
+)
 
 #target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 #target_link_libraries(QSimCoreLib PRIVATE omp)

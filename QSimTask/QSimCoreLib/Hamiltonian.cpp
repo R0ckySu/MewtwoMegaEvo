@@ -33,7 +33,8 @@ void Hamiltonian::load_ext_waveform(int param_index) {
         std::string datapath_index = std::string(external_waveform_path);
         int sharp_pos = datapath_index.find_first_of('#');
         datapath_index.insert(sharp_pos+1,std::to_string(param_index));
-        wave_form.load(datapath_index,arma::csv_ascii);
+        wave_form = (*ext_sig_cache).load_from_cache(datapath_index);
+//        wave_form.load(datapath_index,arma::csv_ascii);
         wave_form = wave_form * amplitude;
         std::cout << "Hamiltonian: Loaded external waveform:" << datapath_index << std::endl;
     }
