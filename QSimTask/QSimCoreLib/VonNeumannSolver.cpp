@@ -31,7 +31,7 @@ void VonNeumannSolver::calculate_evolution() {
         rho_t_multi_temp.at(i) = arma::cx_cube(h_size,h_size,num_steps+1).fill(0);
     }
 
-    if (will_record_unitary) {
+    if (will_record_propagator) {
         //Initialise unitary matrices
         propagator = arma::cx_cube(h_size,h_size,num_steps+1).fill(0);
         propagator.slice(0) = arma::cx_mat(arma::eye(h_size,h_size),arma::zeros(h_size,h_size));
@@ -45,7 +45,7 @@ void VonNeumannSolver::calculate_evolution() {
     std::complex<double> ii = std::complex<double>(0,1);
     for (int i = 0; i < hamiltonian_all.n_slices; ++i) {
         exp_hamiltonians.slice(i) = qmt::custom_matrix_exp(ii * hamiltonian_all.slice(i));
-        if (will_record_unitary) {
+        if (will_record_propagator) {
             propagator.slice(i+1) = exp_hamiltonians.slice(i) * propagator.slice(i);
             propagator_dagger.slice(i+1) = propagator_dagger.slice(i)*exp_hamiltonians.slice(i).t();
         }
@@ -92,14 +92,14 @@ bool VonNeumannSolver::verify_inputdata() {
 }
 
 arma::cx_cube VonNeumannSolver::get_propagator_time_evo() {
-    if (will_record_unitary) {
+    if (will_record_propagator) {
         return propagator;
     }
     return arma::cx_cube();
 }
 
 arma::cx_cube VonNeumannSolver::get_propagator_dagger_time_evo() {
-    if (will_record_unitary) {
+    if (will_record_propagator) {
         return propagator_dagger;
     }
     return arma::cx_cube();

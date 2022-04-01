@@ -19,7 +19,7 @@
       "amplitude":5e1,
       "h_pauli_mat": "Z",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/mewtwo/mewtwo_executable/Darwin/NoiseData/PinkNoiseQ11#.csv"
+      "waveform_path":"./NoiseData/PinkNoiseQ11#.csv"
     }
   ]
 }

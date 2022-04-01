@@ -69,7 +69,7 @@
       "amplitude":1,
       "h_pauli_mat": "ZI",
       "lag_time": 0,
-      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNoise2#.csv"
+      "waveform_path":"./NoiseData/PinkNoise2#.csv"
     },
     {
       "tag": "noise12",
@@ -78,7 +78,7 @@
       "amplitude":1,
       "h_pauli_mat": "ZI",
       "lag_time": 7e-7,
-      "waveform_path":"/Users/rockysu/MewtwoMegaEvo/Playground/NoiseData/PinkNoise2#.csv"
+      "waveform_path":"./NoiseData/PinkNoise2#.csv"
     }
   ]
 }

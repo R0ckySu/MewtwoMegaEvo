@@ -89,6 +89,13 @@ void QSimTask::sweeping_repeat_parallel() {
         }
         task_log("Solver job done!",1);
 
+        if(will_record_propagator) {
+            task_log("Propagator wont't be saved when enable_param_parallel_mode==false",1);
+//            std::string param_idx_str = std::string("/#").append(std::to_string(i));
+//            std::string h5field_name = std::string("propagator").append(param_idx_str);
+//            solver_obj.get_propagator_time_evo().save(arma::hdf5_name(result_file_name,h5field_name, arma::hdf5_opts::append));
+        }
+
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
         meas_manager.step_size = step_size;
         meas_manager.will_record_density_mat = will_record_density_mat;
@@ -137,6 +144,7 @@ void QSimTask::sweeping_param_parallel() {
         std::vector<double > randomstartlist = generate_random_num_list(iterations,3);
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
+        solver_obj.will_record_propagator = will_record_propagator;
         for (int noise_idx = start_pos_for_this_job; noise_idx < end_pos_for_this_job; ++noise_idx) {
             //Load Noise Hamiltonian
             arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
@@ -161,6 +169,11 @@ void QSimTask::sweeping_param_parallel() {
         #pragma omp critical
         {
             meas_manager.save_result_to_h5(result_file_name,i, param_schedule.get_param_dict_for_ith_param(i));
+            if(will_record_propagator) {
+                std::string param_idx_str = std::string("/#").append(std::to_string(i));
+                std::string h5field_name = std::string("propagator").append(param_idx_str);
+                solver_obj.get_propagator_time_evo().save(arma::hdf5_name(result_file_name,h5field_name, arma::hdf5_opts::append));
+            }
         };
         task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(std::to_string(i)),1);
 
@@ -189,8 +202,8 @@ void QSimTask::load_sim_configs() {
     step_size = sim_configs["step_size"];
     iterations = sim_configs["repeat"];
     will_record_all_measurement = sim_configs["record_all_meas"];
-    will_record_unitary = sim_configs["record_unitary"];
-    will_record_density_mat = sim_configs["record_all_density_mat"];
+    will_record_propagator = sim_configs["record_propagator"];
+    will_record_density_mat = sim_configs["record_density_mat"];
     enable_param_parallel_mode = sim_configs["enable_param_parallel_mode"];
     system_dimension = sim_configs["system_dim"];
 
