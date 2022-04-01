@@ -58,7 +58,7 @@ cp ./Demo_configs/RabiChevron/* ./config_files/
 5. When simulator finish its job, data will be dumpped to './sim_results'. <br/>
 Copy the last line of the output: 
 ````
-LoadMeasMarkerData('/*****/Playground/sim_results/*******')
+LoadMewtwoData('/*****/Playground/sim_results/*******')
 ````
 
 6. Open Matlab, run the following commands to plot the results:
@@ -174,9 +174,9 @@ sim_config.json provides all the general configurations of the simulation.
   "log_level": 4,
   "job_slicing_strategy":"linspace",
   "enable_param_parallel_mode":false,
-  "record_unitary": false,
+  "record_propagator": false,
   "record_all_meas": true,
-  "record_all_density_mat": true,
+  "record_density_mat": true,
   "system_dim": 4,
   "observables": ["IZ","IX"],
   "init_states": ["IZ","IY"],
@@ -205,21 +205,21 @@ sim_config.json provides all the general configurations of the simulation.
   ]
 }
 ```
-| field name  | description                                                                                                                                                                                         |
-| ----------- |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| task_name | Defines task name, which will be the name prefix of the exported data folder                                                                                                                        |
-| log_level | Controls the level of detail of the log output. Larger num will output more detailed log (Not fully implemented yet)                                                                                |
-| job_slicing_strategy | "logspace", "linspace", "inv_logspace" See [Job slicing for HPC](#Job-slicing-for-high-performance-computer)                                                                                        |
-| record_unitary | Set true will output all of the unitary matrix generated on simulation (Time consuming)                                                                                                             |
-| record_all_meas | Set true, measurement will be taken at every time point.                                                                                                                                            |
-| record_all_density_mat | Set true, record density matrix for each init state configuration.                                                                                                                                  |
-| system_dim | Defines the dimension of the Hilbert space                                                                                                                                                          |
-| observables | List of the observables (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                                                            |
-| init_states | List of the density matrices at t=0 (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                                                |
-| repeat | Defines the num of repeat. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian)                                                                             |
-| step_size | Time resolution of the simulation in second.                                                                                                                                                        |
-| sequence | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations))                                                                                               |
-| sweep_param_info | All the numeric fields in the gate and hamiltonian config files could be charged with parametric sweeping. Limited string fields can also be swept. See [parametric sweeping](#Parametric-Sweeping) |
+| field name         | description                                                                                                                                                                                        |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| task_name          | Defines task name, which will be the name prefix of the exported data folder                                                                                                                       |
+| log_level          | Controls the level of detail of the log output. Larger num will output more detailed log (Not fully implemented yet)                                                                               |
+| job_slicing_strategy | "logspace", "linspace", "inv_logspace" See [Job slicing for HPC](#Job-slicing-for-high-performance-computer)                                                                                       |
+| record_propagator  | Set true will output all of the propagator matrix generated on simulation (Time consuming and very huge). This will be only availble enable_param_parallel_mode==true                              |
+| record_all_meas    | Set true, measurement will be taken at every time point.                                                                                                                                           |
+| record_density_mat | Set true, record density matrix for each init state configuration at meas_marker.                                                                                                                  |
+| system_dim         | Defines the dimension of the Hilbert space                                                                                                                                                         |
+| observables        | List of the observables (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                                                           |
+| init_states        | List of the density matrices at t=0 (See also: [Symbolic/External matrix input](#symbolic-or-external-matrix-input))                                                                               |
+| repeat             | Defines the num of repeat. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian)                                                                            |
+| step_size          | Time resolution of the simulation in second.                                                                                                                                                       |
+| sequence           | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations))                                                                                              |
+| sweep_param_info   | All the numeric fields in the gate and hamiltonian config files could be charged with parametric sweeping. Limited string fields can also be swept. See [parametric sweeping](#Parametric-Sweeping) |
 
 #### gate_config.json
 gate_config.json provides all the gate prototypes for building symbolic sequences for our simulation task.
