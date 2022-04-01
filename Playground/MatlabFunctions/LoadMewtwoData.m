@@ -20,6 +20,22 @@ function dataset = LoadMewtwoData(data_path)
     dataset.configInfo = configInfo;
     observable_array = configInfo.observables;
     init_state_array = configInfo.init_states;
+
+    gate_config_path = strcat(data_path,config_folder_name,filesep,'gate_config.json');
+    fid = fopen(gate_config_path);
+    raw = fread(fid,inf);
+    str = char(raw');
+    fclose(fid);
+    gate_config = jsondecode(str);
+    dataset.gate_config = gate_config;
+
+    hamiltonian_config_path = strcat(data_path,config_folder_name,filesep,'hamiltonian_config.json');
+    fid = fopen(hamiltonian_config_path);
+    raw = fread(fid,inf);
+    str = char(raw');
+    fclose(fid);
+    hamiltonian_config = jsondecode(str);
+    dataset.hamiltonian_config = hamiltonian_config;
     
 %     dataset.draw = struct('field',cell(length(observable_array),length(init_state_array)));
        
