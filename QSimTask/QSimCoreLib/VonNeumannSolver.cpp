@@ -11,8 +11,8 @@ VonNeumannSolver::VonNeumannSolver() {
 }
 
 VonNeumannSolver::~VonNeumannSolver() {
-    arma::cx_cube().swap(propagator);
-    arma::cx_cube().swap(propagator_dagger);
+//    arma::cx_cube().swap(propagator);
+//    arma::cx_cube().swap(propagator_dagger);
 }
 
 void VonNeumannSolver::calculate_evolution() {
@@ -96,6 +96,14 @@ arma::cx_cube VonNeumannSolver::get_propagator_time_evo() {
         return propagator;
     }
     return arma::cx_cube();
+}
+
+arma::cx_mat VonNeumannSolver::get_propagator_end() {
+    if (will_record_propagator) {
+//        std::cout << propagator.slice(propagator.n_slices-1) << std::endl;
+        return propagator.slice(propagator.n_slices-1);
+    }
+    return arma::cx_mat();
 }
 
 arma::cx_cube VonNeumannSolver::get_propagator_dagger_time_evo() {

@@ -71,29 +71,35 @@ void QSimTask::sweeping_repeat_parallel() {
         auto ctrl_hamiltonian_time_dep = compile_time_dep_ctrl_hamiltonian(reloaded_prototype->ctrl_hamiltonian_prototype_map,reloaded_prototype->gate_prototype_map, *seq);
 
         std::vector<double > randomstartlist = generate_random_num_list(iterations,3);
+        arma::cx_cube propagator_repeat_all = arma::cx_cube(system_dimension,system_dimension,iterations, arma::fill::zeros);
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
-        #pragma omp parallel for default(none) shared(reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp) private(solver_obj)
+        #pragma omp parallel for default(none) shared(reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp, propagator_repeat_all) private(solver_obj)
         for (int noise_idx = 0; noise_idx < iterations; ++noise_idx) {
             //Load Noise Hamiltonian
+
             arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
 
             //Load all prepared info to solver
+            solver_obj.will_record_propagator = will_record_propagator;
             solver_obj.rho_t_multi = &rho_multi_temp;
             solver_obj.rho0_multi = &rho_inits;
             solver_obj.total_repeat_num = iterations;
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
+            if (will_record_propagator){
+                propagator_repeat_all.slice(noise_idx) = solver_obj.get_propagator_end();
+            }
             delete noise_hamiltonian_time_dep;
         }
         task_log("Solver job done!",1);
 
         if(will_record_propagator) {
-            task_log("Propagator wont't be saved when enable_param_parallel_mode==false",1);
-//            std::string param_idx_str = std::string("/#").append(std::to_string(i));
-//            std::string h5field_name = std::string("propagator").append(param_idx_str);
-//            solver_obj.get_propagator_time_evo().save(arma::hdf5_name(result_file_name,h5field_name, arma::hdf5_opts::append));
+//            task_log("Propagator wont't be saved when enable_param_parallel_mode==false",1);
+            std::string param_idx_str = std::string("/#").append(std::to_string(i));
+            std::string h5field_name = std::string("propagator").append(param_idx_str);
+            propagator_repeat_all.save(arma::hdf5_name(result_file_name,h5field_name, arma::hdf5_opts::append));
         }
 
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
@@ -172,7 +178,7 @@ void QSimTask::sweeping_param_parallel() {
             if(will_record_propagator) {
                 std::string param_idx_str = std::string("/#").append(std::to_string(i));
                 std::string h5field_name = std::string("propagator").append(param_idx_str);
-                solver_obj.get_propagator_time_evo().save(arma::hdf5_name(result_file_name,h5field_name, arma::hdf5_opts::append));
+                solver_obj.get_propagator_end().save(arma::hdf5_name(result_file_name,h5field_name, arma::hdf5_opts::append));
             }
         };
         task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(std::to_string(i)),1);

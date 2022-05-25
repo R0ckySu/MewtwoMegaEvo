@@ -102,7 +102,9 @@ void MeasurementManager::save_result_to_h5(const std::string& path,  const int p
         std::string dm_marker_field_name = std::string(DEN_MAT_MARKER_FIELD_NAME).append(param_idx_str).append("/");
         std::string dm_all_field_name = std::string(DEN_MAT_ALL_FIELD_NAME).append(param_idx_str).append("/");
         for (int j = 0; j < (rho_multi_t).size(); ++j) {
-            std::string sub_field_name = dm_marker_field_name.append(init_states.at(j).symbol_name);
+            std::string sub_field_name = std::string(dm_marker_field_name);
+            sub_field_name.append(init_states.at(j).symbol_name);
+//            std::string sub_field_name = dm_marker_field_name.append(init_states.at(j).symbol_name);
             arma::cx_cube rho_markers = (rho_multi_t).at(j).slices(idx_arma);
             rho_markers.save(arma::hdf5_name(path,sub_field_name,arma::hdf5_opts::append));
             if (will_record_all_time_points_meas) {
@@ -110,7 +112,7 @@ void MeasurementManager::save_result_to_h5(const std::string& path,  const int p
                 (rho_multi_t).at(j).save(arma::hdf5_name(path,all_sub_field_name,arma::hdf5_opts::append));
             }
             //Release Mem after saving
-            arma::cx_cube().swap((rho_multi_t).at(j));
+//            arma::cx_cube().swap((rho_multi_t).at(j));
         }
         std::string dm_h5field_name = std::string(DEN_MAT_MARKER_FIELD_NAME).append(param_idx_str).append("/").append("time_vec");
         measurement_time_point_vec.save(arma::hdf5_name(std::string(path),dm_h5field_name,arma::hdf5_opts::append));

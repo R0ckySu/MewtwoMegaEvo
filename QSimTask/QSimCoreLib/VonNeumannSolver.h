@@ -43,6 +43,7 @@ public:
     ~VonNeumannSolver();
     void calculate_evolution();
     arma::cx_cube get_propagator_time_evo();
+    arma::cx_mat get_propagator_end();
     arma::cx_cube get_propagator_dagger_time_evo();
 
 private:
