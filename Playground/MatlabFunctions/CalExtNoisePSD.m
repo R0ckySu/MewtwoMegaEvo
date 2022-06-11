@@ -12,4 +12,5 @@ function [PSD,omega] = CalExtNoisePSD(noise_data1,noise_data2,time_step)
     set(gca,'XScale','log','YScale','log');
     title('Noise PSD');
     grid on;
+    legend('Re','Im');
 end
