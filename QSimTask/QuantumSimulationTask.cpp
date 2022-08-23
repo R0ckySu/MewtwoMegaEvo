@@ -391,7 +391,9 @@ QSimTask::compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamil
         auto gate_proto_obj = gate_item.second;
 
         for (const auto& binded_hamiltonian_tag : gate_proto_obj->hamiltonian_tags_list) {
-            hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
+            if (hamiltonian_prototype_map.find(binded_hamiltonian_tag) != hamiltonian_prototype_map.end()) {
+                hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
+            }
         }
     }
 

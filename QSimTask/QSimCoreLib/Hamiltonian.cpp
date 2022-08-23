@@ -18,9 +18,16 @@ RTTR_REGISTRATION{
             .property("rising_time",&Gated_Hamiltonian::rising_time);
 
     rttr::registration::class_<MW_Hamiltonian>("MW_Hamiltonian")
+            .property("falling_time",&MW_Hamiltonian::falling_time)
+            .property("rising_time",&MW_Hamiltonian::rising_time)
             .property("amplitude",&MW_Hamiltonian::amplitude)
             .property("freq",&MW_Hamiltonian::freq)
             .property("phase",&MW_Hamiltonian::phase);
+
+    rttr::registration::class_<AWG_Hamiltonian>("AWG_Hamiltonian")
+            .property("falling_time",&AWG_Hamiltonian::falling_time)
+            .property("rising_time",&AWG_Hamiltonian::rising_time)
+            .property("amplitude",&MW_Hamiltonian::amplitude);
 
     rttr::registration::class_<Noise_Hamiltonian>("Noise_Hamiltonian")
             .property("shift_time",&Noise_Hamiltonian::shift_time);
@@ -36,7 +43,7 @@ void Hamiltonian::load_ext_waveform(int param_index) {
         wave_form = (*ext_sig_cache).load_from_cache(datapath_index);
 //        wave_form.load(datapath_index,arma::csv_ascii);
         wave_form = wave_form * amplitude;
-        std::cout << "Hamiltonian: Loaded external waveform:" << datapath_index << std::endl;
+        std::cout << "Hamiltonian:"<< tag << " Loaded external waveform:" << datapath_index << std::endl;
     }
 }
 
@@ -327,20 +334,26 @@ void Noise_Hamiltonian::load_ext_waveform(int param_index) {
     Hamiltonian::load_ext_waveform(param_index);
     int raw_wave_total_length = wave_form.size();
 
-    int shift_steps = 0;
+    int fixed_shift_steps = 0;
     if (shift_time != 0) {
-        shift_steps = floor(shift_time/step_size);
+        fixed_shift_steps = floor(shift_time/step_size);
     }
 
-    int residual_steps = raw_wave_total_length - num_of_steps - shift_steps;
+    int rand_shift_steps = 0;
+    int residual_steps = raw_wave_total_length - num_of_steps;
     if (residual_steps > 0) {
-        shift_steps += floor(residual_steps * randomStartPosFactor);
+        rand_shift_steps += floor(residual_steps * randomStartPosFactor);
     } else {
-        std::cout << "Noise_Hamiltonian Error: Insufficient length of raw data! Expect:" << num_of_steps + shift_steps << " Provided:" << raw_wave_total_length << std::endl;
+        std::cout << "Noise_Hamiltonian Error: Insufficient length of raw data! Expect:" << num_of_steps + rand_shift_steps << " Provided:" << raw_wave_total_length << std::endl;
     }
 
-    wave_form = wave_form.subvec(shift_steps,shift_steps+num_of_steps);
-    std::cout << "Noise_Hamiltonian: shifted by" << shift_steps << std::endl;
+    int total_shift_steps = rand_shift_steps + fixed_shift_steps;
+    if (total_shift_steps > raw_wave_total_length) {
+        std::cout << "Noise_Hamiltonian Error: Insufficient length of raw data when have fixed shift! Expect:" << total_shift_steps << " Provided:" << raw_wave_total_length << std::endl;
+    }
+
+    wave_form = wave_form.subvec(total_shift_steps,total_shift_steps+num_of_steps);
+    std::cout << "Noise_Hamiltonian:"<< tag << " shifted by" << total_shift_steps << std::endl;
 }
 
 std::string Noise_Hamiltonian::description() {

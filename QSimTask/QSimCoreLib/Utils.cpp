@@ -159,7 +159,7 @@ std::vector<double> generate_random_num_list(int number_of_rand, int effective_d
     srand((unsigned)time(NULL));
     for (int i1 = 0; i1 < number_of_rand; ++i1) {
         double randnum = rand()/double(RAND_MAX);
-        rand_list.at(i1) = floor(randnum*factor)/factor;
+        rand_list.at(i1) = 0.8*floor(randnum*factor)/factor; // Downscale 80% to avoid out of range when have fixed shifted time
     }
     return rand_list;
 }
