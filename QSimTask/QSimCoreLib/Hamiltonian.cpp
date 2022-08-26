@@ -218,7 +218,7 @@ MW_Hamiltonian *MW_Hamiltonian::clone() {
 
 MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path) : Gated_Hamiltonian(h_config, config_path)  {
     freq = h_config["freq"];
-    phase = h_config["phase"];
+    phase = M_PI*double(h_config["phase"]);
 }
 
 void MW_Hamiltonian::load_waveform() {
