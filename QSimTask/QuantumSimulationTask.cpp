@@ -386,7 +386,6 @@ arma::cx_cube*
 QSimTask::compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map,
                                             std::map<gate_tag_type, Gate *> gate_map, Sequence seq) {
 
-    auto necessary_gate_set = std::set<std::string>();
     for (const auto& gate_item : gate_map) {
         auto gate_proto_tag = gate_item.first;
         auto gate_proto_obj = gate_item.second;
@@ -394,7 +393,6 @@ QSimTask::compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamil
         for (const auto& binded_hamiltonian_tag : gate_proto_obj->hamiltonian_tags_list) {
             if (hamiltonian_prototype_map.find(binded_hamiltonian_tag) != hamiltonian_prototype_map.end()) {
                 hamiltonian_prototype_map[binded_hamiltonian_tag]->add_signal(seq.gate_switching_map[gate_proto_tag]);
-                necessary_gate_set.insert(binded_hamiltonian_tag);
             }
         }
     }
@@ -402,12 +400,10 @@ QSimTask::compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamil
     auto * ctrl_hamiltonian_time_dep = new arma::cx_cube(system_dimension,system_dimension,seq.get_total_num_steps());
     ctrl_hamiltonian_time_dep->fill(0);
     for (const auto& hamiltonian_item : hamiltonian_prototype_map) {
-        if (necessary_gate_set.count(hamiltonian_item.first) != 0) {
-            hamiltonian_item.second->num_of_steps = seq.get_total_num_steps();
-            hamiltonian_item.second->step_size = step_size;
-            hamiltonian_item.second->load_waveform();
-            hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
-        }
+        hamiltonian_item.second->num_of_steps = seq.get_total_num_steps();
+        hamiltonian_item.second->step_size = step_size;
+        hamiltonian_item.second->load_waveform();
+        hamiltonian_item.second->fetch_H(ctrl_hamiltonian_time_dep);
     }
     task_log(" Control Hamiltonians preloaded",2);
 

@@ -97,12 +97,12 @@ void Sequence::load_sequence(double _step_size,
     for (const auto& info_pair : gate_info_pair_vec) {
         std::string gate_tag = info_pair.first;
         std::string gate_param_str = info_pair.second;
-        if (not gate_tag.compare("M") || *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
+//        if (not gate_tag.compare("M") || *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
             // Gate found
-            Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
-            if (!gate_param_str.empty()) {gate_new->decode_param_str(gate_param_str);}
-            append_gate(*gate_new);
-        }
+        Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
+        if (!gate_param_str.empty()) {gate_new->decode_param_str(gate_param_str);}
+        append_gate(*gate_new);
+//        }
     }
 
     generate_switching_sig();
