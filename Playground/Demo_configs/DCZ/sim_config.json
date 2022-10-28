@@ -1,0 +1,23 @@
+{
+  "task_name": "CrossTalkDCZ",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_propagator": true,
+  "record_all_meas": false,
+  "record_density_mat": false,
+  "enable_param_parallel_mode":false,
+  "system_dim": 4,
+  "observables": ["Unblockaded"],
+  "init_states": ["rhoTm"],
+  "repeat" : 1,
+  "step_size": 1e-12,
+  "sequence": "J(T/2)-x12-J(T/2)-M",
+  "sweep_param_info": [
+    {
+      "class":"Gate",
+      "tag":"F",
+      "property":"pulse_width",
+      "val_file":"tau"
+    }
+  ]
+}

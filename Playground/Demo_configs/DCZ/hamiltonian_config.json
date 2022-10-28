@@ -1,0 +1,122 @@
+{
+  "hamiltonian_prototype_defs": [
+    {
+      "tag": "Ez1",
+      "type": "static",
+      "enable": true,
+      "amplitude": 20.0e9,
+      "h_pauli_mat": "IZ",
+      "waveform_path":""
+    },
+    {
+      "tag": "Ez2",
+      "type": "static",
+      "enable": true,
+      "amplitude": 20.01e9,
+      "h_pauli_mat": "ZI",
+      "waveform_path":""
+    },
+    {
+      "tag": "stark1",
+      "type": "awg",
+      "enable": true,
+      "amplitude":1.2e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 0,
+      "phase": 0,
+      "h_pauli_mat": "IZ",
+      "waveform_path":""
+    },
+    {
+      "tag": "stark2",
+      "type": "awg",
+      "enable": true,
+      "amplitude":2.8e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 0,
+      "phase": 0,
+      "h_pauli_mat": "ZI",
+      "waveform_path":""
+    },
+    {
+      "tag": "exchange",
+      "type": "awg",
+      "enable": true,
+      "amplitude":2.00e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 0,
+      "phase": 0,
+      "h_pauli_mat": "Hj",
+      "waveform_path":""
+    },
+    {
+      "tag": "X1",
+      "type": "mw",
+      "enable": false,
+      "amplitude":1e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 20.01e9,
+      "phase": 0,
+      "h_pauli_mat": "Hmw",
+      "waveform_path":""
+    },
+    {
+      "tag": "X2",
+      "type": "mw",
+      "enable": false,
+      "amplitude":1e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 20.0e9,
+      "phase": 0,
+      "h_pauli_mat": "Hmw",
+      "waveform_path":""
+    },
+    {
+      "tag": "Y1",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1.01e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 20.00e9,
+      "phase": 0.5,
+      "h_pauli_mat": "IX",
+      "waveform_path":""
+    },
+    {
+      "tag": "Y2",
+      "type": "mw",
+      "enable": true,
+      "amplitude":1e6,
+      "rising_time":0,
+      "falling_time":0,
+      "freq": 20.01e9,
+      "phase": 0.5,
+      "h_pauli_mat": "XI",
+      "waveform_path":""
+    },
+    {
+      "tag": "noise1",
+      "type": "noise",
+      "enable": false,
+      "amplitude":1,
+      "h_pauli_mat": "IZ",
+      "lag_time": 0,
+      "waveform_path":"./NoiseData/PinkNoise_amp_1e4_samp_1ps/PinkNoise_amp_1e4_samp_1ps#.csv"
+    },
+    {
+      "tag": "noise2",
+      "type": "noise",
+      "enable": false,
+      "amplitude":1,
+      "h_pauli_mat": "ZI",
+      "lag_time": 0,
+      "waveform_path":"./NoiseData/PinkNoise_amp_1e4_samp_1ps/PinkNoise_amp_1e4_samp_1ps#.csv"
+    }
+  ]
+}
