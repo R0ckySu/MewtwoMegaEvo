@@ -81,6 +81,7 @@ void QSimTask::sweeping_repeat_parallel() {
             arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
 
             //Load all prepared info to solver
+            solver_obj.solver_id =  noise_idx;
             solver_obj.will_record_propagator = will_record_propagator;
             solver_obj.rho_t_multi = &rho_multi_temp;
             solver_obj.rho0_multi = &rho_inits;
@@ -93,7 +94,6 @@ void QSimTask::sweeping_repeat_parallel() {
             }
             delete noise_hamiltonian_time_dep;
         }
-        task_log("Solver job done!",1);
 
         if(will_record_propagator) {
 //            task_log("Propagator wont't be saved when enable_param_parallel_mode==false",1);
@@ -151,6 +151,7 @@ void QSimTask::sweeping_param_parallel() {
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
         solver_obj.will_record_propagator = will_record_propagator;
+        solver_obj.solver_id =  i;
         for (int noise_idx = start_pos_for_this_job; noise_idx < end_pos_for_this_job; ++noise_idx) {
             //Load Noise Hamiltonian
             arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);

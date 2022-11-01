@@ -28,6 +28,7 @@
 
 class VonNeumannSolver {
 public:
+    int solver_id = 0;
     bool will_record_propagator = false;
     int total_repeat_num = 1; //Do not use it for iteration control!!!
 
@@ -45,7 +46,7 @@ public:
     arma::cx_cube get_propagator_time_evo();
     arma::cx_mat get_propagator_end();
     arma::cx_cube get_propagator_dagger_time_evo();
-
+    double solver_cpu_time = 0;
 private:
     bool verify_inputdata();
 };

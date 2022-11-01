@@ -5,6 +5,7 @@
 #include "VonNeumannSolver.h"
 #include <random>
 #include <complex>
+#include <ctime>
 
 VonNeumannSolver::VonNeumannSolver() {
 
@@ -16,6 +17,8 @@ VonNeumannSolver::~VonNeumannSolver() {
 }
 
 void VonNeumannSolver::calculate_evolution() {
+    std::clock_t solver_start = std::clock();
+
     if (!verify_inputdata()) {
         std::cout << "VonNeumannSolver:" << "Please check the input data dimensions!" << std::endl;
         return;
@@ -39,7 +42,7 @@ void VonNeumannSolver::calculate_evolution() {
         propagator_dagger.slice(0) = arma::cx_mat(arma::eye(h_size,h_size),arma::zeros(h_size,h_size));
     }
 
-//    std::cout << "VonNeumann: Cal propagator" << std::endl;
+//    std::cout << "VonNeumannSolver "<< std::to_string(solver_id) <<  ": Cal propagator..." << std::endl;
 
     arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
     std::complex<double> ii = std::complex<double>(0,1);
@@ -51,7 +54,7 @@ void VonNeumannSolver::calculate_evolution() {
         }
     }
 
-//    std::cout << "VonNeumann: Cal rho time evo" << std::endl;
+//    std::cout << "VonNeumannSolver "<< std::to_string(solver_id) <<  ": Cal rho time evo" << std::endl;
     for (int k = 0; k < num_rhos; ++k) {
         for (int j = 0; j < num_steps + 1; ++j) {
             if (j==0) {
@@ -62,15 +65,19 @@ void VonNeumannSolver::calculate_evolution() {
         }
     }
 
-    std::cout << "VonNeumann: finished for one shot" << std::endl;
+//    std::cout << "VonNeumannSolver "<< std::to_string(solver_id) <<  ":  finished for one shot" << std::endl;
 
     #pragma omp critical
     {
         for (int i = 0; i < num_rhos; ++i) {
             rho_t_multi->at(i) = rho_t_multi->at(i) + rho_t_multi_temp.at(i)/total_repeat_num;
         }
-        std::cout << "VonNeumann: finished joining data" << std::endl;
+        std::cout << "VonNeumannSolver "<< std::to_string(solver_id) <<  ":  finished joining data" << std::endl;
     };
+
+    std::clock_t solver_end = std::clock();
+    solver_cpu_time = (solver_end-solver_start) / CLOCKS_PER_SEC;
+    std::cout << "VonNeumannSolver "<< std::to_string(solver_id) <<  ": Job done! Time consumption:" << std::to_string(solver_cpu_time) << std::endl;
 }
 
 /**********************************************************************************************************************/
