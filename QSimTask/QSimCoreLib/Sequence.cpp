@@ -61,12 +61,14 @@ void Sequence::append_gate(const Gate &g) {
     Gate *newGate = new Gate(g);
     if(!sequential_gate_list.empty()) {
         Gate *pre_neighbor = sequential_gate_list.at(sequential_gate_list.size() - 1);
-        newGate->shift_by_time(pre_neighbor->end_time);
+        newGate->shift_by_time(pre_neighbor->end_time + newGate->seq_shift_time);
+        end_time = std::max(newGate->end_time, pre_neighbor->end_time);
         sequential_gate_list.push_back(newGate);
     } else {
         sequential_gate_list.push_back(newGate);
+        end_time = newGate->end_time;
     }
-    end_time += newGate->get_pulse_width();
+//    end_time += newGate->get_pulse_width();
 
     std::cout << newGate->description().name << newGate->description().data_row << std::endl;
 }

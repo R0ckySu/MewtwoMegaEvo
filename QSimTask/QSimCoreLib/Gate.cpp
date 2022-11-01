@@ -15,6 +15,7 @@ Gate::Gate() {
 Gate::Gate(const TimingBasic &t, const Gate &g):TimingBasic(t) {
     tag = g.tag;
     hamiltonian_tags_list = g.hamiltonian_tags_list;
+    seq_shift_time = g.seq_shift_time;
     ext_shaped_sig_path = g.ext_shaped_sig_path;
     ext_shaped_sig = g.ext_shaped_sig;
 }
@@ -26,6 +27,7 @@ Gate *Gate::clone() {
 Gate::Gate(nlohmann::json gate_config, double _step_size) {
     step_size = _step_size;
     tag = gate_config["tag"];
+    seq_shift_time = gate_config["shift_time"];
     std::vector<std::string> h_tag_list = gate_config["hamiltonians"];
     hamiltonian_tags_list = h_tag_list;
     ext_shaped_sig_path = gate_config["ext_shaped_sig_path"];
@@ -46,15 +48,18 @@ std::vector<std::string> Gate::decode_param_str(std::string params) {
 
     exprtk::expression<double> expression;
     std::string T_expression = param_list.at(T_pos);
+//    std::string seq_simultaneous = param_list.at(1);
 
-    exprtk::symbol_table<double> symbol_table;
-    double T = get_pulse_width();
-    symbol_table.add_variable("T", T);
-    expression.register_symbol_table(symbol_table);
+    if(T_expression.size() != 0 ) {
+        exprtk::symbol_table<double> symbol_table;
+        double T = get_pulse_width();
+        symbol_table.add_variable("T", T);
+        expression.register_symbol_table(symbol_table);
 
-    exprtk::parser<double> parser;
-    parser.compile(T_expression,expression);
-    set_pulse_width(expression.value());
+        exprtk::parser<double> parser;
+        parser.compile(T_expression,expression);
+        set_pulse_width(expression.value());
+    }
 
     return param_list;
 }

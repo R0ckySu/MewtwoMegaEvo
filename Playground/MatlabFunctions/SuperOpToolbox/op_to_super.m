@@ -5,11 +5,11 @@ function super_op = op_to_super(op)
         super_op_list = [];
         super_op_mean = zeros(size(op{1}).^2);
         for i = 1:length(op)
-            super_op_list = [super_op_list, {kron(op{i}', op{i})}];
-            super_op_mean = super_op_mean+kron(op{i}', op{i});
+            super_op_list = [super_op_list, {kron(conj(op{i}), op{i})}];
+            super_op_mean = super_op_mean+kron(conj(op{i}), op{i});
         end
         super_op = super_op_mean / length(op);
     else
-        super_op = kron(op', op);
+        super_op = kron(conj(op), op);
     end
 end
