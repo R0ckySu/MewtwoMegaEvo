@@ -1,0 +1,53 @@
+{ 
+  "gate_defs": [
+    {
+      "tag": "x1",
+      "hamiltonians": ["X1"],
+      "pulse_width": 2.5008e-7,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "x2",
+      "hamiltonians": ["X2"],
+      "pulse_width": 2.5008e-7,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "z1",
+      "hamiltonians": ["Z1"],
+      "pulse_width": 1e-11,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "z2",
+      "hamiltonians": ["Z2"],
+      "pulse_width": 1e-11,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "x12",
+      "hamiltonians": ["X1", "X2"],
+      "pulse_width": 5e-7,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "J",
+      "hamiltonians": ["stark1", "stark2", "exchange"],
+      "pulse_width": 1.25e-7,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "F",
+      "hamiltonians": [],
+      "pulse_width": 1e-9,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    }
+  ]
+}
