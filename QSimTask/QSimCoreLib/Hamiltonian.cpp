@@ -82,7 +82,7 @@ Hamiltonian::~Hamiltonian() {
 }
 
 void Hamiltonian::load_waveform() {
-    times_vec = step_size * arma::linspace(0,num_of_steps+1,num_of_steps+1);
+    times_vec = step_size * arma::linspace(0,num_of_steps,num_of_steps);
     wave_form = arma::cx_vec(num_of_steps).fill(0);
 }
 
@@ -129,13 +129,13 @@ Static_Hamiltonian::Static_Hamiltonian(nlohmann::json h_config, std::string conf
 
 void Static_Hamiltonian::fetch_H(arma::cx_cube *H0) {
     for (int i = 0; i < H0->n_slices; ++i) {
-        H0->slice(i) += step_size * h_mat.mat * wave_form(i);
+        H0->slice(i) += h_mat.mat * wave_form(i);
     }
 }
 
 void Static_Hamiltonian::load_waveform() {
     Hamiltonian::load_waveform();
-    wave_form.fill(amplitude * M_PI);
+    wave_form.fill(step_size * amplitude * M_PI);
 }
 
 /**********************************************************************************************************************/

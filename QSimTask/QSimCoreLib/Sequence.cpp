@@ -10,6 +10,7 @@
 Sequence::Sequence() {
     sequential_gate_list = std::vector<Gate *>();
     measurement_time_point_vec = arma::vec();
+    active_gate_tag_list = std::vector<std::string>();
     gate_switching_map = std::map<gate_tag_type, arma::vec>();
 }
 
@@ -17,6 +18,7 @@ Sequence::~Sequence() {
     std::map<gate_tag_type, arma::vec>().swap(gate_switching_map);
     std::vector<Gate *>().swap(sequential_gate_list);
     arma::vec().swap(measurement_time_point_vec);
+    std::vector<std::string>().swap(active_gate_tag_list);
 }
 
 void Sequence::generate_switching_sig() {
@@ -38,7 +40,7 @@ void Sequence::generate_switching_sig() {
         }
 
         std::cout << "Sequence:" << gate_unit->tag << " turn on from " << gate_unit->get_start_index() << "~" << gate_unit->get_end_index() << std::endl;
-
+        active_gate_tag_list.push_back(std::string(gate_unit->tag));
         if (gate_switching_map.find(gate_unit->tag) == gate_switching_map.end()) {
             std::cout << "Sequence:" << gate_unit->tag << " generating new switching" << std::endl;
             arma::vec new_switching = arma::vec(get_total_num_steps()).fill(0);

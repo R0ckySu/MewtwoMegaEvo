@@ -14,7 +14,7 @@ public:
 
     std::map<gate_tag_type, arma::vec> gate_switching_map;
     arma::vec measurement_time_point_vec;
-
+    std::vector<std::string> active_gate_tag_list;
     void append_gate(const Gate& g);
     void append_sequence(const Sequence & seq);
     void generate_switching_sig();
