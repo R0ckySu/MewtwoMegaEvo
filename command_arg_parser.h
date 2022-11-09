@@ -14,6 +14,7 @@ const char* short_options = "g:i:r:o:c:t:";
 const struct option long_options[] = {
         {"num_job_group", 1, NULL,'g'},
         {"job_id",        1, NULL,'i'},
+        {"resume_from_idx",1, NULL, 'r'},
         {"output_folder", 1, NULL,'o'},
         {"config_folder", 1, NULL,'c'},
         {"timestamp",     1, NULL, 't'},
