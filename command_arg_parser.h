@@ -10,14 +10,13 @@
 #include "nlohmann/json.hpp"
 #include "QSimTask/QuantumSimulationTask.h"
 
-const char* short_options = "g:i:o:c:t:r";
+const char* short_options = "g:i:r:o:c:t:";
 const struct option long_options[] = {
         {"num_job_group", 1, NULL,'g'},
         {"job_id",        1, NULL,'i'},
         {"output_folder", 1, NULL,'o'},
         {"config_folder", 1, NULL,'c'},
         {"timestamp",     1, NULL, 't'},
-        {"resume_from_idx",1, NULL, 'r'},
         {nullptr,         0, nullptr, 0}
 };
 
