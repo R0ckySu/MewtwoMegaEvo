@@ -22,6 +22,8 @@ public:
     int job_id;
     std::string job_slicing_strategy;
 
+    int resume_from_idx=0;
+
     int system_dimension=2;
     std::string task_name;
     int log_level_threshold=1;
