@@ -44,7 +44,7 @@ function dataset = LoadMewtwoData(data_path)
     %     dataset.draw = struct('field',cell(length(observable_array),length(init_state_array)));
            
         % Get field name lookup table for job sliced tasks
-        all_valid_file_names = GetFileNameListWithPattern(data_path, configInfo.task_name,'[0-9]+_Job#[0-9]$');
+        all_valid_file_names = GetFileNameListWithPattern(data_path, configInfo.task_name,'[0-9]+_Job#[0-9]{1,3}$');
     
         param_collect_struct = CollecrH5ParamList(data_path, all_valid_file_names);
         dataset.collected_param_list = param_collect_struct;
@@ -60,6 +60,7 @@ function dataset = LoadMewtwoData(data_path)
                 data_cell_array_collect_meas_all = [];
                 num_of_params = param_collect_struct.num_of_params_for_each_file;
                 for f_idx = 1:length(all_valid_file_names)
+                    all_valid_file_names{f_idx}
                     for p_idx = 0:num_of_params(f_idx)-1
                         dataset_name = ['/meas_marker','/#',num2str(p_idx),'/',o_name,'/',i_name];
                         data_temp = h5read([data_path,filesep, all_valid_file_names{f_idx}],dataset_name);
