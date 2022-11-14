@@ -23,7 +23,6 @@ QSimTask::QSimTask() {
     char *current_path = getcwd(NULL,0);
     config_file_folder = std::string(current_path).append("/").append(CONFIG_FOLDER_NAME);
     result_output_folder = std::string(current_path).append("/").append(OUTPUT_FOLDER_NAME);
-    resume_from_idx = 0;
     job_id = 0;
     num_job_group = 1;
     noise_sig_cache = ExtSigCache();
@@ -49,7 +48,7 @@ void QSimTask::launch_task() {
 }
 
 void QSimTask::sweeping_repeat_parallel() {
-    for (int i = resume_from_idx; i < param_schedule.num_of_params; ++i) {
+    for (int i = 0; i < param_schedule.num_of_params; ++i) {
         std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
         std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
 
@@ -188,6 +187,8 @@ void QSimTask::sweeping_param_parallel() {
 
         delete ctrl_hamiltonian_time_dep;
         delete seq;
+        delete reloaded_prototype;
+        rho_multi_temp.clear();
 //        noise_sig_cache.clean_cache();
     }
 }

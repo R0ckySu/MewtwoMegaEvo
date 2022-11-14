@@ -10,11 +10,11 @@
 #include "nlohmann/json.hpp"
 #include "QSimTask/QuantumSimulationTask.h"
 
-const char* short_options = "g:i:r:o:c:t:";
+const char* short_options = "g:i:o:c:t:";
 const struct option long_options[] = {
         {"num_job_group", 1, NULL,'g'},
         {"job_id",        1, NULL,'i'},
-        {"resume_from_idx",1, NULL, 'r'},
+//        {"resume_from_idx",1, NULL, 'r'},
         {"output_folder", 1, NULL,'o'},
         {"config_folder", 1, NULL,'c'},
         {"timestamp",     1, NULL, 't'},
@@ -47,10 +47,10 @@ QSimTask* create_task_from_command_arg_parser(int argc, char *argv[]){
                 std::cout << "Time stamp:" << optarg << std::endl;
                 sim_task_new->task_time_stamp = optarg;
                 break;
-            case 'r':
-                std::cout << "Resumed from index:" << optarg << std::endl;
-                sim_task_new->resume_from_idx = std::stoi(optarg);
-                break;
+//            case 'r':
+//                std::cout << "Resumed from index:" << optarg << std::endl;
+//                sim_task_new->resume_from_idx = std::stoi(optarg);
+//                break;
             default:
                 break;
         }
