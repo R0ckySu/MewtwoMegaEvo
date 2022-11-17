@@ -6,8 +6,11 @@ function basis = get_pauli_basis(n_qubits)
     p_vec = {I;X;Y;Z};
     
     r = repmat(1:4, [n_qubits,1]);
-
-    basis = kron_depth(p_vec, n_qubits);
+    if n_qubits == 1
+        basis = p_vec';
+    else
+        basis = kron_depth(p_vec, n_qubits);
+    end
     
     function m = kron_depth(op_list, dep)
         new_dep = dep-1;
