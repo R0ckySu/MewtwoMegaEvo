@@ -114,6 +114,7 @@ void QSimTask::sweeping_repeat_parallel() {
 
         delete ctrl_hamiltonian_time_dep;
         delete seq;
+        delete reloaded_prototype;
     }
 }
 

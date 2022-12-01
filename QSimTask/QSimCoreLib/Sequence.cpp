@@ -17,6 +17,9 @@ Sequence::Sequence() {
 Sequence::~Sequence() {
     std::map<gate_tag_type, arma::vec>().swap(gate_switching_map);
     std::vector<Gate *>().swap(sequential_gate_list);
+    for (int i = 0; i < sequential_gate_list.size(); ++i) {
+        delete sequential_gate_list[i];
+    }
     arma::vec().swap(measurement_time_point_vec);
     std::vector<std::string>().swap(active_gate_tag_list);
 }

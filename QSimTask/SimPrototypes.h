@@ -9,6 +9,7 @@
 
 struct SimPrototypes {
     SimPrototypes();
+    ~SimPrototypes();
     SimPrototypes(const SimPrototypes &s);
     std::map<gate_tag_type, Gate *> gate_prototype_map;
     std::map<hamiltonian_tag_type, Hamiltonian *> ctrl_hamiltonian_prototype_map;

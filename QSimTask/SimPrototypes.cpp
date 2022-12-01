@@ -7,8 +7,22 @@
 SimPrototypes::SimPrototypes() {
     ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Hamiltonian *>();
     noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type, Noise_Hamiltonian *>();
-    gate_prototype_map = std::map<hamiltonian_tag_type, Gate *>();
+    gate_prototype_map = std::map<gate_tag_type, Gate *>();
     sequence_symbol_alias_map = std::map<std::string, std::string>();
+};
+
+SimPrototypes::~SimPrototypes() {
+    for (const auto& ctrl_h_item :ctrl_hamiltonian_prototype_map) {
+        delete ctrl_h_item.second;
+    }
+
+    for (const auto& noise_h_item :noise_hamiltonian_prototype_map) {
+        delete noise_h_item.second;
+    }
+
+    for (const auto& gate_item :gate_prototype_map) {
+        delete gate_item.second;
+    }
 };
 
 SimPrototypes::SimPrototypes(const SimPrototypes &s) {
@@ -32,4 +46,4 @@ SimPrototypes::SimPrototypes(const SimPrototypes &s) {
     for (const auto& symbol_item : s.sequence_symbol_alias_map) {
         sequence_symbol_alias_map.insert(std::make_pair(symbol_item.first,symbol_item.second));
     }
-};
+}
