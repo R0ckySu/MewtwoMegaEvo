@@ -154,7 +154,7 @@ void QSimTask::sweeping_param_parallel() {
         VonNeumannSolver solver_obj = VonNeumannSolver();
         solver_obj.will_record_propagator = will_record_propagator;
         solver_obj.solver_id =  i;
-        for (int noise_idx = start_pos_for_this_job; noise_idx < end_pos_for_this_job; ++noise_idx) {
+        for (int noise_idx = 0; noise_idx < iterations; ++noise_idx) {
             //Load Noise Hamiltonian
             arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
 
