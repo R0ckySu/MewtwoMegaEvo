@@ -106,6 +106,7 @@ void Sequence::load_sequence(double _step_size,
         std::string gate_param_str = info_pair.second;
 //        if (not gate_tag.compare("M") || *gate_prototype_map.find(gate_tag) != *gate_prototype_map.end() ) {
             // Gate found
+        std::cout << "Sequence: Loading " << gate_tag << std::endl;
         Gate * gate_new = new Gate(*gate_prototype_map[gate_tag]);
         if (!gate_param_str.empty()) {gate_new->decode_param_str(gate_param_str);}
         append_gate(*gate_new);

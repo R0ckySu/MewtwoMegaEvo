@@ -315,12 +315,14 @@ Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {}
 
 Noise_Hamiltonian::Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &m): Hamiltonian(h) {
     shift_time = m.shift_time;
+    rand_shift = m.rand_shift;
     randomStartPosFactor = m.randomStartPosFactor;
     external_waveform_path = m.external_waveform_path;
 }
 
 Noise_Hamiltonian::Noise_Hamiltonian(nlohmann::json noise_config, std::string config_path) : Hamiltonian(noise_config, config_path)  {
     shift_time = noise_config["lag_time"];
+    rand_shift = noise_config["rand_shift"];
 }
 
 void Noise_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -347,7 +349,13 @@ void Noise_Hamiltonian::load_ext_waveform(int param_index) {
         std::cout << "Noise_Hamiltonian Error: Insufficient length of raw data! Expect:" << num_of_steps + rand_shift_steps << " Provided:" << raw_wave_total_length << std::endl;
     }
 
-    int total_shift_steps = rand_shift_steps + fixed_shift_steps;
+    int total_shift_steps = 0;
+    if (rand_shift) {
+        total_shift_steps = rand_shift_steps + fixed_shift_steps;
+    } else {
+        total_shift_steps = fixed_shift_steps;
+    }
+
     if (total_shift_steps > raw_wave_total_length) {
         std::cout << "Noise_Hamiltonian Error: Insufficient length of raw data when have fixed shift! Expect:" << total_shift_steps << " Provided:" << raw_wave_total_length << std::endl;
     }
