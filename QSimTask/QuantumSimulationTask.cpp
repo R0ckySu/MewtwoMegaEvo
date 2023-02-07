@@ -443,6 +443,7 @@ arma::cx_cube* QSimTask::compile_time_dep_noise_hamiltonian (
         noise_h_temp->randomStartPosFactor = random_start_pos_factor.at(noise_idx);
         noise_h_temp->load_ext_waveform(noise_idx);
         noise_h_temp->fetch_H(noise_hamiltonian_time_dep);
+        delete noise_h_temp;
     }
 
     return noise_hamiltonian_time_dep;
