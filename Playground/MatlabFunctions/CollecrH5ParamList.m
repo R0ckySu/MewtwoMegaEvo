@@ -13,9 +13,9 @@ function param_info_h5 = CollecrH5ParamList(data_path, file_name_list)
         for p_idx = 1:length(param_names)
             loaded_param_list = h5read(file_name, ['/param_lists/',param_names{p_idx}]);
             if f_idx == 1
-                param_info_h5.(param_names{p_idx}) = loaded_param_list;
+                param_info_h5.(replace(param_names{p_idx},'#','')) = loaded_param_list;
             else
-                param_info_h5.(param_names{p_idx}) = [param_info_h5.(param_names{p_idx}); loaded_param_list];
+                param_info_h5.(replace(param_names{p_idx},'#','')) = [param_info_h5.(param_names{p_idx}); loaded_param_list];
             end
             num_of_params_in_slice = length(loaded_param_list);
         end
