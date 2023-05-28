@@ -3,7 +3,6 @@
 //
 
 #include "Measurement.h"
-
 #define MEAS_MARKER_FIELD_NAME "meas_marker"
 #define MEAS_ALL_FIELD_NAME "meas_all"
 #define DEN_MAT_MARKER_FIELD_NAME "rho_marker"
@@ -31,14 +30,14 @@ void MeasurementManager::measure_from_density_mat_with_time_points(std::vector<a
     if (will_record_density_mat) {
         rho_multi_t = rho_multi;
     }
-    std::vector<uint> time_indices_marker = get_time_index(time_points);
+    std::vector<int> time_indices_marker = get_time_index(time_points);
     measurement_time_point_vec = time_points;
     meas_marker_result = measure_density_mat_at_indices(rho_multi,time_indices_marker);
 
     if (will_record_all_time_points_meas) {
         int total_num_of_time_step = rho_multi.at(0).n_slices;
         arma::vec time_indices_all = arma::linspace(0,total_num_of_time_step-1,total_num_of_time_step);
-        meas_all_result =  measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<uint>>::from(time_indices_all));
+        meas_all_result =  measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<int>>::from(time_indices_all));
     }
 }
 
@@ -46,12 +45,12 @@ void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vect
     int total_num_of_time_step = rho_multi.at(0).n_slices;
 
     arma::vec time_indices = arma::linspace(0,total_num_of_time_step-1,total_num_of_time_step);
-    measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<uint>>::from(time_indices));
+    measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<int>>::from(time_indices));
     measurement_time_point_vec = step_size * time_indices;
 }
 
 std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> * MeasurementManager::measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi,
-                                                        std::vector<uint > time_indices) {
+                                                        std::vector<int > time_indices) {
     std::cout << "Measuring density mat" << std::endl;
     auto meas_result_temp = create_new_meas_result_container();
     for (int i = 0; i < observables.size(); ++i) {
@@ -96,7 +95,7 @@ void MeasurementManager::save_result_to_h5(const std::string& path,  const int p
     std::string h5field_name = std::string(MEAS_MARKER_FIELD_NAME).append(param_idx_str).append("/").append("time_vec");
     measurement_time_point_vec.save(arma::hdf5_name(std::string(path),h5field_name,arma::hdf5_opts::append));
 
-    std::vector<uint> time_indices_marker = get_time_index(measurement_time_point_vec);
+    std::vector<int> time_indices_marker = get_time_index(measurement_time_point_vec);
     arma::uvec idx_arma = arma::conv_to<arma::uvec>::from(time_indices_marker);
     if (will_record_density_mat) {
         std::string dm_marker_field_name = std::string(DEN_MAT_MARKER_FIELD_NAME).append(param_idx_str).append("/");
@@ -146,8 +145,8 @@ void MeasurementManager::save_result_to_folder(const std::string& path, const st
 }
 
 
-std::vector<uint> MeasurementManager::get_time_index(arma::vec time_points) {
-    std::vector<uint> time_index = std::vector<uint>(time_points.n_elem);
+std::vector<int> MeasurementManager::get_time_index(arma::vec time_points) {
+    std::vector<int> time_index = std::vector<int>(time_points.n_elem);
     for (int i = 0; i < time_points.n_elem; ++i) {
         time_index.at(i) = round(time_points.at(i)/step_size);
     }

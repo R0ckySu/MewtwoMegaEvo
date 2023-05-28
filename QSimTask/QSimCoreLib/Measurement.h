@@ -4,6 +4,7 @@
 #include <armadillo>
 #include "Utils.h"
 #include <any>
+#include <iostream>
 
 typedef std::string observable_name_type;
 typedef std::string init_state_name_type;
@@ -34,7 +35,7 @@ public:
     void save_result_to_folder(const std::string& path, const std::string& param_label);
     void save_result_to_h5(const std::string& path, const int param_idx, const std::map<std::string, std::any> param_info);
 private:
-    std::vector<uint> get_time_index(arma::vec time_points);
-    std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> * measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi, std::vector<uint> time_indices);
+    std::vector<int> get_time_index(arma::vec time_points);
+    std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> * measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi, std::vector<int> time_indices);
     std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> * create_new_meas_result_container();
 };
