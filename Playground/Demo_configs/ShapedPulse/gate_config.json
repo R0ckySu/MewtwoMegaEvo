@@ -4,18 +4,21 @@
       "tag": "x",
       "hamiltonians": ["X1"],
       "pulse_width": 1e-5,
+      "shift_time": 0,
       "ext_shaped_sig_path":"/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/x_shape_sig"
     },
     {
       "tag": "z",
       "hamiltonians": ["Z1"],
       "pulse_width": 1e-8,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     },
     {
       "tag": "F",
       "hamiltonians": [],
       "pulse_width": 5e-6,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     }
   ]

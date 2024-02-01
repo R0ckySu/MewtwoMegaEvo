@@ -9,8 +9,8 @@
   "system_dim": 2,
   "observables": ["Zp","Zm"],
   "init_states": ["rho0"],
-  "repeat" : 40,
-  "step_size": 1e-8,
+  "repeat" : 10,
+  "step_size": 1e-9,
   "sequence": "x-F-x-x-F-x-M",
   "sweep_param_info": [
     {

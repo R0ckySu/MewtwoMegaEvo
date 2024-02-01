@@ -231,29 +231,33 @@ Gate prototypes will only define the timing information and its corresponding Ha
       "tag": "X1pi",
       "hamiltonians": ["X1"],
       "pulse_width": 1e-4,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     },
     {
       "tag": "X2pi",
       "hamiltonians": ["X2"],
       "pulse_width": 1e-4,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     },
     {
       "tag": "F",
       "hamiltonians": [],
       "pulse_width": 1e-4,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     }
   ]
 }
 ```
 
-| field name  |  description |
-| ----------- | ----------- | 
+| field name  | description                                                         |
+| ----------- |---------------------------------------------------------------------| 
 | tag | Defines the symbol of the gate (See also: Symbolic Sequence definations) |
-| hamiltonians | Mapping the gate to its corresponding Hamiltonians by its tag. |
-| pulse_width | Defines the gate operation time length |
+| hamiltonians | Mapping the gate to its corresponding Hamiltonians by its tag.      |
+| pulse_width | Defines the gate operation time length                              |
+| shift_time |                                                                     |
 | ext_shaped_sig_path | The path of the external signal data file, signal data length has to be equal to pulse_width/step_size |
 
 #### hamiltonian.json

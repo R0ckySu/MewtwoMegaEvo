@@ -33,7 +33,7 @@
       "falling_time":0,
       "freq": 2.1099e+07,
       "phase": 0,
-      "h_pauli_mat": "XI",
+      "h_pauli_mat": "Hmw",
       "waveform_path":""
     },
     {
@@ -45,7 +45,7 @@
       "falling_time":0,
       "freq": 1.9099e+07,
       "phase": 0,
-      "h_pauli_mat": "XI",
+      "h_pauli_mat": "Hmw",
       "waveform_path":""
     },
     {

@@ -4,18 +4,21 @@
       "tag": "x12",
       "hamiltonians": ["Y1", "Y2"],
       "pulse_width": 5e-7,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     },
     {
       "tag": "J",
       "hamiltonians": ["stark1", "stark2", "exchange"],
       "pulse_width": 2.5e-7,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     },
     {
       "tag": "F",
       "hamiltonians": [],
       "pulse_width": 1e-8,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     }
   ]

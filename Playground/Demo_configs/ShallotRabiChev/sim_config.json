@@ -1,14 +1,14 @@
 {
-  "task_name": "Shallot2QFindESR",
+  "task_name": "Shallot2QRabiChev",
   "log_level": 4,
   "job_slicing_strategy":"linspace",
   "record_propagator": false,
   "record_all_meas": true,
   "record_density_mat": false,
-  "enable_param_parallel_mode":false,
+  "enable_param_parallel_mode":true,
   "system_dim": 4,
-  "observables": ["ZI","IZ"],
-  "init_states": ["rho1"],
+  "observables": ["M1","M2"],
+  "init_states": ["rhoUU", "rhoDD"],
   "repeat" : 1,
   "step_size": 1e-10,
   "sequence": "Xrot-M",
@@ -17,13 +17,7 @@
       "class":"Hamiltonian",
       "tag":"X1d",
       "property":"freq",
-      "val_file":"freq_vec"
-    },
-    {
-      "class":"Hamiltonian",
-      "tag":"X2d",
-      "property":"freq",
-      "val_file":"freq_vec"
+      "val_file":"mw_freq"
     }
   ]
 }
