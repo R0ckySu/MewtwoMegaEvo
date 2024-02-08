@@ -1,6 +1,6 @@
 function K1 = PauliDecompose2(U, verbose)
     Pauli2 = struct();
-    
+    threshold = 1e-11;
     I = eye(2);
     X = [0,1;1,0];
     Y = [0,-1i;1i,0];
@@ -26,8 +26,9 @@ function K1 = PauliDecompose2(U, verbose)
     spinor2QLabels = fieldnames(Pauli2);
     K1 = [];
     for s_i = 1:length(spinor2QLabels)
-        K1 = [K1, trace(Pauli2.(spinor2QLabels{s_i})*U)/4];
+        K1 = [K1, trace(Pauli2.(spinor2QLabels{s_i})*U)];
     end
+    K1(abs(K1)<threshold)=0;
 
     if verbose
         K_table = array2table(K1);

@@ -6,7 +6,7 @@ The most important one is armadillo, which is a high-performance linear algebra 
 The computation efficiency relies highly on the hardware optimizations (for example AVX512 instruction on APUs is a big plus for speeding up long vector evaluations).
 Lower level math libraries bridge up the gap between the higher level software and lower level instruction set.
 For example, Intel's Math Kernal Library (MKL) for Intel x86 CPUs, ACML for AMD's APUs, and Accelerate framework for M series Apple Silicon SoCs. 
-Or more universal option OpenBLAS for
+Or more universal option like OpenBLAS.
 
 RTTR is a runtime reflection library allows us to locate the properties of objects in runtime, which makes the parametrical scanning easy to implement.
 
@@ -18,7 +18,7 @@ This document will guide you through the procedure of setting up the build envir
 
 ### Homebrew install
 Homebrew used to only work on macOS, now it is available for Linuxes. 
-It is also a package managing software like apt on Ubuntu that provide you with pre-compile binaries. 
+It is a package managing software like apt on Ubuntu that provide you with pre-compile binaries on different platforms. 
 
 ## Prepare Compile Toolchain 
 ### GCC
@@ -94,4 +94,22 @@ cd
 ````
 create a new folder under */include/exprtk
 ### 
+
+````shell
+source /opt/intel/oneapi/setvars.sh
+
+export CPATH=$CPATH
+
+export CC=/home/linuxbrew/.linuxbrew/bin/gcc-13
+export CXX=/home/linuxbrew/.linuxbrew/bin/g++-13
+export CPP=/home/linuxbrew/.linuxbrew/bin/cpp-13
+export FORTRAN=/home/linuxbrew/.linuxbrew/bin/gfortran-13
+
+export CPATH=$CPATH:/opt/intel/oneapi/mkl/2024.0/include/:/home/dzurak/opt/include/:/home/linuxbrew/.linuxbrew/include/:/home/linuxbrew/.linuxbrew/opt/libomp/include/
+export LIBRARY_PATH=$LIBRARY_PATH:/opt/intel/oneapi/mkl/2024.0/lib/:/home/dzurak/opt/lib/:/home/linuxbrew/.linuxbrew/lib/:/home/linuxbrew/.linuxbrew/opt/libomp/lib/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/oneapi/mkl/2024.0/lib/:/home/dzurak/opt/lib/:/home/linuxbrew/.linuxbrew/lib/:/home/linuxbrew/.linuxbrew/opt/libomp/lib/
+
+export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/libomp/lib"
+export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/libomp/include"
+````
 

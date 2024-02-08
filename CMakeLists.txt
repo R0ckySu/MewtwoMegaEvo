@@ -10,6 +10,7 @@ link_directories(./3rd_party_libs/lib)
 add_executable(MewtwoMegaEvo
                 main.cpp command_arg_parser.h)
 
+add_subdirectory(WebGUI)
 add_subdirectory(QSimTask)
 add_subdirectory(Noise)
 

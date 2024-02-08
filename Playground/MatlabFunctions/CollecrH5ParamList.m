@@ -22,6 +22,9 @@ function param_info_h5 = CollecrH5ParamList(data_path, file_name_list)
         
         num_of_params_for_each_file(f_idx) = num_of_params_in_slice;
     end
+    
+    
+
     param_info_h5.param_names = param_names;
     param_info_h5.num_of_params_for_each_file = num_of_params_for_each_file;
 end

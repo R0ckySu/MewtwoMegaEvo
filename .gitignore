@@ -26,19 +26,22 @@
 *.a
 *.lib
 
+
 # Executables
 *.exe
 *.out
 *.app
 *.asv
-
+*.wt
 *.dSYM
 cmake-build-debug/
 cmake-build-release/
 .idea/*
 .idea/workspace.xml
 3rd_party_libs/*
-
+*/resources/*
+*/build-private/*
+*/build/*
 */sim_results/*
 */NoiseData/*
 Playground/config_files/*
