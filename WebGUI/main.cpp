@@ -8,8 +8,13 @@
 #include "MewLaunchPad.h"
 #include <iostream>
 
-class MyApp : public Wt::WApplication {
+
+class MyApp : public Wt::WApplication, public TaskLaunchDelegate {
 public:
+    MewSimConfigPannel* simConfigPannel;
+    MewGateConfig* gateConfigTable;
+    MewHamiltonianConfig* hamiltonianTable;
+
     MyApp(const Wt::WEnvironment& env) : Wt::WApplication(env) {
         useStyleSheet("https://fonts.googleapis.com/css?family=Roboto&display=swap");
         root()->setAttributeValue("style", "font-family: 'Roboto', sans-serif;");
@@ -20,25 +25,33 @@ public:
         auto hLayout_upper = container_upper->setLayout(std::make_unique<Wt::WHBoxLayout>());
         auto fileBrowser = hLayout_upper->addWidget(std::make_unique<MewFilePannel>("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/"));
         auto LaunchPad = hLayout_upper->addWidget(std::make_unique<MewLaunchPad>());
+        LaunchPad->delegate = this;
 
         auto container_lower = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
         container_lower->setOverflow(Wt::Overflow::Auto);
         auto hLayout_lower = container_lower->setLayout(std::make_unique<Wt::WHBoxLayout>());
 
-        auto pannel1 = std::make_unique<MewSimConfigPannel>();
-        pannel1->setStyleClass("scrollable-table");
-        pannel1->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/sim_config.json");
-        hLayout_lower->addWidget(std::move(pannel1));
+        simConfigPannel = hLayout_lower->addWidget(std::make_unique<MewSimConfigPannel>());
+        simConfigPannel->setStyleClass("scrollable-table");
+        simConfigPannel->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/sim_config.json");
 
-        auto table1 = std::make_unique<MewGateConfig>();
-        table1->setStyleClass("scrollable-table");
-        table1->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/gate_config.json");
-        hLayout_lower->addWidget(std::move(table1));
+        gateConfigTable = hLayout_lower->addWidget(std::make_unique<MewGateConfig>());
+        gateConfigTable->setStyleClass("scrollable-table");
+        gateConfigTable->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/gate_config.json");
 
-        auto table2 = std::make_unique<MewHamiltonianConfig>();
-        table2->setStyleClass("scrollable-table");
-        table2->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/hamiltonian_config.json");
-        hLayout_lower->addWidget(std::move(table2));
+        hamiltonianTable = hLayout_lower->addWidget(std::make_unique<MewHamiltonianConfig>());
+        hamiltonianTable->setStyleClass("scrollable-table");
+        hamiltonianTable->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/hamiltonian_config.json");
+    };
+
+    void willLaunchSimulator() {
+        simConfigPannel->dump_config();
+        gateConfigTable->dump_config();
+        hamiltonianTable->dump_config();
+    };
+
+    void didLaunchSimulator() {
+
     }
 };
 

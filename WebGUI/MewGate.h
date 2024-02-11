@@ -78,10 +78,10 @@ public:
     MewGateTable* table;
     MewGateConfig() : Wt::WContainerWidget() {
         setAttributeValue("style", "background-color: #fce77d;");
-        auto saveButton = addWidget(std::make_unique<Wt::WPushButton>("Save File"));
-        saveButton->clicked().connect([=] {
-            dump_config();
-        });
+//        auto saveButton = addWidget(std::make_unique<Wt::WPushButton>("Save File"));
+//        saveButton->clicked().connect([=] {
+//            dump_config();
+//        });
 
         auto buttonContainer= addWidget(std::make_unique<Wt::WContainerWidget>());;
         auto hButtonLayout = buttonContainer->setLayout(std::make_unique<Wt::WHBoxLayout>());

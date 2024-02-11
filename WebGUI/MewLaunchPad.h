@@ -11,8 +11,15 @@
 #include <Wt/WVBoxLayout.h>
 #include <Wt/WHBoxLayout.h>
 
+class TaskLaunchDelegate {
+public:
+    virtual void willLaunchSimulator() = 0;
+    virtual void didLaunchSimulator() = 0;
+};
+
 class MewLaunchPad: public Wt::WContainerWidget{
 public:
+    TaskLaunchDelegate* delegate;
     MewLaunchPad() : Wt::WContainerWidget() {
         auto vLayout = this->setLayout(std::make_unique<Wt::WVBoxLayout>());
 //        auto container_up = addWidget(std::make_unique<Wt::WContainerWidget>());
@@ -24,8 +31,10 @@ public:
         auto buttonHLayout = buttonContainer->setLayout(std::make_unique<Wt::WHBoxLayout>());
         auto Lauchbutton = buttonHLayout->addWidget(std::make_unique<Wt::WPushButton>("Launch Simulator!"));
         Lauchbutton->clicked().connect([=] {
+            delegate->willLaunchSimulator();
             auto result = executeCommand("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/MewtwoMegaEvo -c /Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/ -o /Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/sim_results/");
             outputText->setText(std::string(result));
+//            delegate->didLaunchSimulator();
         });
         auto Downloadbutton = buttonHLayout->addWidget(std::make_unique<Wt::WPushButton>("Download Results"));
         Lauchbutton->clicked().connect([=] {

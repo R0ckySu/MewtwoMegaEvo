@@ -16,6 +16,34 @@
 #include <Wt/WDoubleValidator.h>
 #include <Wt/Json/Value.h>
 
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+
+std::string DoubleToString(double value) {
+    std::ostringstream stream;
+    stream << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << value;
+
+    std::string str = stream.str();
+
+    // Remove trailing zeros in the fractional part
+    auto decimalPos = str.find('.');
+    if (decimalPos != std::string::npos) {
+        auto ePos = str.find('e', decimalPos);
+        auto lastNonZeroPos = str.find_last_not_of('0', ePos - 1);
+        if (lastNonZeroPos == decimalPos) {
+            // If the last non-zero character is the decimal point, remove it along with trailing zeros
+            str.erase(decimalPos, ePos - decimalPos);
+        } else {
+            // Otherwise, just remove the trailing zeros
+            str.erase(lastNonZeroPos + 1, ePos - lastNonZeroPos - 1);
+        }
+    }
+
+    return str;
+}
+
 MewCellString::MewCellString(std::string title, std::string content) {
     titleField = addWidget(std::make_unique<Wt::WText>(title));
     contentField = addWidget(std::make_unique<Wt::WLineEdit>(content));
@@ -75,13 +103,13 @@ std::pair<std::string, int> MewCellIntNum::get_data() {
 
 MewCellDoubleNum::MewCellDoubleNum(std::string title, double num) {
     titleField = addWidget(std::make_unique<Wt::WText>(title));
-    num_contentField = addWidget(std::make_unique<Wt::WLineEdit>(std::to_string(num)));
+    num_contentField = addWidget(std::make_unique<Wt::WLineEdit>(DoubleToString(num)));
     num_contentField->setMargin(5, Wt::Side::Left);
     num_contentField->setValidator(std::make_shared<Wt::WDoubleValidator>());
 }
 
 void MewCellDoubleNum::set_data(double num) {
-    num_contentField->setText(std::to_string(num));
+    num_contentField->setText(DoubleToString(num));
 }
 
 std::pair<std::string, double> MewCellDoubleNum::get_data() {

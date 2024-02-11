@@ -150,10 +150,10 @@ public:
 
     MewSimConfigPannel(Wt::WContainerWidget* parent = nullptr) : Wt::WContainerWidget() {
         setAttributeValue("style", "background-color: #b5e48c;");
-        auto saveButton = addWidget(std::make_unique<Wt::WPushButton>("Save File"));
-        saveButton->clicked().connect([=] {
-            dump_config();
-        });
+//        auto saveButton = addWidget(std::make_unique<Wt::WPushButton>("Save File"));
+//        saveButton->clicked().connect([=] {
+//            dump_config();
+//        });
         auto table1 = addWidget(std::make_unique<Wt::WTable>());
         table1->setAttributeValue("style", "border-collapse: separate; border-spacing: 5px 5px;");
 
@@ -226,7 +226,7 @@ public:
         observables->set_data(jsonObject["observables"]);
         init_states->set_data(jsonObject["init_states"]);
         repeat->set_data(jsonObject["repeat"].toNumber());
-        step_size->set_data(jsonObject["step_size"].toNumber());
+        step_size->set_data(jsonObject["step_size"]);
         sequence->set_data(jsonObject["sequence"].toString());
 
         paramTable->clear();
