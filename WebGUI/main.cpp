@@ -1,62 +1,37 @@
-#include <Wt/WApplication.h>
-#include <Wt/WCheckBox.h>
-#include <Wt/WHBoxLayout.h>
-#include "MewHamiltonian.h"
-#include "MewGate.h"
-#include "MewSimConfigPannel.h"
-#include "MewFilePannel.h"
-#include "MewLaunchPad.h"
-#include <iostream>
+#include <Wt/WServer.h>
+//#include <Wt/WApplication.h>
+#include "MewSimApp.h"
+#include "MewLoginPortalApp.cpp"
 
+std::unique_ptr<Wt::WApplication> createSimConfigApp(const Wt::WEnvironment& env) {
+    /*
+    Your LoginApp class should be defined to return an instance of Wt::WApplication.
+    */
+    return std::make_unique<MewtwoSimConfigApp>(env);
+}
 
-class MyApp : public Wt::WApplication, public TaskLaunchDelegate {
-public:
-    MewSimConfigPannel* simConfigPannel;
-    MewGateConfig* gateConfigTable;
-    MewHamiltonianConfig* hamiltonianTable;
+std::unique_ptr<Wt::WApplication> createMewLoginApp(const Wt::WEnvironment& env) {
+    /*
+    Your LoginApp class should be defined to return an instance of Wt::WApplication.
+    */
+    return std::make_unique<MewLoginApp>(env);
+}
 
-    MyApp(const Wt::WEnvironment& env) : Wt::WApplication(env) {
-        useStyleSheet("https://fonts.googleapis.com/css?family=Roboto&display=swap");
-        root()->setAttributeValue("style", "font-family: 'Roboto', sans-serif;");
-//        root()->addWidget(std::make_unique<Wt::WText>("Mewtwo"));
+int main(int argc, char *argv[]) {
+    try {
+        Wt::WServer server(argc, argv, WTHTTP_CONFIGURATION);
+        server.addEntryPoint(Wt::EntryPointType::Application, &createMewLoginApp, "/");
 
-        auto container_upper = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
-        container_upper->setOverflow(Wt::Overflow::Auto);
-        auto hLayout_upper = container_upper->setLayout(std::make_unique<Wt::WHBoxLayout>());
-        auto fileBrowser = hLayout_upper->addWidget(std::make_unique<MewFilePannel>("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/"));
-        auto LaunchPad = hLayout_upper->addWidget(std::make_unique<MewLaunchPad>());
-        LaunchPad->delegate = this;
+        // Add a route for the login application
+        server.addEntryPoint(Wt::EntryPointType::Application, &createSimConfigApp, "/simconfig");
 
-        auto container_lower = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
-        container_lower->setOverflow(Wt::Overflow::Auto);
-        auto hLayout_lower = container_lower->setLayout(std::make_unique<Wt::WHBoxLayout>());
+        // Add a route for the main application
 
-        simConfigPannel = hLayout_lower->addWidget(std::make_unique<MewSimConfigPannel>());
-        simConfigPannel->setStyleClass("scrollable-table");
-        simConfigPannel->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/sim_config.json");
+        server.run();
 
-        gateConfigTable = hLayout_lower->addWidget(std::make_unique<MewGateConfig>());
-        gateConfigTable->setStyleClass("scrollable-table");
-        gateConfigTable->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/gate_config.json");
-
-        hamiltonianTable = hLayout_lower->addWidget(std::make_unique<MewHamiltonianConfig>());
-        hamiltonianTable->setStyleClass("scrollable-table");
-        hamiltonianTable->load_from_file("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/hamiltonian_config.json");
-    };
-
-    void willLaunchSimulator() {
-        simConfigPannel->dump_config();
-        gateConfigTable->dump_config();
-        hamiltonianTable->dump_config();
-    };
-
-    void didLaunchSimulator() {
-
+    } catch (Wt::WServer::Exception& e) {
+        std::cerr << e.what() << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "exception: " << e.what() << std::endl;
     }
-};
-
-int main(int argc, char **argv) {
-    return Wt::WRun(argc, argv, [](const Wt::WEnvironment &env) {
-        return std::make_unique<MyApp>(env);
-    });
 }

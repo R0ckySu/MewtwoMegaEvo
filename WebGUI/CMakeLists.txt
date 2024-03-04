@@ -13,7 +13,8 @@ ADD_EXECUTABLE(WebGUI.wt
         MewComponents.cpp MewComponents.h
         MewMatrixInputPannel.h
         MewFilePannel.cpp MewFilePannel.h
-        MewLaunchPad.cpp MewLaunchPad.h)
+        MewLaunchPad.cpp MewLaunchPad.h
+        MewSimApp.cpp MewSimApp.h " MewGate.cpp" MewHamiltonian.cpp)
 
 TARGET_LINK_LIBRARIES(WebGUI.wt
         Wt::Wt

@@ -11,6 +11,11 @@
 #include <dirent.h>
 #include <algorithm>
 #include "omp.h"
+#include <iostream>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstring>
 
 RTTR_REGISTRATION{
     rttr::registration::class_<QSimTask>("QSimTask").constructor<>()
@@ -20,12 +25,64 @@ RTTR_REGISTRATION{
 
 QSimTask::QSimTask() {
     task_time_stamp = get_time_stamp_str();
+    task_progress = 0;
     char *current_path = getcwd(NULL,0);
     config_file_folder = std::string(current_path).append("/").append(CONFIG_FOLDER_NAME);
     result_output_folder = std::string(current_path).append("/").append(OUTPUT_FOLDER_NAME);
     job_id = 0;
     num_job_group = 1;
     noise_sig_cache = ExtSigCache();
+    createSharedMemory("/mew_task_progress", task_progress);
+    writeToSharedMemory("/mew_task_progress", task_progress);
+    createSharedMemory("/mew_total_task", 1);
+    writeToSharedMemory("/mew_total_task", 1);
+//    createSharedMemory("/mew_task_name", std::string(task_name).append(task_time_stamp).c_str());
+}
+
+
+void QSimTask::createSharedMemory(const char* shm_name, int data) {
+    // Create a shared memory object
+    int fd = shm_open(shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        std::cerr << "Error creating shared memory." << std::endl;
+//        return 1;
+    }
+    // Size of the shared memory object
+    const size_t sharedSize = sizeof(int);
+
+    // Configure the size of the shared memory object
+    ftruncate(fd, sharedSize);
+
+    // Memory map the shared memory object
+    void* ptr = mmap(0, sharedSize, PROT_WRITE, MAP_SHARED, fd, 0);
+    if (ptr == MAP_FAILED) {
+        std::cerr << "Error mapping shared memory." << std::endl;
+//        return 1;
+    }
+}
+
+void QSimTask::writeToSharedMemory(const char* shm_name, int data) {
+    // Open the shared memory object
+    int shm_fd = shm_open(shm_name, O_RDWR, 0666);
+    if (shm_fd == -1) {
+        perror("shm_open");
+        return;
+    }
+    // Map the shared memory object
+    int* ptr = (int*)mmap(0, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    if (ptr == MAP_FAILED) {
+        perror("mmap");
+        close(shm_fd);
+        return;
+    }
+    // Write to the shared memory (this can be done multiple times as needed)
+    *ptr = data;
+    // Unmap the shared memory
+    if (munmap(ptr, sizeof(int)) == -1) {
+        perror("munmap");
+    }
+    // Close the shared memory object
+    close(shm_fd);
 }
 
 QSimTask::~QSimTask() {
@@ -48,6 +105,9 @@ void QSimTask::launch_task() {
 }
 
 void QSimTask::sweeping_repeat_parallel() {
+    int total_tasks = param_schedule.num_of_params * iterations;
+    writeToSharedMemory("/mew_total_task", total_tasks);
+
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
         std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
         std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
@@ -75,7 +135,7 @@ void QSimTask::sweeping_repeat_parallel() {
         arma::cx_cube propagator_repeat_all = arma::cx_cube(system_dimension,system_dimension,iterations, arma::fill::zeros);
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
-        #pragma omp parallel for default(none) shared(reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp, propagator_repeat_all) private(solver_obj)
+        #pragma omp parallel for default(none) shared(task_progress, reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp, propagator_repeat_all) private(solver_obj)
         for (int noise_idx = 0; noise_idx < iterations; ++noise_idx) {
             //Load Noise Hamiltonian
 
@@ -94,6 +154,8 @@ void QSimTask::sweeping_repeat_parallel() {
                 propagator_repeat_all.slice(noise_idx) = solver_obj.get_propagator_end();
             }
             delete noise_hamiltonian_time_dep;
+            task_progress ++;
+            writeToSharedMemory("/mew_task_progress", task_progress);
         }
 
         if(will_record_propagator) {
@@ -119,14 +181,16 @@ void QSimTask::sweeping_repeat_parallel() {
 }
 
 void QSimTask::sweeping_param_parallel() {
+    int total_tasks = param_schedule.num_of_params * iterations;
+    writeToSharedMemory("/mew_total_task", total_tasks);
+
     std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
 
     arma::vec noise_index_ends_list = arma::linspace(0,iterations,num_job_group+1);
     int start_pos_for_this_job = noise_index_ends_list.at(job_id);
     int end_pos_for_this_job = noise_index_ends_list.at(job_id+1);
     task_log(std::string("Noise index start:").append(std::to_string(start_pos_for_this_job)).append(" index ends:").append(std::to_string(end_pos_for_this_job)),1);
-
-    #pragma omp parallel for shared(start_pos_for_this_job,end_pos_for_this_job,result_file_name)
+    #pragma omp parallel for shared(task_progress, start_pos_for_this_job,end_pos_for_this_job,result_file_name)
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
 
         std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
@@ -166,6 +230,8 @@ void QSimTask::sweeping_param_parallel() {
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
             delete noise_hamiltonian_time_dep;
+            task_progress ++;
+            writeToSharedMemory("/mew_task_progress", task_progress);
         }
         task_log("Solver job done!",1);
 

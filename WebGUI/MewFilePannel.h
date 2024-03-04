@@ -5,7 +5,6 @@
 #ifndef MYPROJECT_MEWFILEPANNEL_H
 #define MYPROJECT_MEWFILEPANNEL_H
 
-#include <Wt/WApplication.h>
 #include <Wt/WPushButton.h>
 #include <Wt/WTable.h>
 #include <Wt/WText.h>

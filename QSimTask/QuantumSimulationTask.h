@@ -11,6 +11,7 @@
 #include "ParamScheduler.h"
 #include "SimPrototypes.h"
 #include "QSimCoreLib/ExtSigCache.h"
+#include <type_traits>
 
 #define CONFIG_FOLDER_NAME "config_files"
 #define OUTPUT_FOLDER_NAME "sim_results"
@@ -39,6 +40,7 @@ public:
     bool will_record_all_measurement;
     bool will_record_density_mat;
     double step_size;
+    double task_progress;
     int iterations;
     std::vector<symbolic_matrix> rho_inits;
     std::vector<symbolic_matrix> observables;
@@ -69,6 +71,7 @@ public:
 private:
     static nlohmann::json load_config_from_path(const std::string& path);
     void task_log(std::string message, int log_level);
-
+    void writeToSharedMemory(const char* shm_name, int data);
+    void createSharedMemory(const char* shm_name, int data);
     std::string get_result_file_name();
 };
