@@ -69,16 +69,16 @@ void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vect
 
 void MeasurementManager::reset_density_matrix_rotating_frame(std::vector<arma::cx_cube>& rho_multi, std::vector<int > time_indices) {
     std::cout << static_hamiltonian_total_per_step << std::endl;
-
+    arma::cx_mat diag_H = arma::diagmat(static_hamiltonian_total_per_step.diag());
     for (int j = 0; j < init_states.size(); ++j) {
         init_state_name_type rho_sym = init_states.at(j).symbol_name;
         std::cout << "Reset frame for:" << " rho:" << rho_sym << std::endl;
 
         arma::vec meas_temp = arma::vec(time_indices.size());
-        #pragma omp parallel for default(none) shared(j,time_indices,rho_multi)
+        #pragma omp parallel for default(none) shared(diag_H, j,time_indices,rho_multi)
         for (int k = 0; k < time_indices.size(); ++k) {
-            arma::cx_mat H_temp = std::complex<double>(0,-time_indices.at(k)) * arma::cx_mat(static_hamiltonian_total_per_step);
-            auto U_rf = arma::expmat(H_temp);
+            arma::cx_mat H_temp = std::complex<double>(0,-time_indices.at(k)) * arma::cx_mat(diag_H);
+            auto U_rf = arma::expmat(H_temp); //Using exact method to solve mat expm.
 //            std::cout << "at t idx:" << time_indices.at(k) << "\n Urf= \n " << U_rf << "\n H= \n " << H_temp << std::endl;
             rho_multi.at(j).slice(time_indices.at(k)) = U_rf * rho_multi.at(j).slice(time_indices.at(k)) * U_rf.t();
         }

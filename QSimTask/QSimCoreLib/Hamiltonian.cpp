@@ -135,7 +135,7 @@ void Static_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 
 void Static_Hamiltonian::load_waveform() {
     Hamiltonian::load_waveform();
-    wave_form.fill(step_size * amplitude * M_PI);
+    wave_form.fill(step_size * amplitude * 2*M_PI);
 }
 
 /**********************************************************************************************************************/
@@ -228,7 +228,7 @@ void MW_Hamiltonian::load_waveform() {
         if(freq == 0.){
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
+                    wave_form[i] = 2*M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
                 }
             }
         }
@@ -236,7 +236,7 @@ void MW_Hamiltonian::load_waveform() {
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*M_PI + phase));
+                    wave_form[i] = 2*M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*2*M_PI + phase));
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
@@ -287,7 +287,7 @@ AWG_Hamiltonian::AWG_Hamiltonian(const Gated_Hamiltonian &g, const AWG_Hamiltoni
 
 void AWG_Hamiltonian::load_waveform() {
     Gated_Hamiltonian::load_waveform();
-    wave_form = arma::cx_vec(M_PI * amplitude * switching_signal * step_size, arma::zeros(switching_signal.size()));
+    wave_form = arma::cx_vec(amplitude * switching_signal * step_size, arma::zeros(switching_signal.size()));
 //    std::cout << "waveform of:"<< tag << "\n" << wave_form << std::endl;
 }
 
