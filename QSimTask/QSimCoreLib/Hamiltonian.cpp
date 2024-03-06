@@ -236,7 +236,7 @@ void MW_Hamiltonian::load_waveform() {
             std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
             for (int i = 0; i < switching_signal.size(); ++i){
                 if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*2.*M_PI + phase));
+                    wave_form[i] = M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*M_PI + phase));
 //                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
 //                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
 //                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))

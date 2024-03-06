@@ -167,6 +167,8 @@ void QSimTask::sweeping_repeat_parallel() {
 
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
         meas_manager.step_size = step_size;
+        meas_manager.will_reset_rotating_frame = will_reset_rotating_frame;
+        meas_manager.static_hamiltonian_total_per_step = get_static_hamiltonian_per_step(reloaded_prototype->ctrl_hamiltonian_prototype_map);
         meas_manager.will_record_density_mat = will_record_density_mat;
         meas_manager.will_record_all_time_points_meas = will_record_all_measurement;
         std::string result_file_name_meas = std::string(result_file_name);
@@ -236,6 +238,8 @@ void QSimTask::sweeping_param_parallel() {
         task_log("Solver job done!",1);
 
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
+        meas_manager.static_hamiltonian_total_per_step = get_static_hamiltonian_per_step(reloaded_prototype->ctrl_hamiltonian_prototype_map);
+        meas_manager.will_reset_rotating_frame = will_reset_rotating_frame;
         meas_manager.will_record_density_mat = will_record_density_mat;
         meas_manager.will_record_all_time_points_meas = will_record_all_measurement;
         meas_manager.step_size = step_size;
@@ -281,6 +285,7 @@ void QSimTask::load_sim_configs() {
     will_record_all_measurement = sim_configs["record_all_meas"];
     will_record_propagator = sim_configs["record_propagator"];
     will_record_density_mat = sim_configs["record_density_mat"];
+    will_reset_rotating_frame = sim_configs["reset_rotating_frame"];
     enable_param_parallel_mode = sim_configs["enable_param_parallel_mode"];
     system_dimension = sim_configs["system_dim"];
 
@@ -307,7 +312,7 @@ void QSimTask::load_sim_configs() {
     for(const auto& rho_init_str : rho_init_strs) {
         symbolic_matrix rho_;
         rho_.load_from_symbol(rho_init_str,config_file_folder);
-        rho_.mat /= sys_dim;
+//        rho_.mat /= sys_dim;
         rho_inits.push_back(rho_);
         std::cout << "QSimTask: rho_init:\n" << rho_.mat << std::endl;
     }
@@ -514,6 +519,21 @@ arma::cx_cube* QSimTask::compile_time_dep_noise_hamiltonian (
 
     return noise_hamiltonian_time_dep;
 }
+
+arma::cx_mat QSimTask::get_static_hamiltonian_per_step(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map) {
+    // must be called after ctrl hamiltonian load
+    auto static_hamiltonian_total_temp = arma::cx_cube(system_dimension,system_dimension,1);
+    static_hamiltonian_total_temp.fill(0);
+
+    for (const auto& hamiltonian_item : hamiltonian_prototype_map) {
+        if (dynamic_cast<const Static_Hamiltonian*>(hamiltonian_item.second) != nullptr) {
+            hamiltonian_item.second->fetch_H(&static_hamiltonian_total_temp);
+        }
+    }
+    auto static_hamiltonian_total = arma::cx_mat(system_dimension,system_dimension);
+    static_hamiltonian_total = static_hamiltonian_total_temp.slice(0);
+    return static_hamiltonian_total;
+};
 
 std::string QSimTask::get_result_file_name() {
     std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));

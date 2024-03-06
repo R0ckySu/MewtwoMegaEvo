@@ -39,6 +39,7 @@ public:
     bool will_record_propagator;
     bool will_record_all_measurement;
     bool will_record_density_mat;
+    bool will_reset_rotating_frame;
     double step_size;
     double task_progress;
     int iterations;
@@ -67,6 +68,7 @@ public:
     virtual void launch_task();
 
     arma::cx_cube* compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
+    arma::cx_mat get_static_hamiltonian_per_step(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map);
     arma::cx_cube* compile_time_dep_noise_hamiltonian(std::map<hamiltonian_tag_type, Noise_Hamiltonian *> hamiltonian_prototype_map,int noise_idx, std::vector<double> random_start_pos_factor, int total_num_steps);
 private:
     static nlohmann::json load_config_from_path(const std::string& path);

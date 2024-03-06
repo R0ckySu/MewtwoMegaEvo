@@ -7,6 +7,10 @@
 #define MEAS_ALL_FIELD_NAME "meas_all"
 #define DEN_MAT_MARKER_FIELD_NAME "rho_marker"
 #define DEN_MAT_ALL_FIELD_NAME "rho_all"
+#include "Utils.h"
+#include <algorithm>
+#include <set>
+#include <iterator>
 
 MeasurementManager::MeasurementManager(std::vector<symbolic_matrix> observables_,
                                        std::vector<symbolic_matrix> init_states_) {
@@ -27,17 +31,31 @@ MeasurementManager::MeasurementManager(std::vector<symbolic_matrix> observables_
 
 void MeasurementManager::measure_from_density_mat_with_time_points(std::vector<arma::cx_cube> rho_multi,
                                                                    arma::vec time_points) {
-    if (will_record_density_mat) {
-        rho_multi_t = rho_multi;
-    }
     std::vector<int> time_indices_marker = get_time_index(time_points);
     measurement_time_point_vec = time_points;
+    if (will_reset_rotating_frame) {
+        reset_density_matrix_rotating_frame(rho_multi, time_indices_marker);
+    }
     meas_marker_result = measure_density_mat_at_indices(rho_multi,time_indices_marker);
 
     if (will_record_all_time_points_meas) {
         int total_num_of_time_step = rho_multi.at(0).n_slices;
-        arma::vec time_indices_all = arma::linspace(0,total_num_of_time_step-1,total_num_of_time_step);
-        meas_all_result =  measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<int>>::from(time_indices_all));
+        std::vector<int> time_indices_all = arma::conv_to<std::vector<int>>::from(arma::linspace(0,total_num_of_time_step-1,total_num_of_time_step));
+        if (will_reset_rotating_frame) {
+            std::set<int> time_indices_marker_set = std::set<int>(time_indices_marker.begin(), time_indices_marker.end());
+            std::set<int> time_indices_all_set = std::set<int>(time_indices_all.begin(), time_indices_all.end());
+            std::set<int> time_indices_to_update_set;
+            std::set_difference(time_indices_all_set.begin(),time_indices_all_set.end(),
+                                time_indices_marker_set.begin(),time_indices_marker_set.end(),
+                                std::inserter(time_indices_to_update_set, time_indices_to_update_set.end()));
+            std::vector<int> time_indices_to_update(time_indices_to_update_set.begin(), time_indices_to_update_set.end());
+            reset_density_matrix_rotating_frame(rho_multi, time_indices_to_update);
+        }
+        meas_all_result =  measure_density_mat_at_indices(rho_multi,time_indices_all);
+    }
+
+    if (will_record_density_mat) {
+        rho_multi_t = rho_multi;
     }
 }
 
@@ -47,6 +65,24 @@ void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vect
     arma::vec time_indices = arma::linspace(0,total_num_of_time_step-1,total_num_of_time_step);
     measure_density_mat_at_indices(rho_multi,arma::conv_to<std::vector<int>>::from(time_indices));
     measurement_time_point_vec = step_size * time_indices;
+}
+
+void MeasurementManager::reset_density_matrix_rotating_frame(std::vector<arma::cx_cube>& rho_multi, std::vector<int > time_indices) {
+    std::cout << static_hamiltonian_total_per_step << std::endl;
+
+    for (int j = 0; j < init_states.size(); ++j) {
+        init_state_name_type rho_sym = init_states.at(j).symbol_name;
+        std::cout << "Reset frame for:" << " rho:" << rho_sym << std::endl;
+
+        arma::vec meas_temp = arma::vec(time_indices.size());
+        #pragma omp parallel for default(none) shared(j,time_indices,rho_multi)
+        for (int k = 0; k < time_indices.size(); ++k) {
+            arma::cx_mat H_temp = std::complex<double>(0,-time_indices.at(k)) * arma::cx_mat(static_hamiltonian_total_per_step);
+            auto U_rf = arma::expmat(H_temp);
+//            std::cout << "at t idx:" << time_indices.at(k) << "\n Urf= \n " << U_rf << "\n H= \n " << H_temp << std::endl;
+            rho_multi.at(j).slice(time_indices.at(k)) = U_rf * rho_multi.at(j).slice(time_indices.at(k)) * U_rf.t();
+        }
+    }
 }
 
 std::map<observable_name_type,std::map<init_state_name_type, arma::vec>> * MeasurementManager::measure_density_mat_at_indices(std::vector<arma::cx_cube> rho_multi,
@@ -169,6 +205,7 @@ MeasurementManager::create_new_meas_result_container() {
     }
     return meas_result;
 }
+
 
 
 

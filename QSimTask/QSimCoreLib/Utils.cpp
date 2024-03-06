@@ -11,21 +11,21 @@ namespace qmt{
 
     arma::cx_mat22 pauli_x() {
         arma::cx_mat pauli_x = arma::cx_mat(arma::zeros(2,2),arma::zeros(2,2));
-        pauli_x(0,1) = 1;
-        pauli_x(1,0) = 1;
+        pauli_x(0,1) = 0.5;
+        pauli_x(1,0) = 0.5;
         return pauli_x;
     }
 
     arma::cx_mat22 pauli_y() {
         arma::cx_mat pauli_y = arma::cx_mat(arma::zeros(2,2),arma::zeros(2,2));
-        pauli_y(0,1) = -ii;
-        pauli_y(1,0) = ii;
+        pauli_y(0,1) = -ii*0.5;
+        pauli_y(1,0) = ii*0.5;
         return pauli_y;
     }
 
     arma::cx_mat22 pauli_z() {
-        arma::cx_mat pauli_z = arma::cx_mat(arma::eye(2,2),arma::zeros(2,2));
-        pauli_z(1,1) = -1;
+        arma::cx_mat pauli_z = arma::cx_mat(arma::eye(2,2)*0.5,arma::zeros(2,2));
+        pauli_z(1,1) = -0.5;
         return pauli_z;
     }
 
