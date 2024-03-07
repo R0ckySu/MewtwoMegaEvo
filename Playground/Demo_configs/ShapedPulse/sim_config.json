@@ -5,6 +5,7 @@
   "record_propagator": false,
   "record_all_meas": false,
   "record_density_mat": true,
+  "reset_rotating_frame": false,
   "enable_param_parallel_mode":false,
   "system_dim": 2,
   "observables": ["Zp","Zm","Yp","Ym","Xp","Xm"],
