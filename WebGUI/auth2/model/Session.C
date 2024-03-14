@@ -38,11 +38,11 @@ void Session::configureAuth()
   myPasswordService.setStrengthValidator
     (std::make_unique<Auth::PasswordStrengthValidator>());
 
-  if (Auth::GoogleService::configured())
-    myOAuthServices.push_back(std::make_unique<Auth::GoogleService>(myAuthService));
-
-  if (Auth::FacebookService::configured())
-    myOAuthServices.push_back(std::make_unique<Auth::FacebookService>(myAuthService));
+//  if (Auth::GoogleService::configured())
+//    myOAuthServices.push_back(std::make_unique<Auth::GoogleService>(myAuthService));
+//
+//  if (Auth::FacebookService::configured())
+//    myOAuthServices.push_back(std::make_unique<Auth::FacebookService>(myAuthService));
 }
 
 Session::Session(const std::string& sqliteDb)

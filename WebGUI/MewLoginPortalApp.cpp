@@ -1,34 +1,41 @@
 //
 // Created by Rocky Su on 4/3/2024.
-//
+// GPT4 assisted
+#include "MewLoginPortalApp.h"
 #include <Wt/WApplication.h>
 #include <Wt/WContainerWidget.h>
 #include <Wt/WLineEdit.h>
 #include <Wt/WPushButton.h>
 #include <Wt/WText.h>
 
-class MewLoginApp : public Wt::WApplication {
-public:
-    MewLoginApp(const Wt::WEnvironment& env) : Wt::WApplication(env) {
-        setTitle("Login Portal");
+LoginApplication::LoginApplication(const Wt::WEnvironment& env) : Wt::WApplication(env) {
+    auto sqlite3 = std::make_unique<dbo::backend::Sqlite3>("userdb.sqlite");
+    session.setConnection(std::move(sqlite3));
 
-        auto container = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
-        auto usernameEdit = container->addWidget(std::make_unique<Wt::WLineEdit>());
-        usernameEdit->setPlaceholderText("Username");
-
-        auto passwordEdit = container->addWidget(std::make_unique<Wt::WLineEdit>());
-        passwordEdit->setPlaceholderText("Password");
-        passwordEdit->setEchoMode(Wt::EchoMode::Password);
-
-        auto loginButton = container->addWidget(std::make_unique<Wt::WPushButton>("Login"));
-        loginButton->clicked().connect([=] {
-            // Simple authentication check for demonstration
-            if (usernameEdit->text() == "user" && passwordEdit->text() == "pass") {
-                // Redirect to the main application upon successful login
-                Wt::WApplication::instance()->redirect("http://localhost:8082/simconfig");
-            } else {
-                root()->addWidget(std::make_unique<Wt::WText>("Invalid username or password."));
-            }
-        });
+    session.mapClass<User>("user");
+    try {
+        session.createTables(); // This will attempt to create the tables if they don't exist
+    } catch (const std::exception& e) {
+        Wt::log("error") << "Database operation failed: " << e.what();
     }
-};
+
+    // Show login or registration form
+}
+
+
+void LoginApplication::registerUser(const std::string& username, const std::string& password) {
+    dbo::Transaction transaction(session);
+    std::unique_ptr<User> user(new User());
+    user->username = username;
+    user->password = password; // Remember, you should hash this!
+
+    session.add(std::move(user));
+    transaction.commit();
+}
+
+bool LoginApplication::checkLogin(const std::string& username, const std::string& password) {
+    dbo::Transaction transaction(session);
+    dbo::ptr<User> user = session.find<User>().where("username = ?").bind(username).where("password = ?").bind(password); // Remember to hash password in real scenarios
+
+    return user ? true : false;
+}

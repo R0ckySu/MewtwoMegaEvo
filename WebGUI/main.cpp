@@ -1,34 +1,35 @@
 #include <Wt/WServer.h>
 //#include <Wt/WApplication.h>
 #include "MewSimApp.h"
-#include "MewLoginPortalApp.cpp"
+//#include "MewLoginPortalApp.h"
+#include "MewUserInventoryApp.h"
+#include "auth2/Auth2.h"
+
+std::unique_ptr<Wt::WApplication> createUserInventoryApp(const Wt::WEnvironment& env) {
+    return std::make_unique<MewUserInventoryApp>(env,
+                                                 "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/Demo_configs",
+                                                 "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/TestConfig");
+}
 
 std::unique_ptr<Wt::WApplication> createSimConfigApp(const Wt::WEnvironment& env) {
-    /*
-    Your LoginApp class should be defined to return an instance of Wt::WApplication.
-    */
     return std::make_unique<MewtwoSimConfigApp>(env);
 }
 
-std::unique_ptr<Wt::WApplication> createMewLoginApp(const Wt::WEnvironment& env) {
-    /*
-    Your LoginApp class should be defined to return an instance of Wt::WApplication.
-    */
-    return std::make_unique<MewLoginApp>(env);
+
+std::unique_ptr<Wt::WApplication> createApplication(const Wt::WEnvironment& env) {
+    return std::make_unique<AuthApplication>(env);
 }
 
 int main(int argc, char *argv[]) {
     try {
         Wt::WServer server(argc, argv, WTHTTP_CONFIGURATION);
-        server.addEntryPoint(Wt::EntryPointType::Application, &createMewLoginApp, "/");
-
+        server.addEntryPoint(Wt::EntryPointType::Application, &createApplication, "/");
+        Session::configureAuth();
         // Add a route for the login application
         server.addEntryPoint(Wt::EntryPointType::Application, &createSimConfigApp, "/simconfig");
-
         // Add a route for the main application
-
+        server.addEntryPoint(Wt::EntryPointType::Application, &createUserInventoryApp, "/userInv");
         server.run();
-
     } catch (Wt::WServer::Exception& e) {
         std::cerr << e.what() << std::endl;
     } catch (std::exception& e) {

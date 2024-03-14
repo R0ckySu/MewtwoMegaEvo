@@ -8,15 +8,21 @@ ADD_DEFINITIONS(-DHPDF_DLL)
 ADD_EXECUTABLE(WebGUI.wt
         main.cpp
         MewSimConfigPannel.cpp MewSimConfigPannel.h
-        MewHamiltonian.h
-        MewGate.h
+        MewHamiltonian.h MewHamiltonian.cpp
+        MewGate.h MewGate.cpp
         MewComponents.cpp MewComponents.h
         MewMatrixInputPannel.h
         MewFilePannel.cpp MewFilePannel.h
         MewLaunchPad.cpp MewLaunchPad.h
-        MewSimApp.cpp MewSimApp.h " MewGate.cpp" MewHamiltonian.cpp)
+        MewSimApp.cpp MewSimApp.h
+        MewUserInventoryApp.h MewUserInventoryApp.cpp
+#        MewLoginPortalApp.h MewLoginPortalApp.cpp
+        )
+
+add_subdirectory(auth2)
 
 TARGET_LINK_LIBRARIES(WebGUI.wt
         Wt::Wt
         Wt::HTTP
+        auth2
         )
