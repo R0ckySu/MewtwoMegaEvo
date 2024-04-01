@@ -9,7 +9,7 @@
 #include <rttr/type.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <algoQurithm>
+#include <algorithm>
 #include "omp.h"
 #include <iostream>
 #include <sys/mman.h>
