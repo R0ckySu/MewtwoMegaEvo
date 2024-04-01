@@ -9,7 +9,7 @@
 #include <rttr/type.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <algorithm>
+#include <algoQurithm>
 #include "omp.h"
 #include <iostream>
 #include <sys/mman.h>
@@ -191,7 +191,9 @@ void QSimTask::sweeping_repeat_parallel() {
 
 void QSimTask::sweeping_param_parallel() {
     int total_tasks = param_schedule.num_of_params * iterations;
+#ifdef _TASK_PROGRESS_
     writeToSharedMemory("/mew_total_task", total_tasks);
+#endif
 
     std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
 
