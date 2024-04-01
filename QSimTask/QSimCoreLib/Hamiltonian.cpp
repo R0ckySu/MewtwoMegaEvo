@@ -244,10 +244,7 @@ void MW_Hamiltonian::load_waveform() {
                 }
             }
         }
-//        std::cout << "waveform:" << wave_form << std::endl;
     }
-
-//        pulse_data_conj = arma::conj(pulse_data);
 }
 
 void MW_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -287,7 +284,7 @@ AWG_Hamiltonian::AWG_Hamiltonian(const Gated_Hamiltonian &g, const AWG_Hamiltoni
 
 void AWG_Hamiltonian::load_waveform() {
     Gated_Hamiltonian::load_waveform();
-    wave_form = arma::cx_vec(amplitude * switching_signal * step_size, arma::zeros(switching_signal.size()));
+    wave_form = arma::cx_vec(2*M_PI*amplitude * switching_signal * step_size, arma::zeros(switching_signal.size()));
 //    std::cout << "waveform of:"<< tag << "\n" << wave_form << std::endl;
 }
 

@@ -135,8 +135,8 @@ void MeasurementManager::save_result_to_h5(const std::string& path,  const int p
     arma::uvec idx_arma = arma::conv_to<arma::uvec>::from(time_indices_marker);
     if (will_record_density_mat) {
         std::string dm_marker_field_name = std::string(DEN_MAT_MARKER_FIELD_NAME).append(param_idx_str).append("/");
-        std::string dm_all_field_name = std::string(DEN_MAT_ALL_FIELD_NAME).append(param_idx_str).append("/");
         for (int j = 0; j < (rho_multi_t).size(); ++j) {
+            std::string dm_all_field_name = std::string(DEN_MAT_ALL_FIELD_NAME).append(param_idx_str).append("/");
             std::string sub_field_name = std::string(dm_marker_field_name);
             sub_field_name.append(init_states.at(j).symbol_name);
 //            std::string sub_field_name = dm_marker_field_name.append(init_states.at(j).symbol_name);

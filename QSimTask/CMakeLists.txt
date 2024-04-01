@@ -13,6 +13,8 @@ add_library(
 
 add_subdirectory(QSimCoreLib)
 
+add_definitions(-D_TASK_PROGRESS_)
+
 target_link_libraries(QSimTask PRIVATE QSimCoreLib)
 target_link_libraries(QSimTask PRIVATE omp)
 target_link_libraries(QSimTask PRIVATE hdf5_cpp)
