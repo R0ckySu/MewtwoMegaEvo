@@ -6,7 +6,7 @@
 #include <Wt/WCheckBox.h>
 #include <Wt/WEnvironment.h>
 #include <Wt/WHBoxLayout.h>
-#include "MewFilePannel.h"
+
 
 #include <iostream>
 
@@ -22,8 +22,8 @@ MewtwoSimConfigApp::MewtwoSimConfigApp(const Wt::WEnvironment& env) : Wt::WAppli
     auto container_upper = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
     container_upper->setOverflow(Wt::Overflow::Auto);
     auto hLayout_upper = container_upper->setLayout(std::make_unique<Wt::WHBoxLayout>());
-    auto fileBrowser = hLayout_upper->addWidget(std::make_unique<MewFilePannel>(std::string(basePath).append("/").append(userID).append("/config_files")));
-    auto LaunchPad = hLayout_upper->addWidget(std::make_unique<MewLaunchPad>());
+    fileBrowser = hLayout_upper->addWidget(std::make_unique<MewFilePannel>(std::string(basePath).append("/").append(userID).append("/config_files")));
+    LaunchPad = hLayout_upper->addWidget(std::make_unique<MewLaunchPad>());
     LaunchPad->working_folder = std::string(basePath).append("/").append(userID);
     LaunchPad->delegate = this;
 
@@ -48,6 +48,7 @@ void MewtwoSimConfigApp::willLaunchSimulator() {
     simConfigPannel->dump_config();
     gateConfigTable->dump_config();
     hamiltonianTable->dump_config();
+    LaunchPad->current_task_name = simConfigPannel->task_name->get_data().second;
 };
 
 void MewtwoSimConfigApp::didLaunchSimulator() {

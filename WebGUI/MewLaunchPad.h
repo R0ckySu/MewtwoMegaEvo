@@ -36,8 +36,11 @@ public:
     std::string working_folder;
     std::string export_folder;
     std::string current_time_stamp_string="";
+    std::string current_task_name="";
     Wt::WTimer* progress_bar_timer;
     Wt::WPushButton* Lauchbutton;
+    Wt::WPushButton* Downloadbutton;
+    std::shared_ptr<Wt::WResource> zipFileResource;
 
     std::string most_recent_job_time_stamp;
     TaskLaunchDelegate* delegate;
@@ -57,7 +60,6 @@ public:
         progress_bar_timer = this->addChild(std::make_unique<Wt::WTimer>());
         progress_bar_timer->setInterval(std::chrono::milliseconds(1000)); // Update every second
 
-
         Lauchbutton->clicked().connect([=] {
             Lauchbutton->setEnabled(false);
             delegate->willLaunchSimulator();
@@ -66,17 +68,19 @@ public:
                     append(working_folder).append("/config_files/ -o ").
                     append(working_folder).append("/sim_results/ -t ").
                     append(current_time_stamp_string);
-
             progress_bar_timer->timeout().connect([=] {
                 // Read the shared memory for the progress value
                 int progress = readSharedMemoryProgress(std::string("/progress_").append(current_time_stamp_string));
                 int total_num_task = readSharedMemoryProgress(std::string("/total_").append(current_time_stamp_string));
+                int data_dump_ready = readSharedMemoryProgress(std::string("/datardy_").append(current_time_stamp_string));
                 progressBar->setRange(0, total_num_task);
                 progressBar->setValue(progress);
-                if (progress!=0 && total_num_task!=0 && progress == total_num_task) {
+                if (data_dump_ready==1 && progress!=0 && total_num_task!=0 && progress == total_num_task) {
                     // Re-enable the button
                     Lauchbutton->enable();
                     progress_bar_timer->stop();
+                    Downloadbutton->enable();
+                    Downloadbutton->setText(std::string("Download Results: \n").append(current_task_name).append(current_time_stamp_string));
                 }
             });
 
@@ -88,13 +92,12 @@ public:
 //            delegate->didLaunchSimulator();
         });
 
-        auto Downloadbutton = buttonHLayout->addWidget(std::make_unique<Wt::WPushButton>("Download Results"));
-        Downloadbutton->clicked().connect([=] {
-//            std::cout << std::string(readSharedMemoryTaskName()) << std::endl;
-//            auto result = executeCommand("/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/MewtwoMegaEvo -c /Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/config_files/ -o /Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/sim_results/");
-//            outputText->setText(std::string(result));
-        });
+        Downloadbutton = buttonHLayout->addWidget(std::make_unique<Wt::WPushButton>("Download Results"));
+        Downloadbutton->disable();
+        Downloadbutton->clicked().connect(this, &MewLaunchPad::onDownloadClicked);
     }
+
+    void onDownloadClicked();
 
     int readSharedMemoryProgress(std::string var_name) {
         int fd = shm_open(var_name.c_str(), O_RDONLY, 0);
@@ -121,31 +124,6 @@ public:
         close(fd);
         return value;
     }
-
-//    const char* readSharedMemoryTaskName() {
-//        int fd = shm_open("/mew_task_name", O_RDONLY, 0);
-//        if (fd == -1) {
-//            std::cerr << "Error opening shared memory." << std::endl;
-////            return -1;
-//        }
-//        // Size of the shared memory object
-//        const size_t sharedSize = sizeof(const char*);
-//        // Memory map the shared memory object
-//        void* ptr = mmap(0, sharedSize, PROT_READ, MAP_SHARED, fd, 0);
-//        if (ptr == MAP_FAILED) {
-//            std::cerr << "Error mapping shared memory." << std::endl;
-//        }
-//
-//        // Read from the shared memory
-//        const char * value;
-//        memcpy(&value, ptr, sizeof(value));
-//        std::cout << "Read from shared memory: " << value << std::endl;
-//
-//        // Unmap and close the shared memory object
-//        munmap(ptr, sharedSize);
-//        close(fd);
-//        return value;
-//    }
 
     std::string executeCommand(const char* cmd) {
         std::thread thread{[cmd]() {

@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
+#include "QSimCoreLib/Utils.h"
 
 RTTR_REGISTRATION{
     rttr::registration::class_<QSimTask>("QSimTask").constructor<>()
@@ -34,64 +35,17 @@ QSimTask::QSimTask() {
     noise_sig_cache = ExtSigCache();
 }
 
-#ifdef _TASK_PROGRESS_
-void QSimTask::createSharedMemory(std::string var_name, int data) {
-    const char* shm_name = var_name.c_str();
-    // Create a shared memory object
-    int fd = shm_open(shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    if (fd == -1) {
-        std::cerr << "Error creating shared memory." << std::endl;
-//        return 1;
-    }
-    // Size of the shared memory object
-    const size_t sharedSize = sizeof(int);
-
-    // Configure the size of the shared memory object
-    ftruncate(fd, sharedSize);
-
-    // Memory map the shared memory object
-    void* ptr = mmap(0, sharedSize, PROT_WRITE, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED) {
-        std::cerr << "Error mapping shared memory." << std::endl;
-    }
-    std::cout << "Shared mem created:" << var_name << std::endl;
-}
-
-void QSimTask::writeToSharedMemory(std::string var_name, int data) {
-    const char* shm_name = var_name.c_str();
-    // Open the shared memory object
-    int shm_fd = shm_open(shm_name, O_RDWR, 0666);
-    if (shm_fd == -1) {
-        perror("shm_open");
-        return;
-    }
-    // Map the shared memory object
-    int* ptr = (int*)mmap(0, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    if (ptr == MAP_FAILED) {
-        perror("mmap");
-        close(shm_fd);
-        return;
-    }
-    // Write to the shared memory (this can be done multiple times as needed)
-    *ptr = data;
-    // Unmap the shared memory
-    if (munmap(ptr, sizeof(int)) == -1) {
-        perror("munmap");
-    }
-    // Close the shared memory object
-    close(shm_fd);
-}
-#endif
-
 QSimTask::~QSimTask() {
 }
 
 void QSimTask::launch_task() {
 #ifdef _TASK_PROGRESS_
-    createSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
+    createSharedMemory(std::string("/progress_").append(task_time_stamp));
     writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
-    createSharedMemory(std::string("/total_").append(task_time_stamp), 1);
+    createSharedMemory(std::string("/total_").append(task_time_stamp));
     writeToSharedMemory(std::string("/total_").append(task_time_stamp), 1);
+    createSharedMemory(std::string("/datardy_").append(task_time_stamp));
+    writeToSharedMemory(std::string("/datardy_").append(task_time_stamp), 0);
 #endif
     int max_num_of_threads = omp_get_max_threads();
     task_log(std::string("QSimTask: Device has ").append(std::to_string(max_num_of_threads)).append(" threads."),1);
@@ -106,6 +60,7 @@ void QSimTask::launch_task() {
         param_schedule.save_param_list_to_h5(get_result_file_name());
         sweeping_repeat_parallel();
     }
+    writeToSharedMemory(std::string("/datardy_").append(task_time_stamp), 1);
 }
 
 void QSimTask::sweeping_repeat_parallel() {

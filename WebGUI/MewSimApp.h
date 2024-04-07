@@ -7,6 +7,7 @@
 #include <Wt/WApplication.h>
 //#include <Wt/WEnvironment.h>
 #include "MewLaunchPad.h"
+#include "MewFilePannel.h"
 #include "MewSimConfigPannel.h"
 #include "MewHamiltonian.h"
 #include "MewGate.h"
@@ -14,6 +15,8 @@
 class MewtwoSimConfigApp : public Wt::WApplication, public TaskLaunchDelegate {
 public:
     std::string userID;
+    MewLaunchPad* LaunchPad;
+    MewFilePannel* fileBrowser;
     MewSimConfigPannel* simConfigPannel;
     MewGateConfig* gateConfigTable;
     MewHamiltonianConfig* hamiltonianTable;

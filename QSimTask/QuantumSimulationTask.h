@@ -73,9 +73,5 @@ public:
 private:
     static nlohmann::json load_config_from_path(const std::string& path);
     void task_log(std::string message, int log_level);
-#ifdef _TASK_PROGRESS_
-    void writeToSharedMemory(std::string var_name, int data);
-    void createSharedMemory(std::string var_name, int data);
-#endif
     std::string get_result_file_name();
 };

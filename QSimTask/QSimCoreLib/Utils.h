@@ -81,4 +81,9 @@ std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(cons
 
 std::string find_and_replace_string(const std::string& str_to_find, const std::string& str_to_rep, std::string original_str);
 
+#ifdef _TASK_PROGRESS_
+void writeToSharedMemory(std::string var_name, int data);
+void createSharedMemory(std::string var_name);
+#endif
+
 #endif //MEWTWOMEGAEVO_UTILS_H

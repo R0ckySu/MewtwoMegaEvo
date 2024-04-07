@@ -17,6 +17,8 @@ add_library(
         ExtSigCache.cpp
 )
 
+add_definitions(-D_TASK_PROGRESS_)
+
 #target_link_libraries(QSimCoreLibTest PRIVATE QSimCoreLib)
 #target_link_libraries(QSimCoreLib PRIVATE omp)
 target_link_libraries(QSimCoreLib PUBLIC armadillo)
