@@ -32,17 +32,11 @@ QSimTask::QSimTask() {
     job_id = 0;
     num_job_group = 1;
     noise_sig_cache = ExtSigCache();
-#ifdef _TASK_PROGRESS_
-    createSharedMemory("/mew_task_progress", task_progress);
-    writeToSharedMemory("/mew_task_progress", task_progress);
-    createSharedMemory("/mew_total_task", 1);
-    writeToSharedMemory("/mew_total_task", 1);
-//    createSharedMemory("/mew_task_name", std::string(task_name).append(task_time_stamp).c_str());
-#endif
 }
 
 #ifdef _TASK_PROGRESS_
-void QSimTask::createSharedMemory(const char* shm_name, int data) {
+void QSimTask::createSharedMemory(std::string var_name, int data) {
+    const char* shm_name = var_name.c_str();
     // Create a shared memory object
     int fd = shm_open(shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd == -1) {
@@ -59,11 +53,12 @@ void QSimTask::createSharedMemory(const char* shm_name, int data) {
     void* ptr = mmap(0, sharedSize, PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         std::cerr << "Error mapping shared memory." << std::endl;
-//        return 1;
     }
+    std::cout << "Shared mem created:" << var_name << std::endl;
 }
 
-void QSimTask::writeToSharedMemory(const char* shm_name, int data) {
+void QSimTask::writeToSharedMemory(std::string var_name, int data) {
+    const char* shm_name = var_name.c_str();
     // Open the shared memory object
     int shm_fd = shm_open(shm_name, O_RDWR, 0666);
     if (shm_fd == -1) {
@@ -92,6 +87,12 @@ QSimTask::~QSimTask() {
 }
 
 void QSimTask::launch_task() {
+#ifdef _TASK_PROGRESS_
+    createSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
+    writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
+    createSharedMemory(std::string("/total_").append(task_time_stamp), 1);
+    writeToSharedMemory(std::string("/total_").append(task_time_stamp), 1);
+#endif
     int max_num_of_threads = omp_get_max_threads();
     task_log(std::string("QSimTask: Device has ").append(std::to_string(max_num_of_threads)).append(" threads."),1);
     if(enable_param_parallel_mode) {
@@ -110,9 +111,8 @@ void QSimTask::launch_task() {
 void QSimTask::sweeping_repeat_parallel() {
     int total_tasks = param_schedule.num_of_params * iterations;
 #ifdef _TASK_PROGRESS_
-    writeToSharedMemory("/mew_total_task", total_tasks);
+    writeToSharedMemory(std::string("/total_").append(task_time_stamp), total_tasks);
 #endif
-
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
         std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
         std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
@@ -161,7 +161,7 @@ void QSimTask::sweeping_repeat_parallel() {
             delete noise_hamiltonian_time_dep;
             task_progress ++;
 #ifdef _TASK_PROGRESS_
-            writeToSharedMemory("/mew_task_progress", task_progress);
+            writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
 #endif
         }
 
@@ -192,7 +192,7 @@ void QSimTask::sweeping_repeat_parallel() {
 void QSimTask::sweeping_param_parallel() {
     int total_tasks = param_schedule.num_of_params * iterations;
 #ifdef _TASK_PROGRESS_
-    writeToSharedMemory("/mew_total_task", total_tasks);
+    writeToSharedMemory(std::string("/total_").append(task_time_stamp), total_tasks);
 #endif
 
     std::string result_file_name = std::string(result_exact_path).append("/").append(task_name).append(task_time_stamp).append("_Job#").append(std::to_string(job_id));
@@ -243,7 +243,7 @@ void QSimTask::sweeping_param_parallel() {
             delete noise_hamiltonian_time_dep;
             task_progress ++;
 #ifdef _TASK_PROGRESS_
-            writeToSharedMemory("/mew_task_progress", task_progress);
+            writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
 #endif
         }
         task_log("Solver job done!",1);

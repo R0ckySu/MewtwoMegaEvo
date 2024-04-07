@@ -48,6 +48,7 @@ public:
     MewCellBool *record_propagator;
     MewCellBool *record_all_meas;
     MewCellBool *record_density_mat;
+    MewCellBool *reset_rotating_frame;
     MewCellBool *enable_param_parallel_mode;
     MewCellIntNum *system_dim;
     MewStrList *observables;

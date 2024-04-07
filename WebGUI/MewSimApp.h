@@ -13,6 +13,7 @@
 
 class MewtwoSimConfigApp : public Wt::WApplication, public TaskLaunchDelegate {
 public:
+    std::string userID;
     MewSimConfigPannel* simConfigPannel;
     MewGateConfig* gateConfigTable;
     MewHamiltonianConfig* hamiltonianTable;

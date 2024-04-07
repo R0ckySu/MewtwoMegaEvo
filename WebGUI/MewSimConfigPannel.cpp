@@ -121,19 +121,20 @@ MewSimConfigPannel::MewSimConfigPannel(Wt::WContainerWidget* parent) : Wt::WCont
     record_propagator = table1->elementAt(3, 0)->addWidget(std::make_unique<MewCellBool>("record_propagator", false));
     record_all_meas = table1->elementAt(4, 0)->addWidget(std::make_unique<MewCellBool>("record_all_meas", false));
     record_density_mat = table1->elementAt(5, 0)->addWidget(std::make_unique<MewCellBool>("record_density_mat", false));
-    enable_param_parallel_mode = table1->elementAt(6, 0)->addWidget(std::make_unique<MewCellBool>("enable_param_parallel_mode", false));
+    reset_rotating_frame = table1->elementAt(6, 0)->addWidget(std::make_unique<MewCellBool>("reset_rotating_frame", false));
+    enable_param_parallel_mode = table1->elementAt(7, 0)->addWidget(std::make_unique<MewCellBool>("enable_param_parallel_mode", false));
 
-    system_dim = table1->elementAt(7, 0)->addWidget(std::make_unique<MewCellIntNum>("system_dim", 2));
-    observables = table1->elementAt(8, 0)->addWidget(std::make_unique<MewStrList>("observables", ""));
-    init_states = table1->elementAt(9, 0)->addWidget(std::make_unique<MewStrList>("init_states", ""));
+    system_dim = table1->elementAt(8, 0)->addWidget(std::make_unique<MewCellIntNum>("system_dim", 2));
+    observables = table1->elementAt(9, 0)->addWidget(std::make_unique<MewStrList>("observables", ""));
+    init_states = table1->elementAt(10, 0)->addWidget(std::make_unique<MewStrList>("init_states", ""));
 
-    repeat = table1->elementAt(10, 0)->addWidget(std::make_unique<MewCellIntNum>("repeat", 0));
-    step_size = table1->elementAt(11, 0)->addWidget(std::make_unique<MewCellDoubleNum>("step_size", 0.0));
-    sequence = table1->elementAt(12, 0)->addWidget(std::make_unique<MewCellString>("sequence",""));
-    auto addNumParam= table1->elementAt(13, 0)->addWidget(std::make_unique<Wt::WPushButton>("+ Numerical Param"));
-    auto addStrParam= table1->elementAt(14, 0)->addWidget(std::make_unique<Wt::WPushButton>("+ String Param"));
+    repeat = table1->elementAt(11, 0)->addWidget(std::make_unique<MewCellIntNum>("repeat", 0));
+    step_size = table1->elementAt(12, 0)->addWidget(std::make_unique<MewCellDoubleNum>("step_size", 0.0));
+    sequence = table1->elementAt(13, 0)->addWidget(std::make_unique<MewCellString>("sequence",""));
+    auto addNumParam= table1->elementAt(14, 0)->addWidget(std::make_unique<Wt::WPushButton>("+ Numerical Param"));
+    auto addStrParam= table1->elementAt(15, 0)->addWidget(std::make_unique<Wt::WPushButton>("+ String Param"));
 
-    auto paramTablePanel = table1->elementAt(15, 0)->addWidget(std::make_unique<Wt::WPanel>());
+    auto paramTablePanel = table1->elementAt(16, 0)->addWidget(std::make_unique<Wt::WPanel>());
     paramTablePanel->setTitle("sweep_param_info");
     paramTable = paramTablePanel->setCentralWidget(std::make_unique<MewParamTable>());
     paramTable->setAttributeValue("style", "border-spacing: 5px 5px; background-color: #c5fad5");

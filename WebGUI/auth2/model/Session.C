@@ -45,28 +45,27 @@ void Session::configureAuth()
 //    myOAuthServices.push_back(std::make_unique<Auth::FacebookService>(myAuthService));
 }
 
-Session::Session(const std::string& sqliteDb)
-{
-  auto connection = std::make_unique<Dbo::backend::Sqlite3>(sqliteDb);
+Session::Session(const std::string& sqliteDb) {
+    auto connection = std::make_unique<Dbo::backend::Sqlite3>(sqliteDb);
 
-  connection->setProperty("show-queries", "true");
+    connection->setProperty("show-queries", "true");
 
-  setConnection(std::move(connection));
+    setConnection(std::move(connection));
 
-  mapClass<User>("user");
-  mapClass<AuthInfo>("auth_info");
-  mapClass<AuthInfo::AuthIdentityType>("auth_identity");
-  mapClass<AuthInfo::AuthTokenType>("auth_token");
+    mapClass<User>("user");
+    mapClass<AuthInfo>("auth_info");
+    mapClass<AuthInfo::AuthIdentityType>("auth_identity");
+    mapClass<AuthInfo::AuthTokenType>("auth_token");
 
-//  try {
-//    createTables();
-//    std::cerr << "Created database." << std::endl;
-//  } catch (std::exception& e) {
-//    std::cerr << e.what() << std::endl;
-//    std::cerr << "Using existing database";
-//  }
+//    try {
+//        createTables();
+//        std::cerr << "Created database." << std::endl;
+//    } catch (std::exception& e) {
+//        std::cerr << e.what() << std::endl;
+//        std::cerr << "Using existing database";
+//    }
 
-  users_ = std::make_unique<UserDatabase>(*this);
+    users_ = std::make_unique<UserDatabase>(*this);
 }
 
 Session::~Session()
@@ -88,16 +87,16 @@ dbo::ptr<User> Session::user()
 
 dbo::ptr<User> Session::user(const Auth::User& authUser)
 {
-  dbo::ptr<AuthInfo> authInfo = users_->find(authUser);
+    dbo::ptr<AuthInfo> authInfo = users_->find(authUser);
 
-  dbo::ptr<User> user = authInfo->user();
+    dbo::ptr<User> user = authInfo->user();
 
-  if (!user) {
-    user = add(std::make_unique<User>());
-    authInfo.modify()->setUser(user);
-  }
+    if (!user) {
+        user = add(std::make_unique<User>());
+        authInfo.modify()->setUser(user);
+    }
 
-  return user;
+    return user;
 }
 
 const Auth::AuthService& Session::auth()

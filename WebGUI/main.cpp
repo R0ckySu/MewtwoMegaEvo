@@ -6,15 +6,12 @@
 #include "auth2/Auth2.h"
 
 std::unique_ptr<Wt::WApplication> createUserInventoryApp(const Wt::WEnvironment& env) {
-    return std::make_unique<MewUserInventoryApp>(env,
-                                                 "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/Demo_configs",
-                                                 "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/TestConfig");
+    return std::make_unique<MewUserInventoryApp>(env);
 }
 
 std::unique_ptr<Wt::WApplication> createSimConfigApp(const Wt::WEnvironment& env) {
     return std::make_unique<MewtwoSimConfigApp>(env);
 }
-
 
 std::unique_ptr<Wt::WApplication> createApplication(const Wt::WEnvironment& env) {
     return std::make_unique<AuthApplication>(env);

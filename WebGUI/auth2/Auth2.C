@@ -37,13 +37,15 @@ AuthApplication::AuthApplication(const Wt::WEnvironment& env): Wt::WApplication(
 
 void AuthApplication::authEvent() {
     if (session_.login().loggedIn()) {
-      log("notice") << "User " << session_.login().user().id()
-                        << " logged in.";
-      Dbo::Transaction t(session_);
-      dbo::ptr<User> user = session_.user();
-      log("notice") << "(Favourite pet: " << user->favouritePet << ")";
-    } else
-      log("notice") << "User logged out.";
+        auto userId = session_.login().user().id();
+        log("notice") << "User " << userId << " logged in.";
+        Dbo::Transaction t(session_);
+        dbo::ptr<User> user = session_.user();
+        log("notice") << "(Favourite pet: " << user->favouritePet << ")";
+        Wt::WApplication::instance()->redirect(std::string("/userInv?uid=").append(userId));
+    } else {
+        log("notice") << "User logged out.";
+    }
 }
 
 

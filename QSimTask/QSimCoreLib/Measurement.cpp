@@ -67,13 +67,13 @@ void MeasurementManager::measure_from_density_mat_with_all_time_points(std::vect
     measurement_time_point_vec = step_size * time_indices;
 }
 
-void MeasurementManager::reset_density_matrix_rotating_frame(std::vector<arma::cx_cube>& rho_multi, std::vector<int > time_indices) {
-    std::cout << static_hamiltonian_total_per_step << std::endl;
+void MeasurementManager::reset_density_matrix_rotating_frame(std::vector<arma::cx_cube>& rho_multi, std::vector<int> time_indices) {
+//    std::cout << static_hamiltonian_total_per_step << std::endl;
     arma::cx_mat diag_H = arma::diagmat(static_hamiltonian_total_per_step.diag());
     for (int j = 0; j < init_states.size(); ++j) {
         init_state_name_type rho_sym = init_states.at(j).symbol_name;
         std::cout << "Reset frame for:" << " rho:" << rho_sym << std::endl;
-
+        std::cout << "Number of steps:" << time_indices.size() << std::endl;
         arma::vec meas_temp = arma::vec(time_indices.size());
         #pragma omp parallel for default(none) shared(diag_H, j,time_indices,rho_multi)
         for (int k = 0; k < time_indices.size(); ++k) {
