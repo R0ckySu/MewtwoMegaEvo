@@ -16,7 +16,7 @@
 #include <Wt/WFileResource.h>
 #include <cstdlib>
 
-#define DemoConfigFolder "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/Demo_configs"
+#define DemoConfigFolder "./Demo_configs"
 
 class MewUserInventoryApp : public Wt::WApplication {
 public:
@@ -41,7 +41,7 @@ private:
         auto container = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
         auto table = container->addWidget(std::make_unique<Wt::WTable>());
         table->setHeaderCount(1);
-        table->elementAt(0, 0)->addWidget(std::make_unique<Wt::WText>("Subdirectory Name"));
+        table->elementAt(0, 0)->addWidget(std::make_unique<Wt::WText>("Demo Name"));
         table->elementAt(0, 1)->addWidget(std::make_unique<Wt::WText>("Actions"));
 
         table->addStyleClass("table table-striped");

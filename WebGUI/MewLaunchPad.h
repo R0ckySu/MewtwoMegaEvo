@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <cstring>
 
-#define command_path "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground/MewtwoMegaEvo"
+#define command_path "./MewtwoMegaEvo"
 
 class TaskLaunchDelegate {
 public:
