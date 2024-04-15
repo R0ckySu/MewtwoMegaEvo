@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#define basePath "/Users/rockysu/CodeRepo/MewtwoMegaEvo.git/Playground"
+#define basePath "."
 
 MewtwoSimConfigApp::MewtwoSimConfigApp(const Wt::WEnvironment& env) : Wt::WApplication(env) {
     userID = env.getParameter("uid") ? *env.getParameter("uid") : "defaultUserId";
