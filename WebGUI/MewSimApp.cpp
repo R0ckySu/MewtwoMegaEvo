@@ -25,7 +25,7 @@ MewtwoSimConfigApp::MewtwoSimConfigApp(const Wt::WEnvironment& env) : Wt::WAppli
     fileBrowser = hLayout_upper->addWidget(std::make_unique<MewFilePannel>(std::string(basePath).append("/").append(userID).append("/config_files")));
     LaunchPad = hLayout_upper->addWidget(std::make_unique<MewLaunchPad>());
     LaunchPad->working_folder = std::string(basePath).append("/").append(userID);
-    LaunchPad->delegate = this;
+    LaunchPad->delegate = (TaskLaunchDelegate*) this;
 
     auto container_lower = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
     container_lower->setOverflow(Wt::Overflow::Auto);
@@ -42,12 +42,13 @@ MewtwoSimConfigApp::MewtwoSimConfigApp(const Wt::WEnvironment& env) : Wt::WAppli
     hamiltonianTable = hLayout_lower->addWidget(std::make_unique<MewHamiltonianConfig>());
     hamiltonianTable->setStyleClass("scrollable-table");
     hamiltonianTable->load_from_file(std::string(basePath).append("/").append(userID).append("/config_files/hamiltonian_config.json"));
-};
+}
 
 void MewtwoSimConfigApp::willLaunchSimulator() {
-    simConfigPannel->dump_config();
-    gateConfigTable->dump_config();
-    hamiltonianTable->dump_config();
+    std::string work_path = std::string(basePath).append("/").append(userID).append("/config_files/");
+    simConfigPannel->dump_config(work_path);
+    gateConfigTable->dump_config(work_path);
+    hamiltonianTable->dump_config(work_path);
     LaunchPad->current_task_name = simConfigPannel->task_name->get_data().second;
 };
 

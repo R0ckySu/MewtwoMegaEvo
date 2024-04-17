@@ -37,7 +37,7 @@ public:
     MewGateTable *table;
     MewGateConfig();
     void load_from_file(std::string filePath);
-    void dump_config();
+    void dump_config(std::string dest_path);
 };
 
 #endif //MYPROJECT_MEWGATE_H

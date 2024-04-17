@@ -51,6 +51,7 @@ Wt::Json::Object GateCell::getJsonObj() {
     g[hamiltonians->get_data().first] = Wt::Json::Value(hamiltonians->get_data().second);
     g[pulse_width->get_data().first] = Wt::Json::Value(pulse_width->get_data().second);
     g[shift_time->get_data().first] = Wt::Json::Value(shift_time->get_data().second);
+    g[ext_shaped_sig_path->get_data().first] = Wt::Json::Value(ext_shaped_sig_path->get_data().second);
     return g;
 }
 
@@ -111,7 +112,7 @@ void MewGateConfig::load_from_file(std::string filePath) {
     table->reindexing_table_cells();
 }
 
-void MewGateConfig::dump_config() {
+void MewGateConfig::dump_config(std::string dest_path) {
     Wt::Json::Object gate_config;
 
     auto gate_List = Wt::Json::Array();
@@ -123,7 +124,7 @@ void MewGateConfig::dump_config() {
     gate_config["gate_defs"] = gate_List;
 
     std::string jsonString = Wt::Json::serialize(gate_config, true);
-    std::ofstream file("gate_config.json");
+    std::ofstream file(std::string(dest_path).append("gate_config.json"));
     if (file.is_open()) {
         file << jsonString;
         file.close();

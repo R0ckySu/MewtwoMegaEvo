@@ -41,9 +41,9 @@ public:
     Wt::WPushButton* Lauchbutton;
     Wt::WPushButton* Downloadbutton;
     std::shared_ptr<Wt::WResource> zipFileResource;
-
-    std::string most_recent_job_time_stamp;
     TaskLaunchDelegate* delegate;
+    std::string most_recent_job_time_stamp;
+
     MewLaunchPad() : Wt::WContainerWidget() {
         auto vLayout = this->setLayout(std::make_unique<Wt::WVBoxLayout>());
         auto outputText = vLayout->addWidget(std::make_unique<Wt::WTextArea>());

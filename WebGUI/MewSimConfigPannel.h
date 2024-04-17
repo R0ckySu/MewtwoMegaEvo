@@ -63,7 +63,7 @@ public:
 
     MewSimConfigPannel(Wt::WContainerWidget* parent = nullptr);
     void load_from_file(std::string filePath);
-    void dump_config();
+    void dump_config(std::string dest_path);
 };
 
 

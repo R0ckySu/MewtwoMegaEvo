@@ -175,6 +175,7 @@ void MewSimConfigPannel::load_from_file(std::string filePath) {
     record_propagator->set_data(jsonObject["record_propagator"].toBool());
     record_all_meas->set_data(jsonObject["record_all_meas"].toBool());
     record_density_mat->set_data(jsonObject["record_density_mat"].toBool());
+    reset_rotating_frame->set_data(jsonObject["reset_rotating_frame"].toBool());
     enable_param_parallel_mode->set_data(jsonObject["enable_param_parallel_mode"].toBool());
     system_dim->set_data(jsonObject["system_dim"].toNumber());
     observables->set_data(jsonObject["observables"]);
@@ -209,7 +210,7 @@ void MewSimConfigPannel::load_from_file(std::string filePath) {
     paramTable->reindexing_table_cells();
 }
 
-void MewSimConfigPannel::dump_config() {
+void MewSimConfigPannel::dump_config(std::string dest_path) {
     Wt::Json::Object sim_config;
     sim_config["task_name"] = Wt::Json::Value(task_name->get_data().second);
     sim_config[log_level->get_data().first] = Wt::Json::Value(log_level->get_data().second);
@@ -217,6 +218,7 @@ void MewSimConfigPannel::dump_config() {
     sim_config[record_propagator->get_data().first] = Wt::Json::Value(record_propagator->get_data().second);
     sim_config[record_all_meas->get_data().first] = Wt::Json::Value(record_all_meas->get_data().second);
     sim_config[record_density_mat->get_data().first] = Wt::Json::Value(record_density_mat->get_data().second);
+    sim_config[reset_rotating_frame->get_data().first] = Wt::Json::Value(reset_rotating_frame->get_data().second);
     sim_config[enable_param_parallel_mode->get_data().first] = Wt::Json::Value(enable_param_parallel_mode->get_data().second);
     sim_config[system_dim->get_data().first] = Wt::Json::Value(system_dim->get_data().second);
 
@@ -240,7 +242,7 @@ void MewSimConfigPannel::dump_config() {
     auto sim_config_rev = reverseEntries(sim_config);
 
     std::string jsonString = Wt::Json::serialize(sim_config_rev, true);
-    std::ofstream file("sim_config.json");
+    std::ofstream file(std::string(dest_path).append("sim_config.json"));
     if (file.is_open()) {
         file << jsonString;
         file.close();

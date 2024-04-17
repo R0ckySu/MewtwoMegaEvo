@@ -43,7 +43,7 @@ void QSimTask::launch_task() {
     createSharedMemory(std::string("/progress_").append(task_time_stamp));
     writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
     createSharedMemory(std::string("/total_").append(task_time_stamp));
-    writeToSharedMemory(std::string("/total_").append(task_time_stamp), 1);
+    writeToSharedMemory(std::string("/total_").append(task_time_stamp), -1);
     createSharedMemory(std::string("/datardy_").append(task_time_stamp));
     writeToSharedMemory(std::string("/datardy_").append(task_time_stamp), 0);
 #endif

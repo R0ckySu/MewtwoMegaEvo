@@ -313,7 +313,7 @@ void MewHamiltonianConfig::load_from_file(std::string filePath) {
 }
 
 
-void MewHamiltonianConfig::dump_config() {
+void MewHamiltonianConfig::dump_config(std::string dest_path) {
     Wt::Json::Object hamiltonian_config;
 
     auto hamiltonian_List = Wt::Json::Array();
@@ -331,7 +331,7 @@ void MewHamiltonianConfig::dump_config() {
     hamiltonian_config["hamiltonian_prototype_defs"] = hamiltonian_List;
 
     std::string jsonString = Wt::Json::serialize(hamiltonian_config, true);
-    std::ofstream file("hamiltonian_config.json");
+    std::ofstream file(std::string(dest_path).append("hamiltonian_config.json"));
     if (file.is_open()) {
         file << jsonString;
         file.close();
