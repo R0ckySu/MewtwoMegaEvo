@@ -75,7 +75,7 @@ public:
                 int data_dump_ready = readSharedMemoryProgress(std::string("/datardy_").append(current_time_stamp_string));
                 progressBar->setRange(0, total_num_task);
                 progressBar->setValue(progress);
-                if (data_dump_ready==1 && progress!=0 && total_num_task!=0 && progress == total_num_task) {
+                if (data_dump_ready==1 && progress!=0 && total_num_task!=-1 && progress == total_num_task) {
                     // Re-enable the button
                     Lauchbutton->enable();
                     progress_bar_timer->stop();

@@ -35,6 +35,7 @@ public:
 private:
     std::string userID;
     std::filesystem::path userConfigFolder;
+    std::shared_ptr<Wt::WResource> zipFileResource;
     void listDemoConfigs(const std::string& directoryPath) {
         namespace fs = std::filesystem;
 
@@ -70,8 +71,9 @@ private:
         }
     }
 
-    bool zipFolder(const std::string& sourceFolder, const std::string& outputZipFile) {
-        std::string command = "zip -r " + outputZipFile + " " + sourceFolder;
+    bool zipFolder(std::string working_folder, std::string targetFolder) {
+//        std::string working_folder = std::string("./").append(userID);
+        std::string command = "cd " + std::string(working_folder) + " ; " +  "zip -r " + std::string(targetFolder).append(".zip") + " " + targetFolder;
         return std::system(command.c_str()) == 0; // Check the return value, 0 means success
     }
 
@@ -86,7 +88,7 @@ private:
 
         table->addStyleClass("table table-striped");
         table->setWidth(Wt::WLength("50%"));
-
+        std::string working_folder = std::string("./").append(userID).append("/sim_results/");
         int row = 1;
         try {
             for (const auto& entry : fs::directory_iterator(directoryPath)) {
@@ -96,9 +98,12 @@ private:
 
                     // Add a button for clearing and copying
                     auto downloadBtn = std::make_unique<Wt::WPushButton>("Download Results");
+
                     downloadBtn->clicked().connect([=] {
-//                        clearAndCopyFolder(entry.path().string(), this->userConfigFolder);
-//                        Wt::WApplication::instance()->redirect(std::string("/simconfig?uid=").append(userID));
+                        zipFolder(working_folder, folderName);
+                        zipFileResource = std::make_shared<Wt::WFileResource>("application/zip", std::string(std::string(working_folder).append(folderName)).append(".zip"));
+//                        this->addWidget(std::make_unique<Wt::WAnchor>(zipFileResource, "Download"));
+                        Wt::WApplication::instance()->redirect(zipFileResource->url());
                     });
                     table->elementAt(row, 1)->addWidget(std::move(downloadBtn));
 
