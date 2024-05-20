@@ -335,6 +335,9 @@ void QSimTask::load_hamiltonian_configs() {
                 ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, h_staic));
             } else if(hamiltonian_type == "mw") {
                 auto *mw = new MW_Hamiltonian(h_prototypes_def, config_file_folder);
+                ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag, mw));
+            } else if(hamiltonian_type == "mw_RF") {
+                auto *mw = new MW_RF_Hamiltonian(h_prototypes_def, config_file_folder);
                 ctrl_hamiltonian_prototype_map.insert(std::make_pair(tag,mw));
             } else if(hamiltonian_type == "awg") {
                 auto *awg_h = new AWG_Hamiltonian(h_prototypes_def, config_file_folder);

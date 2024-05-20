@@ -24,6 +24,14 @@ RTTR_REGISTRATION{
             .property("freq",&MW_Hamiltonian::freq)
             .property("phase",&MW_Hamiltonian::phase);
 
+    rttr::registration::class_<MW_RF_Hamiltonian>("MW_RF_Hamiltonian")
+            .property("falling_time",&MW_RF_Hamiltonian::falling_time)
+            .property("rising_time",&MW_RF_Hamiltonian::rising_time)
+            .property("amplitude",&MW_RF_Hamiltonian::amplitude)
+            .property("freq",&MW_RF_Hamiltonian::freq)
+            .property("phase",&MW_RF_Hamiltonian::phase)
+            .property("RF_freq_mat",&MW_RF_Hamiltonian::phase);
+
     rttr::registration::class_<AWG_Hamiltonian>("AWG_Hamiltonian")
             .property("falling_time",&AWG_Hamiltonian::falling_time)
             .property("rising_time",&AWG_Hamiltonian::rising_time)
@@ -82,6 +90,7 @@ Hamiltonian::~Hamiltonian() {
 }
 
 void Hamiltonian::load_waveform() {
+
     times_vec = step_size * arma::linspace(0,num_of_steps,num_of_steps);
     wave_form = arma::cx_vec(num_of_steps).fill(0);
 }
@@ -271,6 +280,78 @@ MW_Hamiltonian::~MW_Hamiltonian() {
     arma::vec().swap(times_vec);
     arma::vec().swap(switching_signal);
 }
+
+/**********************************************************************************************************************/
+
+MW_RF_Hamiltonian::MW_RF_Hamiltonian() {
+    freq = 0;
+    phase = 0;
+    RF_freq_mat = symbolic_matrix();
+}
+
+MW_RF_Hamiltonian::MW_RF_Hamiltonian(nlohmann::json h_config, std::string config_path):Gated_Hamiltonian(h_config, config_path) {
+    freq = h_config["freq"];
+    phase = M_PI*double(h_config["phase"]);
+    RF_freq_mat.load_from_symbol(h_config["RF_freq_mat"], config_path);
+}
+
+MW_RF_Hamiltonian::MW_RF_Hamiltonian(const Gated_Hamiltonian &g, const MW_RF_Hamiltonian &m): Gated_Hamiltonian(g) {
+    freq = m.freq;
+    phase = m.phase;
+    RF_freq_mat = m.RF_freq_mat;
+}
+
+MW_RF_Hamiltonian::~MW_RF_Hamiltonian() {
+    arma::cx_vec().swap(wave_form);
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
+    arma::cx_cube().swap(wave_form_mat);
+}
+
+void MW_RF_Hamiltonian::load_waveform() {
+    Gated_Hamiltonian::load_waveform();
+    wave_form_mat = arma::cx_cube(h_mat.mat.n_cols,h_mat.mat.n_rows,num_of_steps).fill(0);
+
+    arma::cx_mat freq_with_RF_offset = arma::cx_mat(RF_freq_mat.mat.n_rows, RF_freq_mat.mat.n_cols).fill(freq);
+    arma::mat freq_mask = arma::mat(RF_freq_mat.mat.n_rows, RF_freq_mat.mat.n_cols).fill(0);
+    freq_mask.elem(arma::find(arma::abs(RF_freq_mat.mat) > 0)).ones();
+    freq_with_RF_offset = freq_with_RF_offset % freq_mask - RF_freq_mat.mat;
+    arma::dmat phase_mat = arma::dmat(RF_freq_mat.mat.n_rows,RF_freq_mat.mat.n_cols).fill(phase) % freq_mask;
+
+    if(switching_signal.size()) {
+        const arma::cx_double j = arma::cx_double(0,1);
+        std::cout << "Microwave: freq=" << freq << std::endl;
+        for (int i = 0; i < switching_signal.size(); ++i) {
+            if (switching_signal.at(i) != 0.0) {
+                wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*switching_signal.at(i)*arma::exp(j*(times_vec[i]*freq_with_RF_offset*2*M_PI + phase_mat));
+            }
+        }
+    }
+}
+
+void MW_RF_Hamiltonian::fetch_H(arma::cx_cube *H0) {
+    Gated_Hamiltonian::fetch_H(H0);
+    arma::cx_cube wave_form_mat_conj = arma::conj(wave_form_mat);
+    arma::cx_mat matrix_element_up = arma::trimatu(h_mat.mat);
+    arma::cx_mat matrix_element_down = arma::trimatu(h_mat.mat,1).t();
+
+    for (int i = 0; i < H0->n_slices; ++i) {
+        H0->slice(i) += matrix_element_up % wave_form_mat.slice(i) + matrix_element_down % wave_form_mat_conj.slice(i);
+    }
+}
+
+void MW_RF_Hamiltonian::clean_up_on_reload() {
+    Gated_Hamiltonian::clean_up_on_reload();
+}
+
+std::string MW_RF_Hamiltonian::description() {
+    return "Microwave Hamiltonian under rotating frame";
+}
+
+MW_RF_Hamiltonian *MW_RF_Hamiltonian::clone() {
+    return new MW_RF_Hamiltonian(*this);
+}
+
 
 /**********************************************************************************************************************/
 

@@ -96,6 +96,29 @@ RTTR_ENABLE(Gated_Hamiltonian);
 
 /**********************************************************************************************************************/
 
+class MW_RF_Hamiltonian: public Gated_Hamiltonian {
+public:
+    MW_RF_Hamiltonian();
+    explicit MW_RF_Hamiltonian(nlohmann::json h_config, std::string config_path);
+    MW_RF_Hamiltonian(const Gated_Hamiltonian &g, const MW_RF_Hamiltonian &m);
+    ~MW_RF_Hamiltonian();
+    double freq;
+    double phase;
+
+    symbolic_matrix RF_freq_mat;
+    arma::cx_cube wave_form_mat;
+
+    void load_waveform() override;
+    void fetch_H(arma::cx_cube* H0) override;
+    void clean_up_on_reload() override;
+    std::string description() override;
+    MW_RF_Hamiltonian* clone() override;
+
+RTTR_ENABLE(Gated_Hamiltonian);
+};
+
+/**********************************************************************************************************************/
+
 class AWG_Hamiltonian: public Gated_Hamiltonian {
 public:
     AWG_Hamiltonian();
