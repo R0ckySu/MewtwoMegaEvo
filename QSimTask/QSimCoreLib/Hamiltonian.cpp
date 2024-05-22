@@ -167,18 +167,15 @@ void Static_RF_Hamiltonian::load_waveform() {
     Static_Hamiltonian::load_waveform();
     wave_form_mat = arma::cx_cube(h_mat.mat.n_cols,h_mat.mat.n_rows,num_of_steps).fill(0);
 
-    if(switching_signal.size()) {
-        const arma::cx_double j = arma::cx_double(0,1);
-        for (int i = 0; i < switching_signal.size(); ++i) {
-            if (switching_signal.at(i) != 0.0) {
-                wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*arma::exp(j*(times_vec[i]*RF_freq_mat.mat*2*M_PI));
-            }
-        }
+    const arma::cx_double j = arma::cx_double(0,1);
+    for (int i = 0; i < num_of_steps; ++i) {
+        wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*arma::exp(j*(times_vec[i]*RF_freq_mat.mat*2*M_PI));
+//        std::cout << "Waveform Mat:" << std::endl;
+//        std::cout << wave_form_mat.slice(i) << std::endl;
     }
 }
 
 void Static_RF_Hamiltonian::fetch_H(arma::cx_cube *H0) {
-    Static_Hamiltonian::fetch_H(H0);
     arma::cx_cube wave_form_mat_conj = arma::conj(wave_form_mat);
     arma::cx_mat matrix_element_up = arma::trimatu(h_mat.mat);
     arma::cx_mat matrix_element_down = arma::trimatu(h_mat.mat,1).t();
