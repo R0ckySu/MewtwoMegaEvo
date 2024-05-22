@@ -13,6 +13,12 @@ RTTR_REGISTRATION{
             .property("waveform_path", &Hamiltonian::external_waveform_path)
             .property("h_mat",&Hamiltonian::h_mat);
 
+    rttr::registration::class_<Static_RF_Hamiltonian>("Hamiltonian")
+            .property("amplitude",&Static_RF_Hamiltonian::amplitude)
+            .property("waveform_path", &Static_RF_Hamiltonian::external_waveform_path)
+            .property("h_mat",&Static_RF_Hamiltonian::h_mat)
+            .property("RF_freq_mat",&Static_RF_Hamiltonian::RF_freq_mat);
+
     rttr::registration::class_<Gated_Hamiltonian>("Gated_Hamiltonian")
             .property("falling_time",&Gated_Hamiltonian::falling_time)
             .property("rising_time",&Gated_Hamiltonian::rising_time);
@@ -146,6 +152,48 @@ void Static_Hamiltonian::load_waveform() {
     Hamiltonian::load_waveform();
     wave_form.fill(step_size * amplitude * 2*M_PI);
 }
+
+/**********************************************************************************************************************/
+
+Static_RF_Hamiltonian *Static_RF_Hamiltonian::clone() {
+    return new Static_RF_Hamiltonian(*this);
+}
+
+Static_RF_Hamiltonian::Static_RF_Hamiltonian(nlohmann::json h_config, std::string config_path) : Static_Hamiltonian(h_config, config_path) {
+    RF_freq_mat.load_from_symbol(h_config["RF_freq_mat"], config_path);
+}
+
+void Static_RF_Hamiltonian::load_waveform() {
+    Static_Hamiltonian::load_waveform();
+    wave_form_mat = arma::cx_cube(h_mat.mat.n_cols,h_mat.mat.n_rows,num_of_steps).fill(0);
+
+    if(switching_signal.size()) {
+        const arma::cx_double j = arma::cx_double(0,1);
+        for (int i = 0; i < switching_signal.size(); ++i) {
+            if (switching_signal.at(i) != 0.0) {
+                wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*arma::exp(j*(times_vec[i]*RF_freq_mat.mat*2*M_PI));
+            }
+        }
+    }
+}
+
+void Static_RF_Hamiltonian::fetch_H(arma::cx_cube *H0) {
+    Static_Hamiltonian::fetch_H(H0);
+    arma::cx_cube wave_form_mat_conj = arma::conj(wave_form_mat);
+    arma::cx_mat matrix_element_up = arma::trimatu(h_mat.mat);
+    arma::cx_mat matrix_element_down = arma::trimatu(h_mat.mat,1).t();
+    for (int i = 0; i < H0->n_slices; ++i) {
+        H0->slice(i) += matrix_element_up % wave_form_mat.slice(i) + matrix_element_down % wave_form_mat_conj.slice(i);
+    }
+}
+
+Static_RF_Hamiltonian::~Static_RF_Hamiltonian() {
+    arma::cx_vec().swap(wave_form);
+    arma::vec().swap(times_vec);
+    arma::vec().swap(switching_signal);
+    arma::cx_cube().swap(wave_form_mat);
+}
+
 
 /**********************************************************************************************************************/
 

@@ -55,6 +55,23 @@ public:
     void fetch_H(arma::cx_cube *H0);
 };
 
+
+/**********************************************************************************************************************/
+
+class Static_RF_Hamiltonian: public Static_Hamiltonian {
+public:
+//    Static_RF_Hamiltonian();
+    ~Static_RF_Hamiltonian();
+    explicit Static_RF_Hamiltonian(nlohmann::json h_config, std::string config_path);
+
+    symbolic_matrix RF_freq_mat;
+    arma::cx_cube wave_form_mat;
+
+    void load_waveform() override;
+    void fetch_H(arma::cx_cube *H0) override;
+    Static_RF_Hamiltonian* clone() override;
+};
+
 /**********************************************************************************************************************/
 class Gated_Hamiltonian: public Hamiltonian {
 public:
