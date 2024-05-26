@@ -8,9 +8,9 @@ In a nutshell, the core functionality of this software is to solve the time-depe
 ## Installation
 
 ### Toolchain Requirements
-1. gcc-11
-2. g++-11
-3. gfortran-11
+1. gcc-11~13
+2. g++-11~13
+3. gfortran-11~13
 3. CMake 3.21+
 4. make 4.2.1
 
@@ -23,6 +23,10 @@ In a nutshell, the core functionality of this software is to solve the time-depe
 6. [RTTR](https://www.rttr.org) Allows C++ do run time reflection with this lib 
 7. [muparserx](https://beltoforion.de/en/muparserx/index.php#idIntro) math expression parser.
 8. [exprtk](https://github.com/ArashPartow/exprtk) Math expression parser, will be replaced by muparserx in future update.
+9. [Boost](https://www.boost.org) Math expression parser, will be replaced by muparserx in future update.
+10. [Wt-C++](https://www.webtoolkit.eu/wt) Build Web GUI application in C++
+
+To build Mewtwo natively, please refer to Note4BuildEnv.md.
 
 ## Quick Start Guide
 1. In your command line prompt, go to the playground of MewtwoMegaEvo

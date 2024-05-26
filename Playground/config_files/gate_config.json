@@ -4,12 +4,14 @@
       "tag": "Xpi",
       "hamiltonians": ["X1"],
       "pulse_width": 5e-6,
+      "shift_time": 0,
       "ext_shaped_sig_path":""
     },
     {
       "tag": "F",
       "hamiltonians": [],
       "pulse_width": 5e-6,
+      "shift_time":0,
       "ext_shaped_sig_path":""
     }
   ]

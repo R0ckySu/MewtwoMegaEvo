@@ -170,8 +170,6 @@ void Static_RF_Hamiltonian::load_waveform() {
     const arma::cx_double j = arma::cx_double(0,1);
     for (int i = 0; i < num_of_steps; ++i) {
         wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*arma::exp(j*(times_vec[i]*RF_freq_mat.mat*2*M_PI));
-//        std::cout << "Waveform Mat:" << std::endl;
-//        std::cout << wave_form_mat.slice(i) << std::endl;
     }
 }
 

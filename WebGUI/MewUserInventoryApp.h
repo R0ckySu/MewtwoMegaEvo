@@ -8,6 +8,8 @@
 #include <Wt/WApplication.h>
 #include <Wt/WEnvironment.h>
 #include <Wt/WContainerWidget.h>
+#include <Wt/WVBoxLayout.h>
+#include <Wt/WHBoxLayout.h>
 #include <Wt/WTable.h>
 #include <Wt/WPushButton.h>
 #include <Wt/WText.h>
@@ -27,20 +29,24 @@ public:
         userConfigFolder = std::filesystem::path(userID) / "config_files";
         auto userResultsFolder = std::filesystem::path(userID) / "sim_results";
         setTitle("User Inventory");
-        useStyleSheet("auth2/css/style.css");
-        listDemoConfigs(DemoConfigFolder);
-        listSimResults(userResultsFolder.string());
+
+        auto sidebysideContainer = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
+        auto hLayout = sidebysideContainer->setLayout(std::make_unique<Wt::WHBoxLayout>());
+
+        listDemoConfigs(DemoConfigFolder, hLayout);
+        listSimResults(userResultsFolder.string(), hLayout);
     }
 
 private:
     std::string userID;
     std::filesystem::path userConfigFolder;
     std::shared_ptr<Wt::WResource> zipFileResource;
-    void listDemoConfigs(const std::string& directoryPath) {
+    void listDemoConfigs(const std::string& directoryPath, Wt::WHBoxLayout *layout) {
         namespace fs = std::filesystem;
 
-        auto container = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
+        auto container = layout->addWidget(std::make_unique<Wt::WContainerWidget>());
         auto table = container->addWidget(std::make_unique<Wt::WTable>());
+        table->setAttributeValue("style", "background-color: #f0f0f0;");
         table->setHeaderCount(1);
         table->elementAt(0, 0)->addWidget(std::make_unique<Wt::WText>("Demo Name"));
         table->elementAt(0, 1)->addWidget(std::make_unique<Wt::WText>("Actions"));
@@ -77,11 +83,12 @@ private:
         return std::system(command.c_str()) == 0; // Check the return value, 0 means success
     }
 
-    void listSimResults(const std::string& directoryPath) {
+    void listSimResults(const std::string& directoryPath, Wt::WHBoxLayout *layout) {
         namespace fs = std::filesystem;
 
-        auto container = root()->addWidget(std::make_unique<Wt::WContainerWidget>());
+        auto container = layout->addWidget(std::make_unique<Wt::WContainerWidget>());
         auto table = container->addWidget(std::make_unique<Wt::WTable>());
+        table->setAttributeValue("style", "background-color: #909090;");
         table->setHeaderCount(1);
         table->elementAt(0, 0)->addWidget(std::make_unique<Wt::WText>("Result Name"));
         table->elementAt(0, 1)->addWidget(std::make_unique<Wt::WText>("Actions"));
@@ -98,6 +105,7 @@ private:
 
                     // Add a button for clearing and copying
                     auto downloadBtn = std::make_unique<Wt::WPushButton>("Download Results");
+                    auto templateBtn = std::make_unique<Wt::WPushButton>("Copy as template");
 
                     downloadBtn->clicked().connect([=] {
                         zipFolder(working_folder, folderName);
@@ -105,7 +113,12 @@ private:
 //                        this->addWidget(std::make_unique<Wt::WAnchor>(zipFileResource, "Download"));
                         Wt::WApplication::instance()->redirect(zipFileResource->url());
                     });
+                    templateBtn->clicked().connect([=] {
+                        clearAndCopyFolder(entry.path().string().append("/config_files/"), this->userConfigFolder);
+                        Wt::WApplication::instance()->redirect(std::string("/simconfig?uid=").append(userID));
+                    });
                     table->elementAt(row, 1)->addWidget(std::move(downloadBtn));
+                    table->elementAt(row, 1)->addWidget(std::move(templateBtn));
 
                     ++row;
                 }
