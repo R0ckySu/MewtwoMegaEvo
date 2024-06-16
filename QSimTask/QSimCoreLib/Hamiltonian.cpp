@@ -36,6 +36,7 @@ RTTR_REGISTRATION{
             .property("amplitude",&MW_RF_Hamiltonian::amplitude)
             .property("freq",&MW_RF_Hamiltonian::freq)
             .property("phase",&MW_RF_Hamiltonian::phase)
+            .property("wave_forward_propagate",&MW_RF_Hamiltonian::wave_forward_propagate)
             .property("RF_freq_mat",&MW_RF_Hamiltonian::phase);
 
     rttr::registration::class_<AWG_Hamiltonian>("AWG_Hamiltonian")
@@ -336,12 +337,14 @@ MW_RF_Hamiltonian::MW_RF_Hamiltonian(nlohmann::json h_config, std::string config
     freq = h_config["freq"];
     phase = M_PI*double(h_config["phase"]);
     RF_freq_mat.load_from_symbol(h_config["RF_freq_mat"], config_path);
+    wave_forward_propagate = h_config["wave_forward_propagate"];
 }
 
 MW_RF_Hamiltonian::MW_RF_Hamiltonian(const Gated_Hamiltonian &g, const MW_RF_Hamiltonian &m): Gated_Hamiltonian(g) {
     freq = m.freq;
     phase = m.phase;
     RF_freq_mat = m.RF_freq_mat;
+    wave_forward_propagate = m.wave_forward_propagate;
 }
 
 MW_RF_Hamiltonian::~MW_RF_Hamiltonian() {
@@ -353,6 +356,7 @@ MW_RF_Hamiltonian::~MW_RF_Hamiltonian() {
 
 void MW_RF_Hamiltonian::load_waveform() {
     Gated_Hamiltonian::load_waveform();
+    int propagate_factor = wave_forward_propagate ? -1:1;
     wave_form_mat = arma::cx_cube(h_mat.mat.n_cols,h_mat.mat.n_rows,num_of_steps).fill(0);
 
     arma::cx_mat freq_with_RF_offset = arma::cx_mat(RF_freq_mat.mat.n_rows, RF_freq_mat.mat.n_cols).fill(freq);
@@ -366,7 +370,7 @@ void MW_RF_Hamiltonian::load_waveform() {
         std::cout << "Microwave: freq=" << freq << std::endl;
         for (int i = 0; i < switching_signal.size(); ++i) {
             if (switching_signal.at(i) != 0.0) {
-                wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*switching_signal.at(i)*arma::exp(j*(times_vec[i]*freq_with_RF_offset*2*M_PI + phase_mat));
+                wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*switching_signal.at(i)*arma::exp(j*(times_vec[i]*freq_with_RF_offset*2*M_PI + phase_mat)*propagate_factor);
             }
         }
     }

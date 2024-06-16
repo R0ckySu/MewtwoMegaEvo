@@ -121,6 +121,7 @@ public:
     ~MW_RF_Hamiltonian();
     double freq;
     double phase;
+    bool wave_forward_propagate;
 
     symbolic_matrix RF_freq_mat;
     arma::cx_cube wave_form_mat;
