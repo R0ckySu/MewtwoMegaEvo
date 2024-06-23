@@ -7,13 +7,8 @@ int main(int argc, char *argv[]) {
     sim_task->preload();
     sim_task->launch_task();
 
-    system("cd ./MatlabFunctions");
-    std::string matlab_cmd = std::string("/Applications/MATLAB_R2023b.app/bin/matlab -nodisplay -nosplash - nodesktop -r \"LoadMewtwoData('").append(sim_task->result_exact_path).append("');exit\"");
+    std::string matlab_cmd = std::string("./matlab_process.sh ").append(sim_task->result_exact_path);
     std::cout << matlab_cmd << std::endl;
     system(matlab_cmd.c_str());
-
-//    std::string matlab_cmd = std::string("Please run in matlab:\n \"LoadMewtwoData('").append(sim_task->result_exact_path).append("')\"");
-//    std::cout << matlab_cmd << std::endl;
-
     return 0;
 }
