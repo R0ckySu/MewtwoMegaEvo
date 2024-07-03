@@ -353,6 +353,7 @@ MW_RF_Hamiltonian::MW_RF_Hamiltonian(const Gated_Hamiltonian &g, const MW_RF_Ham
 }
 
 MW_RF_Hamiltonian::~MW_RF_Hamiltonian() {
+    std::cout << "MW_RF_H is cleaning" << std::endl;
     arma::cx_vec().swap(wave_form);
     arma::vec().swap(times_vec);
     arma::vec().swap(switching_signal);
@@ -393,6 +394,7 @@ void MW_RF_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 }
 
 void MW_RF_Hamiltonian::clean_up_on_reload() {
+    std::cout << "MW_RF_H is cleaning" << std::endl;
     Gated_Hamiltonian::clean_up_on_reload();
     arma::cx_cube().swap(wave_form_mat);
 }
@@ -508,3 +510,8 @@ Noise_Hamiltonian::~Noise_Hamiltonian() {
     arma::vec().swap(times_vec);
     arma::vec().swap(switching_signal);
 }
+
+void Noise_Hamiltonian::clean_up_on_reload() {
+    Hamiltonian::clean_up_on_reload();
+}
+

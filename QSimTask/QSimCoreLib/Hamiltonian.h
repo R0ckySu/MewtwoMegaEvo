@@ -169,6 +169,7 @@ public:
     void load_ext_waveform(int param_index) override;
     std::string description() override;
     Noise_Hamiltonian* clone() override;
+    void clean_up_on_reload() override;
 RTTR_ENABLE(Hamiltonian);
 };
 

@@ -12,11 +12,14 @@ SimPrototypes::SimPrototypes() {
 };
 
 SimPrototypes::~SimPrototypes() {
+    std::cout << "Sim Prototype Cleaning" << std::endl;
     for (const auto& ctrl_h_item :ctrl_hamiltonian_prototype_map) {
+        ctrl_h_item.second->clean_up_on_reload();
         delete ctrl_h_item.second;
     }
 
     for (const auto& noise_h_item :noise_hamiltonian_prototype_map) {
+        noise_h_item.second->clean_up_on_reload();
         delete noise_h_item.second;
     }
 
