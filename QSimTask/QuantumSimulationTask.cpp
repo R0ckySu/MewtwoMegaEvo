@@ -89,7 +89,7 @@ void QSimTask::sweeping_repeat_parallel() {
         }
 
         //Ctrl time-dep hamiltonian doesn't change per noise iteration.
-        auto ctrl_hamiltonian_time_dep = compile_time_dep_ctrl_hamiltonian(reloaded_prototype->ctrl_hamiltonian_prototype_map,reloaded_prototype->gate_prototype_map, *seq);
+        arma::cx_cube* ctrl_hamiltonian_time_dep = compile_time_dep_ctrl_hamiltonian(reloaded_prototype->ctrl_hamiltonian_prototype_map,reloaded_prototype->gate_prototype_map, *seq);
 
         std::vector<double > randomstartlist = generate_random_num_list(iterations,3);
         arma::cx_cube propagator_repeat_all = arma::cx_cube(system_dimension,system_dimension,iterations, arma::fill::zeros);
@@ -113,6 +113,7 @@ void QSimTask::sweeping_repeat_parallel() {
             if (will_record_propagator){
                 propagator_repeat_all.slice(noise_idx) = solver_obj.get_propagator_end();
             }
+            arma::cx_cube().swap(*noise_hamiltonian_time_dep);
             delete noise_hamiltonian_time_dep;
             task_progress ++;
 #ifdef _TASK_PROGRESS_
@@ -138,6 +139,7 @@ void QSimTask::sweeping_repeat_parallel() {
         meas_manager.save_result_to_h5(result_file_name, i, param_schedule.get_param_dict_for_ith_param(i));
         task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param idx:").append(std::to_string(i)),1);
 
+        arma::cx_cube().swap(*ctrl_hamiltonian_time_dep);
         delete ctrl_hamiltonian_time_dep;
         delete seq;
         delete reloaded_prototype;
@@ -195,6 +197,7 @@ void QSimTask::sweeping_param_parallel() {
             solver_obj.ctrl_hamiltonian_time_dep = ctrl_hamiltonian_time_dep;
             solver_obj.noise_hamiltonian_time_dep = noise_hamiltonian_time_dep;
             solver_obj.calculate_evolution();
+            arma::cx_cube().swap(*noise_hamiltonian_time_dep);
             delete noise_hamiltonian_time_dep;
             task_progress ++;
 #ifdef _TASK_PROGRESS_
@@ -222,6 +225,7 @@ void QSimTask::sweeping_param_parallel() {
         };
         task_log(std::string("Result saved to:").append(result_file_name).append("\n at param:").append(std::to_string(i)),1);
 
+        arma::cx_cube().swap(*ctrl_hamiltonian_time_dep);
         delete ctrl_hamiltonian_time_dep;
         delete seq;
         delete reloaded_prototype;

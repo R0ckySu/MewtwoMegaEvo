@@ -12,8 +12,8 @@ VonNeumannSolver::VonNeumannSolver() {
 }
 
 VonNeumannSolver::~VonNeumannSolver() {
-//    arma::cx_cube().swap(propagator);
-//    arma::cx_cube().swap(propagator_dagger);
+    arma::cx_cube().swap(propagator);
+    arma::cx_cube().swap(propagator_dagger);
 }
 
 void VonNeumannSolver::calculate_evolution() {
