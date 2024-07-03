@@ -190,6 +190,11 @@ Static_RF_Hamiltonian::~Static_RF_Hamiltonian() {
     arma::cx_cube().swap(wave_form_mat);
 }
 
+void Static_RF_Hamiltonian::clean_up_on_reload() {
+    Hamiltonian::clean_up_on_reload();
+    arma::cx_cube().swap(wave_form_mat);
+}
+
 
 /**********************************************************************************************************************/
 
@@ -389,6 +394,7 @@ void MW_RF_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 
 void MW_RF_Hamiltonian::clean_up_on_reload() {
     Gated_Hamiltonian::clean_up_on_reload();
+    arma::cx_cube().swap(wave_form_mat);
 }
 
 std::string MW_RF_Hamiltonian::description() {

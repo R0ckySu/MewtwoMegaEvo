@@ -68,6 +68,7 @@ public:
     arma::cx_cube wave_form_mat;
 
     void load_waveform() override;
+    void clean_up_on_reload() override;
     void fetch_H(arma::cx_cube *H0) override;
     Static_RF_Hamiltonian* clone() override;
 };

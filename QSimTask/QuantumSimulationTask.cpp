@@ -140,6 +140,9 @@ void QSimTask::sweeping_repeat_parallel() {
         task_log(std::string("Result saved to:").append(result_file_name_meas).append("\n at param idx:").append(std::to_string(i)),1);
 
         arma::cx_cube().swap(*ctrl_hamiltonian_time_dep);
+        for (auto & rho_t_item : rho_multi_temp) {
+            arma::cx_cube().swap(rho_t_item);
+        }
         delete ctrl_hamiltonian_time_dep;
         delete seq;
         delete reloaded_prototype;
@@ -229,6 +232,9 @@ void QSimTask::sweeping_param_parallel() {
         delete ctrl_hamiltonian_time_dep;
         delete seq;
         delete reloaded_prototype;
+        for (auto & rho_t_item : rho_multi_temp) {
+            arma::cx_cube().swap(rho_t_item);
+        }
         rho_multi_temp.clear();
 //        noise_sig_cache.clean_cache();
     }
