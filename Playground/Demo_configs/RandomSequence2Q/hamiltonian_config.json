@@ -61,6 +61,7 @@
       "falling_time":0,
       "freq": 2.0e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "Hmw",
       "waveform_path":""
     },
@@ -73,6 +74,7 @@
       "falling_time":0,
       "freq": 2.01e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "Hmw",
       "waveform_path":""
     },
@@ -85,6 +87,7 @@
       "falling_time":0,
       "freq": 0,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "IZ",
       "waveform_path":""
     },
@@ -97,6 +100,7 @@
       "falling_time":0,
       "freq": 0,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "ZI",
       "waveform_path":""
     },

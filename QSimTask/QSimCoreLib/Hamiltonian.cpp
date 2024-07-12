@@ -28,7 +28,8 @@ RTTR_REGISTRATION{
             .property("rising_time",&MW_Hamiltonian::rising_time)
             .property("amplitude",&MW_Hamiltonian::amplitude)
             .property("freq",&MW_Hamiltonian::freq)
-            .property("phase",&MW_Hamiltonian::phase);
+            .property("phase",&MW_Hamiltonian::phase)
+            .property("chirp_rate",&MW_Hamiltonian::chirp_rate);
 
     rttr::registration::class_<MW_RF_Hamiltonian>("MW_RF_Hamiltonian")
             .property("falling_time",&MW_RF_Hamiltonian::falling_time)
@@ -36,6 +37,7 @@ RTTR_REGISTRATION{
             .property("amplitude",&MW_RF_Hamiltonian::amplitude)
             .property("freq",&MW_RF_Hamiltonian::freq)
             .property("phase",&MW_RF_Hamiltonian::phase)
+            .property("chirp_rate",&MW_RF_Hamiltonian::chirp_rate)
             .property("wave_forward_propagate",&MW_RF_Hamiltonian::wave_forward_propagate)
             .property("RF_freq_mat",&MW_RF_Hamiltonian::phase);
 
@@ -277,29 +279,23 @@ MW_Hamiltonian *MW_Hamiltonian::clone() {
 MW_Hamiltonian::MW_Hamiltonian(nlohmann::json h_config, std::string config_path) : Gated_Hamiltonian(h_config, config_path)  {
     freq = h_config["freq"];
     phase = M_PI*double(h_config["phase"]);
+    chirp_rate = h_config["chirp_rate"];
 }
 
 void MW_Hamiltonian::load_waveform() {
     Gated_Hamiltonian::load_waveform();
-    if(switching_signal.size()) {
+    if(!switching_signal.empty()) {
         const arma::cx_double j = arma::cx_double(0,1);
-        if(freq == 0.){
-            for (int i = 0; i < switching_signal.size(); ++i){
-                if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = 2*M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*phase);
-                }
-            }
+        if(freq == 0.) {
+            wave_form = 2*M_PI*step_size*amplitude*switching_signal * std::exp(j*phase);
         }
         else {
-            std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
-            for (int i = 0; i < switching_signal.size(); ++i){
-                if (switching_signal.at(i) != 0.0) {
-                    wave_form[i] = 2*M_PI*step_size*amplitude*switching_signal.at(i)*std::exp(j*(times_vec[i]*freq*2*M_PI + phase));
-//                    wave_form[i] = amplitude * (get_amplitude(times_vec[i]) + get_amplitude(times_vec[i + 1])) / 2 *
-//                                   std::exp(j * phase) / (j * freq * M_PI * 2.) * (
-//                                           std::exp(j * freq * 2. * M_PI * (times_vec[i + 1]))
-//                                           - std::exp(j * freq * 2. * M_PI * (times_vec[i])));
-                }
+            if (chirp_rate == 0.0) {
+                std::cout << "Microwave:Non RF: freq=" << freq << std::endl;
+                wave_form = 2*M_PI*step_size*amplitude*switching_signal % arma::exp(j*(times_vec * freq * 2 * M_PI + phase*arma::ones(times_vec.size())));
+            } else {
+                arma::vec freq_t = switching_signal % arma::cumsum(switching_signal) * step_size * chirp_rate + freq;
+                wave_form = 2*M_PI*step_size*amplitude*switching_signal % arma::exp(j*(times_vec % freq_t * 2 * M_PI + phase*arma::ones(times_vec.size())));
             }
         }
     }
@@ -335,12 +331,14 @@ MW_Hamiltonian::~MW_Hamiltonian() {
 MW_RF_Hamiltonian::MW_RF_Hamiltonian() {
     freq = 0;
     phase = 0;
+    chirp_rate = 0;
     RF_freq_mat = symbolic_matrix();
 }
 
 MW_RF_Hamiltonian::MW_RF_Hamiltonian(nlohmann::json h_config, std::string config_path):Gated_Hamiltonian(h_config, config_path) {
     freq = h_config["freq"];
     phase = M_PI*double(h_config["phase"]);
+    chirp_rate = h_config["chirp_rate"];
     RF_freq_mat.load_from_symbol(h_config["RF_freq_mat"], config_path);
     wave_forward_propagate = h_config["wave_forward_propagate"];
 }
@@ -374,9 +372,18 @@ void MW_RF_Hamiltonian::load_waveform() {
     if(switching_signal.size()) {
         const arma::cx_double j = arma::cx_double(0,1);
         std::cout << "Microwave: freq=" << freq << std::endl;
-        for (int i = 0; i < switching_signal.size(); ++i) {
-            if (switching_signal.at(i) != 0.0) {
-                wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*switching_signal.at(i)*arma::exp(j*(times_vec[i]*freq_with_RF_offset*2*M_PI + phase_mat)*propagate_factor);
+        if (chirp_rate == 0.0) {
+            for (int i = 0; i < switching_signal.size(); ++i) {
+                if (switching_signal.at(i) != 0.0) {
+                    wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*switching_signal.at(i)*arma::exp(j*(times_vec[i]*freq_with_RF_offset*2*M_PI + phase_mat)*propagate_factor);
+                }
+            }
+        } else {
+            arma::vec freq_t = switching_signal % arma::cumsum(switching_signal) * step_size * chirp_rate + freq;
+            for (int i = 0; i < switching_signal.size(); ++i) {
+                if (switching_signal.at(i) != 0.0) {
+                    wave_form_mat.slice(i) = 2*M_PI*step_size*amplitude*switching_signal.at(i)*arma::exp(j*(times_vec[i]*(freq_mask*freq_t[i]-RF_freq_mat.mat)*2*M_PI + phase_mat)*propagate_factor);
+                }
             }
         }
     }

@@ -33,6 +33,7 @@
       "falling_time":0,
       "freq": 2.1099e+07,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "XI",
       "waveform_path":""
     },
@@ -45,6 +46,7 @@
       "falling_time":0,
       "freq": 1.9099e+07,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "XI",
       "waveform_path":""
     },
@@ -57,6 +59,7 @@
       "falling_time":0,
       "freq": 1.0901e+07,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "IX",
       "waveform_path":""
     },
@@ -69,6 +72,7 @@
       "falling_time":0,
       "freq": 9.9010e+06,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "IX",
       "waveform_path":""
     },

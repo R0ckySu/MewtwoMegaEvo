@@ -25,6 +25,7 @@
       "falling_time":0,
       "freq": 1e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "XI",
       "waveform_path":""
     },
@@ -37,6 +38,7 @@
       "falling_time":0,
       "freq": 1e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "YI",
       "waveform_path":""
     },
@@ -49,6 +51,7 @@
       "falling_time":0,
       "freq":  0.998e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "IX",
       "waveform_path":""
     },

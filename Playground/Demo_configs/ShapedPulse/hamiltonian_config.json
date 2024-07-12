@@ -17,6 +17,7 @@
       "falling_time":0,
       "freq": 0,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "X",
       "waveform_path":""
     },

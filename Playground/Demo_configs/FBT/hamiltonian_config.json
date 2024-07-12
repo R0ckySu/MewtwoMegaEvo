@@ -17,6 +17,7 @@
       "falling_time":0,
       "freq": 0,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "X",
       "waveform_path":""
     },
@@ -35,7 +36,7 @@
     {
       "tag": "noise1",
       "type": "noise",
-      "enable": true,
+      "enable": false,
       "amplitude":1,
       "h_pauli_mat": "Z",
       "lag_time": 0,

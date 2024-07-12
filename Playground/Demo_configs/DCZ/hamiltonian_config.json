@@ -25,6 +25,7 @@
       "falling_time":0,
       "freq": 0,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "IZ",
       "waveform_path":""
     },
@@ -37,6 +38,7 @@
       "falling_time":0,
       "freq": 0,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "ZI",
       "waveform_path":""
     },
@@ -61,6 +63,7 @@
       "falling_time":0,
       "freq": 20.01e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "Hmw",
       "waveform_path":""
     },
@@ -73,6 +76,7 @@
       "falling_time":0,
       "freq": 20.0e9,
       "phase": 0,
+      "chirp_rate": 0,
       "h_pauli_mat": "Hmw",
       "waveform_path":""
     },
@@ -85,6 +89,7 @@
       "falling_time":0,
       "freq": 20.00e9,
       "phase": 0.5,
+      "chirp_rate": 0,
       "h_pauli_mat": "IX",
       "waveform_path":""
     },
@@ -97,6 +102,7 @@
       "falling_time":0,
       "freq": 20.01e9,
       "phase": 0.5,
+      "chirp_rate": 0,
       "h_pauli_mat": "XI",
       "waveform_path":""
     },
