@@ -1,0 +1,24 @@
+{
+  "task_name": "AntimonyRandUnitaryRB",
+  "log_level": 4,
+  "job_slicing_strategy":"linspace",
+  "record_propagator": true,
+  "record_all_meas": false,
+  "record_density_mat": true,
+  "reset_rotating_frame": false,
+  "enable_param_parallel_mode":true,
+  "system_dim": 8,
+  "observables": ["Iz"],
+  "init_states": ["rhoI1","rhoI2","rhoI3","rhoI4","rhoI5","rhoI6","rhoI7","rhoI8"],
+  "repeat" : 1,
+  "step_size": 1e-8,
+  "sequence": "$S-M",
+  "sweep_param_info": [
+    {
+      "class":"Sequence",
+      "tag":"$S",
+      "property":"",
+      "string_file":"sequence_list"
+    }
+  ]
+}

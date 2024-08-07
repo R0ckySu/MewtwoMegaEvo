@@ -1,0 +1,25 @@
+{  
+  "gate_defs": [
+    {
+      "tag": "X",
+      "hamiltonians": ["XNMR1","XNMR2","XNMR3","XNMR4","XNMR5","XNMR6","XNMR7"],
+      "pulse_width": 0.5e-3,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "Z",
+      "hamiltonians": ["ZGlobal"],
+      "pulse_width": 1e-8,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    },
+    {
+      "tag": "F",
+      "hamiltonians": [],
+      "pulse_width": 2e-6,
+      "shift_time": 0,
+      "ext_shaped_sig_path":""
+    }
+  ]
+}
