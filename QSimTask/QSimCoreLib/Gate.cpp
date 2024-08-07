@@ -4,6 +4,7 @@
 
 #include "Gate.h"
 #include "Utils.h"
+#include <map>
 #include <rttr/registration.h>
 #include <exprtk/exprtk.hpp>
 
@@ -14,6 +15,7 @@ Gate::Gate() {
 
 Gate::Gate(const TimingBasic &t, const Gate &g):TimingBasic(t) {
     tag = g.tag;
+    amp = g.amp;
     hamiltonian_tags_list = g.hamiltonian_tags_list;
     seq_shift_time = g.seq_shift_time;
     ext_shaped_sig_path = g.ext_shaped_sig_path;
@@ -44,21 +46,42 @@ Gate::Gate(nlohmann::json gate_config, double _step_size) {
 }
 
 std::vector<std::string> Gate::decode_param_str(std::string params) {
-    auto param_list = str_split(params,',');
+    std::vector<std::string> param_list = str_split(params,',');
 
-    exprtk::expression<double> expression;
-    std::string T_expression = param_list.at(T_pos);
-//    std::string seq_simultaneous = param_list.at(1);
+    std::map<std::string, std::string> express_str_map;
+    for (int i = 0; i < param_list.size(); i++) {
+        if (param_list.at(i).find('A') != std::string::npos) {
+            express_str_map.insert(std::make_pair(std::string("A"), param_list.at(i)));
+        }
+        if (param_list.at(i).find('T') != std::string::npos) {
+            express_str_map.insert(std::make_pair(std::string("T"), param_list.at(i)));
+        }
+    }
 
-    if(T_expression.size() != 0 ) {
+    if (express_str_map.count("T") > 0) {
+        exprtk::expression<double> expression_T;
+        std::string T_str_exp = express_str_map["T"];
+//        std::cout << "Gate: " << tag << " expression:" << T_str_exp << std::endl;
         exprtk::symbol_table<double> symbol_table;
         double T = get_pulse_width();
         symbol_table.add_variable("T", T);
-        expression.register_symbol_table(symbol_table);
-
+        expression_T.register_symbol_table(symbol_table);
         exprtk::parser<double> parser;
-        parser.compile(T_expression,expression);
-        set_pulse_width(expression.value());
+        parser.compile(T_str_exp, expression_T);
+        set_pulse_width(expression_T.value());
+        std::cout << "Gate: " << tag << " pulse_width:" << get_pulse_width() << std::endl;
+    }
+
+    if (express_str_map.count("A") > 0) {
+        exprtk::expression<double> expression_A;
+        std::string A_str_exp = express_str_map["A"];
+        exprtk::symbol_table<double> symbol_table_A;
+        symbol_table_A.add_variable("A", amp);
+        expression_A.register_symbol_table(symbol_table_A);
+        exprtk::parser<double> parser;
+        parser.compile(A_str_exp, expression_A);
+        amp = expression_A.value();
+        std::cout << "Gate: " << tag << " amp:" << amp << std::endl;
     }
 
     return param_list;

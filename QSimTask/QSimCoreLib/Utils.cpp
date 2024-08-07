@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <random>
 
 namespace qmt{
 
@@ -310,6 +311,18 @@ std::string find_and_replace_string(const std::string& str_to_find, const std::s
     }
     return replaced_str;
 };
+
+int getRandInt(int X) {
+    // Create a random number generator engine
+    std::random_device rd;  // Obtain a random number from hardware
+    std::mt19937 gen(rd()); // Seed the generator
+
+    // Define the distribution range
+    std::uniform_int_distribution<> distr(0, X - 1);
+
+    // Generate a random number
+    return distr(gen);
+}
 
 #ifdef _TASK_PROGRESS_
 void createSharedMemory(std::string var_name) {

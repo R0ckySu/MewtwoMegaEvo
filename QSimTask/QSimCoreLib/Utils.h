@@ -65,6 +65,11 @@ std::string get_time_stamp_str();
 std::string double_to_fixprecision_str(double num, int percision);
 
 /*
+ * Get a random int between 0~X-1
+ * */
+int getRandInt(int X);
+
+/*
  * Symbolic Sequence string parser
  * - Sequence decomposition rule
  *  |- Sub sequence wrapped by square braket "[]"

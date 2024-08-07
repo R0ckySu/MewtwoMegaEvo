@@ -161,7 +161,9 @@ class Noise_Hamiltonian: public Hamiltonian {
 public:
     double shift_time;
     bool rand_shift = true;
+    bool rand_channel = false;
     double randomStartPosFactor;
+    int num_available_channels = 0;
     Noise_Hamiltonian();
     Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &n);
     explicit Noise_Hamiltonian(nlohmann::json noise_config, std::string config_path);

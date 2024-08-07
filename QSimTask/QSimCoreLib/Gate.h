@@ -27,6 +27,7 @@ public:
     Gate(const TimingBasic &t,const Gate &g);
 
     gate_tag_type tag;
+    double amp = 1;
     double seq_shift_time = 0;
     std::vector<hamiltonian_tag_type> hamiltonian_tags_list;
     std::string ext_shaped_sig_path;

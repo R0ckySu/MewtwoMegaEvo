@@ -456,6 +456,8 @@ Noise_Hamiltonian::Noise_Hamiltonian(): Hamiltonian() {}
 Noise_Hamiltonian::Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltonian &m): Hamiltonian(h) {
     shift_time = m.shift_time;
     rand_shift = m.rand_shift;
+    rand_channel = m.rand_channel;
+    num_available_channels = m.num_available_channels;
     randomStartPosFactor = m.randomStartPosFactor;
     external_waveform_path = m.external_waveform_path;
 }
@@ -463,6 +465,8 @@ Noise_Hamiltonian::Noise_Hamiltonian(const Hamiltonian &h, const Noise_Hamiltoni
 Noise_Hamiltonian::Noise_Hamiltonian(nlohmann::json noise_config, std::string config_path) : Hamiltonian(noise_config, config_path)  {
     shift_time = noise_config["lag_time"];
     rand_shift = noise_config["rand_shift"];
+    rand_channel = noise_config["rand_channel"];
+    num_available_channels = noise_config["num_available_channels"];
 }
 
 void Noise_Hamiltonian::fetch_H(arma::cx_cube *H0) {
@@ -473,7 +477,13 @@ void Noise_Hamiltonian::fetch_H(arma::cx_cube *H0) {
 }
 
 void Noise_Hamiltonian::load_ext_waveform(int param_index) {
-    Hamiltonian::load_ext_waveform(param_index);
+    if (rand_channel) {
+        int rand_channel_idx = getRandInt(num_available_channels);
+        std::cout << "Noise_Hamiltonian: Random channel at " << rand_channel_idx << std::endl;
+        Hamiltonian::load_ext_waveform(rand_channel_idx);
+    } else {
+        Hamiltonian::load_ext_waveform(param_index);
+    }
     int raw_wave_total_length = wave_form.size();
 
     int fixed_shift_steps = 0;
