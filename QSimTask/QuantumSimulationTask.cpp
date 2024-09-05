@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <cstring>
 #include "QSimCoreLib/Utils.h"
+#include <format>
 
 RTTR_REGISTRATION{
     rttr::registration::class_<QSimTask>("QSimTask").constructor<>()
@@ -95,7 +96,7 @@ void QSimTask::sweeping_repeat_parallel() {
         arma::cx_cube propagator_repeat_all = arma::cx_cube(system_dimension,system_dimension,iterations, arma::fill::zeros);
 
         VonNeumannSolver solver_obj = VonNeumannSolver();
-        #pragma omp parallel for default(none) shared(task_progress, reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp, propagator_repeat_all) private(solver_obj)
+        #pragma omp parallel for default(none) shared(task_progress, total_tasks, reloaded_prototype,randomstartlist,ctrl_hamiltonian_time_dep,system_dimension,total_num_steps,rho_multi_temp, propagator_repeat_all) private(solver_obj)
         for (int noise_idx = 0; noise_idx < iterations; ++noise_idx) {
             //Load Noise Hamiltonian
 
@@ -119,6 +120,7 @@ void QSimTask::sweeping_repeat_parallel() {
 #ifdef _TASK_PROGRESS_
             writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
 #endif
+            task_log(std::string("Solver job done! ["+ std::to_string(int(task_progress))+"/"+std::to_string(total_tasks))+"]", 1);
         }
 
         if(will_record_propagator) {
@@ -161,7 +163,7 @@ void QSimTask::sweeping_param_parallel() {
     int start_pos_for_this_job = noise_index_ends_list.at(job_id);
     int end_pos_for_this_job = noise_index_ends_list.at(job_id+1);
     task_log(std::string("Noise index start:").append(std::to_string(start_pos_for_this_job)).append(" index ends:").append(std::to_string(end_pos_for_this_job)),1);
-    #pragma omp parallel for shared(task_progress, start_pos_for_this_job,end_pos_for_this_job,result_file_name)
+    #pragma omp parallel for shared(task_progress, total_tasks, start_pos_for_this_job,end_pos_for_this_job,result_file_name)
     for (int i = 0; i < param_schedule.num_of_params; ++i) {
 
         std::string result_param_str = param_schedule.get_param_string_for_ith_param(i);
@@ -207,7 +209,7 @@ void QSimTask::sweeping_param_parallel() {
             writeToSharedMemory(std::string("/progress_").append(task_time_stamp), task_progress);
 #endif
         }
-        task_log("Solver job done!",1);
+        task_log(std::string("Solver job done! ["+ std::to_string(int(task_progress))+"/"+std::to_string(total_tasks))+"]", 1);
 
         MeasurementManager meas_manager = MeasurementManager(observables,rho_inits);
         meas_manager.static_hamiltonian_total_per_step = get_static_hamiltonian_per_step(reloaded_prototype->ctrl_hamiltonian_prototype_map);

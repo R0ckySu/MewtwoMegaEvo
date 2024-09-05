@@ -73,6 +73,7 @@ function dataset = LoadMewtwoData(data_path)
                         end
                     end
                 end
+                
                 dataset.meas_marker.(observable_array{o_idx}).(init_state_array{i_idx}) = data_cell_array_collect_meas_marker;
                 if configInfo.record_all_meas == 1
                     dataset.meas_all.(observable_array{o_idx}).(init_state_array{i_idx}) = data_cell_array_collect_meas_all;
@@ -122,6 +123,6 @@ function dataset = LoadMewtwoData(data_path)
         end
     
         dataset
-        save([dataset.data_path,filesep,dataset.task_name,'_organised'],'dataset');
+        save(join([dataset.data_path,filesep,dataset.task_name,'_organised'], ''),'dataset');
     end
 end

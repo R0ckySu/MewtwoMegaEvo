@@ -47,6 +47,7 @@ RTTR_REGISTRATION{
             .property("amplitude",&MW_Hamiltonian::amplitude);
 
     rttr::registration::class_<Noise_Hamiltonian>("Noise_Hamiltonian")
+            .property("waveform_path", &Noise_Hamiltonian::external_waveform_path)
             .property("shift_time",&Noise_Hamiltonian::shift_time);
 };
 

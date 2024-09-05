@@ -54,7 +54,7 @@ void Sequence::generate_switching_sig() {
         if (empty(gate_unit->ext_shaped_sig_path)) {
             gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(gate_unit->amp);
         } else {
-            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()) = gate_unit->ext_shaped_sig.subvec(0, gate_unit->get_total_num_steps());
+            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()) = gate_unit->ext_shaped_sig.subvec(0, gate_unit->get_total_num_steps()-1);
         }
     }
 
