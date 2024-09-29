@@ -61,7 +61,9 @@ void QSimTask::launch_task() {
         param_schedule.save_param_list_to_h5(get_result_file_name());
         sweeping_repeat_parallel();
     }
+#ifdef _TASK_PROGRESS_
     writeToSharedMemory(std::string("/datardy_").append(task_time_stamp), 1);
+#endif
 }
 
 void QSimTask::sweeping_repeat_parallel() {

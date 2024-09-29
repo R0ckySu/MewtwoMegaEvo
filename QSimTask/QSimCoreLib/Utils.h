@@ -80,7 +80,7 @@ int getRandInt(int X);
  *  |-Result: F(T/4), U(0,pi,X), U(0,pi,Y), U(0,pi,X), U(0,pi,Y), U(0,pi,X), F(T/4)
  *  -- Where, gate symbols are decomposed to tag-param pair, for e.x., F(T/4) will be decomposed to "F" : "T/4"
  * */
-std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string sequence_str);
+std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string input);
 
 std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(const std::string& gate_str);
 

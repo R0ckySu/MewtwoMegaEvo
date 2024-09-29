@@ -8,6 +8,11 @@
 #include <rttr/registration.h>
 #include <exprtk/exprtk.hpp>
 
+RTTR_REGISTRATION {
+    rttr::registration::class_<Gate>("Gate")
+            .property("hamiltonian_tags_list",&Gate::hamiltonian_tags_list);
+};
+
 Gate::Gate() {
     tag = "";
     hamiltonian_tags_list = std::vector<std::string>();
@@ -16,6 +21,7 @@ Gate::Gate() {
 Gate::Gate(const TimingBasic &t, const Gate &g):TimingBasic(t) {
     tag = g.tag;
     amp = g.amp;
+    type = g.type;
     hamiltonian_tags_list = g.hamiltonian_tags_list;
     seq_shift_time = g.seq_shift_time;
     ext_shaped_sig_path = g.ext_shaped_sig_path;
@@ -29,6 +35,7 @@ Gate *Gate::clone() {
 Gate::Gate(nlohmann::json gate_config, double _step_size) {
     step_size = _step_size;
     tag = gate_config["tag"];
+    type = gate_config["type"];
     seq_shift_time = gate_config["shift_time"];
     std::vector<std::string> h_tag_list = gate_config["hamiltonians"];
     hamiltonian_tags_list = h_tag_list;
@@ -117,12 +124,8 @@ Gate::~Gate() {
 MeasurementMarker::MeasurementMarker() {
     hamiltonian_tags_list = std::vector<std::string>();
     tag = "M";
+    type = "switch";
     start_time = 0;
     end_time = 0;
     pulse_width = 0;
 }
-
-RTTR_REGISTRATION {
-    rttr::registration::class_<Gate>("Gate").
-            property("hamiltonian_tags_list",&Gate::hamiltonian_tags_list);
-};

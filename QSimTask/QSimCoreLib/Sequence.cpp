@@ -51,10 +51,12 @@ void Sequence::generate_switching_sig() {
             gate_switching_map.insert(new_gate_swicthing_entry);
         }
 
-        if (empty(gate_unit->ext_shaped_sig_path)) {
+        if (gate_unit->type == "switch") {
             gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()).fill(gate_unit->amp);
-        } else {
+        } else if (gate_unit->type == "shaped") {
             gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),gate_unit->get_end_index()) = gate_unit->ext_shaped_sig.subvec(0, gate_unit->get_total_num_steps()-1);
+        } else if (gate_unit->type == "sticky") {
+            gate_switching_map[gate_unit->tag].subvec(gate_unit->get_start_index(),get_total_num_steps()-1) += arma::ones(get_total_num_steps()-gate_unit->get_start_index()) * gate_unit->amp;
         }
     }
 

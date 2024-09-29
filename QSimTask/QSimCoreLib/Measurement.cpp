@@ -144,7 +144,10 @@ void MeasurementManager::save_result_to_h5(const std::string& path,  const int p
             rho_markers.save(arma::hdf5_name(path,sub_field_name,arma::hdf5_opts::append));
             if (will_record_all_time_points_meas) {
                 std::string all_sub_field_name = dm_all_field_name.append(init_states.at(j).symbol_name);
-                (rho_multi_t).at(j).save(arma::hdf5_name(path,all_sub_field_name,arma::hdf5_opts::append));
+                uint num_of_time_steps = rho_multi_t.at(j).n_slices;
+                arma::uvec slice_indices = arma::linspace<arma::uvec>(0, num_of_time_steps, int(num_of_time_steps/100));
+                arma::cx_cube rho_downsample = (rho_multi_t).at(j).slices(slice_indices);
+                rho_downsample.save(arma::hdf5_name(path,all_sub_field_name,arma::hdf5_opts::append));
             }
             //Release Mem after saving
 //            arma::cx_cube().swap((rho_multi_t).at(j));

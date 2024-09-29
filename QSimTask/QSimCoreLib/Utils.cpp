@@ -8,6 +8,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <random>
+#include <iostream>
+#include <sstream>
+#include <utility>
 
 namespace qmt{
 
@@ -226,65 +229,113 @@ symbolic_matrix::symbolic_matrix() {
     mat=arma::cx_mat().fill(0);
 }
 
-std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser (std::string sequence_str) {
-    std::string seq_str = sequence_str;
-    std::vector<std::pair<std::string, std::string>> elementary_gate_list = std::vector<std::pair<std::string, std::string>>();
+// Function to parse gate sequences
+std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser(std::string input) {
+    std::vector<std::pair<std::string, std::string>> result;
+    std::string pattern = input;
 
-    int left_first_bra_pos = seq_str.find_first_of('[');
-    int right_last_ket_pos = seq_str.find_last_of(']');
+    // Regular expression to find sequences of the form '[...]^N'
+    std::regex repeatPattern(R"(\[([^\]]+)\]\^(\d+))");
+    std::smatch match;
 
-    if ((left_first_bra_pos != seq_str.npos) && (right_last_ket_pos != seq_str.npos)) {
-        std::string left_seq;
-        if (left_first_bra_pos>0) {
-            left_seq = seq_str.substr(0, left_first_bra_pos-1);
-        }
-//        std::cout << "Left:" << left_seq << std::endl;
-
-        std::string right_string = seq_str.substr(right_last_ket_pos,seq_str.size()-right_last_ket_pos);
-        int num_end_pos = right_string.size()-1;
-//        std::cout << "Right raw string:" << right_string << std::endl;
-        if (right_string.find_first_of('-') != right_string.npos) {
-            num_end_pos = right_string.find_first_of('-')-1;
-        }
-//        std::cout << "Num str ends pos in right raw string:" << num_end_pos << std::endl;
-
-        std::string right_seq;
-        if (num_end_pos != right_string.size()-1) {
-            right_seq = right_string.substr(num_end_pos+2,right_string.length()-(num_end_pos+2));
-        }
-        std::string num_of_repeat_str = right_string.substr(2,num_end_pos-1);
-//        std::cout << "Right:" << right_seq << std::endl;
-
-        int repeat_middle_num = atoi(num_of_repeat_str.c_str());
-
-        seq_str = seq_str.substr(left_first_bra_pos+1,right_last_ket_pos-left_first_bra_pos-1);
-//        std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_middle_num << std::endl;
-
-        std::vector<std::string> splitted_gates_left = str_split(left_seq,'-');
-        for (int i = 0; i < splitted_gates_left.size(); ++i) {
-            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates_left.at(i)));
-        }
-
-        // Called recursively to unwrap the repeatable sub sequences
-        std::vector<std::pair<std::string, std::string>> splitted_gates_mid = symbolic_sequence_str_parser(seq_str);
-        for (int j = 0; j < repeat_middle_num; ++j) {
-            for (int i = 0; i < splitted_gates_mid.size(); ++i) {
-                elementary_gate_list.push_back(splitted_gates_mid.at(i));
+    // Helper function to repeat a sequence N times
+    auto repeatSequence = [](const std::string& sequence, int N) {
+        std::ostringstream oss;
+        for (int i = 0; i < N; ++i) {
+            if (i > 0) {
+                oss << "-";
             }
+            oss << sequence;
         }
+        return oss.str();
+    };
 
-        std::vector<std::string> splitted_gates_right = str_split(right_seq,'-');
-        for (int i = 0; i < splitted_gates_right.size(); ++i) {
-            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates_right.at(i)));
-        }
-    } else {
-        std::vector<std::string> splitted_gates = str_split(seq_str,'-');
-        for (int i = 0; i < splitted_gates.size(); ++i) {
-            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates.at(i)));
-        }
+    // Expand all repeated sequences like [X-Y]^2 into X-Y-X-Y
+    while (std::regex_search(pattern, match, repeatPattern)) {
+        std::string sequenceInsideBrackets = match[1].str();
+        int repeatCount = std::stoi(match[2].str());
+        std::string expandedSequence = repeatSequence(sequenceInsideBrackets, repeatCount);
+
+        // Replace the '[X-Y]^2' with 'X-Y-X-Y' in the main sequence
+        pattern.replace(match.position(0), match.length(0), expandedSequence);
     }
-    return elementary_gate_list;
+
+    // Now split the remaining sequence on '-'. This will split gate symbols correctly.
+    // Avoid splitting if '-' is inside the parentheses for decorations
+    std::regex gateSplitPattern(R"(([^-()]+(?:\([^)]*\))?))");
+    std::sregex_iterator iter(pattern.begin(), pattern.end(), gateSplitPattern);
+    std::sregex_iterator end;
+
+    // Collect all matches and decompose gate strings into tag and param pairs
+    while (iter != end) {
+        std::string gateStr = (*iter).str();
+        result.push_back(decompose_gate_string_to_tag_param_pair(gateStr));
+        ++iter;
+    }
+
+    return result;
 }
+
+//
+//std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser2 (std::string sequence_str) {
+//    std::string seq_str = sequence_str;
+//    std::vector<std::pair<std::string, std::string>> elementary_gate_list = std::vector<std::pair<std::string, std::string>>();
+//
+//    int left_first_bra_pos = seq_str.find_first_of('[');
+//    int right_last_ket_pos = seq_str.find_last_of(']');
+//
+//    if ((left_first_bra_pos != seq_str.npos) && (right_last_ket_pos != seq_str.npos)) {
+//        std::string left_seq;
+//        if (left_first_bra_pos>0) {
+//            left_seq = seq_str.substr(0, left_first_bra_pos-1);
+//        }
+////        std::cout << "Left:" << left_seq << std::endl;
+//
+//        std::string right_string = seq_str.substr(right_last_ket_pos,seq_str.size()-right_last_ket_pos);
+//        int num_end_pos = right_string.size()-1;
+////        std::cout << "Right raw string:" << right_string << std::endl;
+//        if (right_string.find_first_of('-') != right_string.npos) {
+//            num_end_pos = right_string.find_first_of('-')-1;
+//        }
+////        std::cout << "Num str ends pos in right raw string:" << num_end_pos << std::endl;
+//
+//        std::string right_seq;
+//        if (num_end_pos != right_string.size()-1) {
+//            right_seq = right_string.substr(num_end_pos+2,right_string.length()-(num_end_pos+2));
+//        }
+//        std::string num_of_repeat_str = right_string.substr(2,num_end_pos-1);
+////        std::cout << "Right:" << right_seq << std::endl;
+//
+//        int repeat_middle_num = atoi(num_of_repeat_str.c_str());
+//
+//        seq_str = seq_str.substr(left_first_bra_pos+1,right_last_ket_pos-left_first_bra_pos-1);
+////        std::cout << "Middle:" << seq_str << " Repeat for: "<< repeat_middle_num << std::endl;
+//
+//        std::vector<std::string> splitted_gates_left = str_split(left_seq,'-');
+//        for (int i = 0; i < splitted_gates_left.size(); ++i) {
+//            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates_left.at(i)));
+//        }
+//
+//        // Called recursively to unwrap the repeatable sub sequences
+//        std::vector<std::pair<std::string, std::string>> splitted_gates_mid = symbolic_sequence_str_parser2(seq_str);
+//        for (int j = 0; j < repeat_middle_num; ++j) {
+//            for (int i = 0; i < splitted_gates_mid.size(); ++i) {
+//                elementary_gate_list.push_back(splitted_gates_mid.at(i));
+//            }
+//        }
+//
+//        std::vector<std::string> splitted_gates_right = str_split(right_seq,'-');
+//        for (int i = 0; i < splitted_gates_right.size(); ++i) {
+//            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates_right.at(i)));
+//        }
+//    } else {
+//        std::vector<std::string> splitted_gates = str_split(seq_str,'-');
+//        for (int i = 0; i < splitted_gates.size(); ++i) {
+//            elementary_gate_list.push_back(decompose_gate_string_to_tag_param_pair(splitted_gates.at(i)));
+//        }
+//    }
+//    return elementary_gate_list;
+//}
 
 std::pair<std::string, std::string> decompose_gate_string_to_tag_param_pair(const std::string& gate_str) {
     int first_para = gate_str.find_first_of('(');

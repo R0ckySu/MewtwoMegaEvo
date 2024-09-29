@@ -40,7 +40,7 @@ SimPrototypes::SimPrototypes(const SimPrototypes &s) {
         noise_hamiltonian_prototype_map.insert(std::make_pair(noise_h_item.first,noise_h_item.second->clone()));
     }
 
-    gate_prototype_map = std::map<hamiltonian_tag_type, Gate *>();
+    gate_prototype_map = std::map<gate_tag_type, Gate *>();
     for (const auto& gate_item : s.gate_prototype_map) {
         gate_prototype_map.insert(std::make_pair(gate_item.first,gate_item.second->clone()));
     }

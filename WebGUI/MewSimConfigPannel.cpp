@@ -15,6 +15,7 @@
 #include <Wt/Json/Serializer.h>
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 Wt::Json::Object reverseEntries(const Wt::Json::Object& original) {
     // Extract key-value pairs into a vector
