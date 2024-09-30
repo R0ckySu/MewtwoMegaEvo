@@ -229,14 +229,11 @@ symbolic_matrix::symbolic_matrix() {
     mat=arma::cx_mat().fill(0);
 }
 
-// Function to parse gate sequences
+// 2nd Gen Symbolic sequence parser, created by ChatGPT 4o
 std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser(std::string input) {
+    // Function to parse gate sequences with nested repeating patterns
     std::vector<std::pair<std::string, std::string>> result;
     std::string pattern = input;
-
-    // Regular expression to find sequences of the form '[...]^N'
-    std::regex repeatPattern(R"(\[([^\]]+)\]\^(\d+))");
-    std::smatch match;
 
     // Helper function to repeat a sequence N times
     auto repeatSequence = [](const std::string& sequence, int N) {
@@ -250,7 +247,11 @@ std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser(st
         return oss.str();
     };
 
-    // Expand all repeated sequences like [X-Y]^2 into X-Y-X-Y
+    // Regular expression to find sequences of the form '[...]^N'
+    std::regex repeatPattern(R"(\[([^\[\]]+)\]\^(\d+))");
+    std::smatch match;
+
+    // Expand nested repeated sequences
     while (std::regex_search(pattern, match, repeatPattern)) {
         std::string sequenceInsideBrackets = match[1].str();
         int repeatCount = std::stoi(match[2].str());
@@ -258,6 +259,18 @@ std::vector<std::pair<std::string, std::string>> symbolic_sequence_str_parser(st
 
         // Replace the '[X-Y]^2' with 'X-Y-X-Y' in the main sequence
         pattern.replace(match.position(0), match.length(0), expandedSequence);
+    }
+
+    // If there are still nested repeating patterns, repeat until fully expanded
+    while (pattern.find('[') != std::string::npos) {
+        std::smatch nestedMatch;
+        if (std::regex_search(pattern, nestedMatch, repeatPattern)) {
+            std::string nestedSequenceInsideBrackets = nestedMatch[1].str();
+            int nestedRepeatCount = std::stoi(nestedMatch[2].str());
+            std::string nestedExpandedSequence = repeatSequence(nestedSequenceInsideBrackets, nestedRepeatCount);
+
+            pattern.replace(nestedMatch.position(0), nestedMatch.length(0), nestedExpandedSequence);
+        }
     }
 
     // Now split the remaining sequence on '-'. This will split gate symbols correctly.
