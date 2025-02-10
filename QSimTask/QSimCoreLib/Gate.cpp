@@ -6,7 +6,7 @@
 #include "Utils.h"
 #include <map>
 #include <rttr/registration.h>
-#include <exprtk/exprtk.hpp>
+#include "exprtk.hpp"
 
 RTTR_REGISTRATION {
     rttr::registration::class_<Gate>("Gate")
