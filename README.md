@@ -1,21 +1,20 @@
 # MewtwoMegaEvo
 ![avatar](https://repository-images.githubusercontent.com/295927869/ddd5ba00-fb6d-11ea-9d3c-e3cd43139e62)
-## Intro
+## 1. Intro
 Mewtwo is a density matrix solver based on the Von-Neumann equation, integrated with symbolic gate and sequence parsing and compiling.
 Written in C++, this software is designed for very large scale qubits dynamic simulation by harnessing the power of parallelisation and job slicing for high performance computer.
 In a nutshell, the core functionality of this software is to solve the time-dependent evolution of the density matrix with the provided time-dependent Hamiltonians.
 
-## Installation
+## 2. Installation
+[//]: # (### 2.1 Toolchain Requirements)
+[//]: # (1. gcc, g++,gfortran-11~14: GNU compiler)
+[//]: # (2. CMake 3.28.3: Build systems management)
+[//]: # (3. make 4.2.1)
+[//]: # (4. conan 2.11.0: C++ package management)
 
-### Toolchain Requirements
-1. gcc, g++,gfortran-11~14: GNU compiler
-2. CMake 3.28.3: Build systems management
-3. make 4.2.1
-4. conan 2.11.0: C++ package management
+### 2.1 Preparing Compile Environment:
 
-### Preparing Compile Environment:
-
-#### Windows WSL (Ubuntu 22.04~24.04.01 LTS)
+#### 2.1.1 Ubuntu on Windows WSL (Ubuntu 22.04~24.04.01 LTS)
 For WSL2 (with Ubuntu 24.04)
 Please install from Microsoft Store directly.
 
@@ -41,14 +40,24 @@ Then install GNU compilers by:
 ```shell
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt update
-sudo apt install -y gcc-13 g++-13
+sudo apt install -y gcc-13 g++-13 gfortran-13 cpp-13
 ```
-This will install you gcc-13, confirm the installation by:
+This will install you gcc-13, please confirm the installation by:
 ```shell
-gcc-13 --version
+whwereis gcc-13
 ```
 
-#### macOS
+Install conan
+```shell
+pip install conan
+```
+
+Install CMake
+```shell
+sudo apt install cmake
+```
+
+#### 2.1.2 macOS
 Note: Please use gcc@14 for macOS Sequoia (10.15+).
 Step1: Install Homebrew/linuxbrew
 ```shell
@@ -68,6 +77,25 @@ brew install cmake@3.30.5
 Step4: Install conan from Homebrew
 ```shell
 brew install conan
+```
+### 2.2 Adding variables to PATH environment
+
+Usually the bash source file can be found under your user path
+````shell
+cd ~
+ls -a
+````
+It could be either .bashrc or .zshrc depending on which shell you are using. You will also need to check the paths for all compiler by "whereis" command.
+When you confirmed everything. You can write the path variable by, for example (macOS):
+```shell
+cat <<EOF >> ~/.bashrc
+# GCC compiler env variables
+export CC=/opt/homebrew/bin/gcc-14
+export CXX=/opt/homebrew/bin/g++-14
+export CPP=/opt/homebrew/bin/cpp-14
+export FORTRAN=/opt/homebrew/bin/gortran-14
+EOF
+source ~/.bashrc
 ```
 
 ### Compile the project
