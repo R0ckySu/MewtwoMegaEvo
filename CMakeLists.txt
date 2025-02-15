@@ -73,5 +73,5 @@ endif()
 FetchContent_Declare(exprtk GIT_REPOSITORY https://github.com/ArashPartow/exprtk.git GIT_TAG cmake)
 FetchContent_MakeAvailable(exprtk)
 
-FetchContent_Declare(armadillo GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code.git GIT_TAG v11.4.x)
+FetchContent_Declare(armadillo GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code.git GIT_TAG 11.4.x)
 FetchContent_MakeAvailable(armadillo)

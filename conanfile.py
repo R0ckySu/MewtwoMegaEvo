@@ -1,11 +1,15 @@
 from conan import ConanFile
+from conan.tools.cmake import CMakeDeps, CMakeToolchain
 import platform
 
 class ProjectMewtwoConan(ConanFile):
     name = "Mewtwo"
     version = "3.0"
     settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeToolchain", "CMakeDeps"
+    # generators = "CMakeToolchain", "CMakeDeps"
+
+    options = {"wt_web_GUI": [True, False]}
+    default_options = {"wt_web_GUI": False}
 
     def requirements(self):
         # Conditionally include OpenBLAS for non-macOS platforms
@@ -23,7 +27,16 @@ class ProjectMewtwoConan(ConanFile):
             self.requires("wt/4.10.1")
             self.requires("boost/1.83.0")
 
-    def configure(self):
-        # Define optional dependencies
-        self.options["wt_web_GUI"] = [True, False]
-        self.default_options = {"wt_web_GUI": False}
+    # def configure(self):
+    #     # Define optional dependencies
+    #     self.options["wt_web_GUI"] = [True, False]
+    #     self.default_options = {"wt_web_GUI": False}
+
+    def generate(self):
+        # Pass options as CMake variables
+        tc = CMakeToolchain(self)
+        tc.variables["wt_web_GUI"] = "ON" if self.options.wt_web_GUI else "OFF"
+        tc.generate()
+
+        deps = CMakeDeps(self)
+        deps.generate()
