@@ -11,10 +11,12 @@ find_package(HDF5)
 find_package(OpenMP)
 find_package(muparserx)
 find_package(exprtk)
+find_package(Armadillo)
 
 include_directories(${muparserx_INCLUDE_DIRS})
 include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${exprtk_SOURCE_DIR})
+include_directories(${Armadillo_INCLUDE_DIR})
 
 if(WT_WEB_GUI)
     find_package(wt)
@@ -43,11 +45,7 @@ set(CMAKE_C_FLAGS -O3)
 
 include(FetchContent)
 
-FetchContent_Declare(
-        rttr
-        GIT_REPOSITORY https://github.com/rttrorg/rttr.git
-        GIT_TAG v0.9.6 # Change this to the desired version
-)
+FetchContent_Declare(rttr GIT_REPOSITORY https://github.com/rttrorg/rttr.git GIT_TAG v0.9.6)
 option(BUILD_RTTR_DYNAMIC "Build the dynamic/shared version of RTTR library" ON)
 option(BUILD_UNIT_TESTS "Build the unit tests of RTTR" OFF)
 option(BUILD_STATIC "Build RTTR as static library" ON)
@@ -73,5 +71,6 @@ endif()
 FetchContent_Declare(exprtk GIT_REPOSITORY https://github.com/ArashPartow/exprtk.git GIT_TAG cmake)
 FetchContent_MakeAvailable(exprtk)
 
-FetchContent_Declare(armadillo GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code.git GIT_TAG 11.4.x)
-FetchContent_MakeAvailable(armadillo)
+#FetchContent_Declare(armadillo GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code.git GIT_TAG 11.4.x)
+#option(DETECT_HDF5 ON)
+#FetchContent_MakeAvailable(armadillo)
