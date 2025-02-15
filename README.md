@@ -6,11 +6,24 @@ Written in C++, this software is designed for very large scale qubits dynamic si
 In a nutshell, the core functionality of this software is to solve the time-dependent evolution of the density matrix with the provided time-dependent Hamiltonians.
 
 ## 2. Installation
-[//]: # (### 2.1 Toolchain Requirements)
-[//]: # (1. gcc, g++,gfortran-11~14: GNU compiler)
-[//]: # (2. CMake 3.28.3: Build systems management)
-[//]: # (3. make 4.2.1)
-[//]: # (4. conan 2.11.0: C++ package management)
+
+### Best performance recommendations
+Mewtwo is a high efficiency simulator and its performance is highly depending on the hardware performance and math libraries.
+All linear algebra calculations are implemented by armadillo, which is an open source linear algebra library. 
+Generally, when compiling armadillo, it will be linked against openBLAS / superLU by default. But if you are using Intel platforms or Mac powered by Apple Silicon, we have better options.
+For hosting machines with Intel CPUs, we strongly recommend you install intel Math Kernel Library (MKL, now integrated in oneAPI).
+For Mac users, Accelerate framework is already built-in, so you don't need to install extra things and armadillo will find the Accelerate automatically and link against it.
+<br>
+Since Mewtwo is simulating in time domain, where ordered time dependency can not be atomically paralleled, thus it is also has its preferred hardware specs.
+The stronger beast may not perform as good as agile elves. Based on author's test, the performance of one single Macbook Pro with M1 Max and 64GB memory is to 4 HPC nodes with Intel Xeon 8740Q with 500GB memory on each.
+We have the following suggestions for the hardware:
+1. More CPU cores not necessarily means better simulation performance.
+- With more CPU cores, parallelized tasks will exhaust memory more easily. When CPU spends most time on SWAP, the computation efficiency will drop dramatically.
+2. Stronger single cores are favoured
+- Big performance cores with high clock are favoured because you can finalise one shot of task in a shorter period of time and release the memory back quicker. 
+3. Higher memory bandwidth is more important than larger memory space.
+- When running simulation, Mewtwo will generate massive time dependent density matrices and Hamiltonians, which can become heavy burden for CPU to exchange data with RAM. Higher memory bandwidth is always a big plus for speeding up.
+<br>
 
 ### 2.1 Preparing Compile Environment:
 
@@ -26,7 +39,7 @@ Install the Ubuntu package to WSL1
 Add-AppxPackage ubuntu-2004.appx
 ```
 
-Press Windows key, search for "Ubuntu", wait for system to be initialised. Then upgrade the system by:
+When you have Ubuntu on WSL ready, press Windows key, search for "Ubuntu", wait for system to be initialised. Then upgrade the system by:
 ```shell
 sudo apt update
 sudo apt upgrade
@@ -69,9 +82,9 @@ Step2: Install GNU compiler from Homebrew
 brew install gcc@14
 ```
 
-Step3: Install cmake 3.30.5
+Step3: Install cmake
 ```shell
-brew install cmake@3.30.5
+brew install cmake
 ```
 
 Step4: Install conan from Homebrew
@@ -86,7 +99,7 @@ cd ~
 ls -a
 ````
 It could be either .bashrc or .zshrc depending on which shell you are using. You will also need to check the paths for all compiler by "whereis" command.
-When you confirmed everything. You can write the path variable by, for example (macOS):
+When you confirmed everything. You can write the path variable by, for example (on macOS):
 ```shell
 cat <<EOF >> ~/.bashrc
 # GCC compiler env variables
@@ -98,7 +111,7 @@ EOF
 source ~/.bashrc
 ```
 
-### Compile the project
+### 2.3 Compile the project
 
 Goto the project folder, detect the env by
 ```shell
@@ -115,7 +128,7 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 ```
 Build the project with:
 ```shell
-cmake --build .
+cmake --build . -j8
 ```
 
 ## Quick Start Guide

@@ -7,26 +7,25 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Playground/)
 include_directories(./3rd_party_libs/include)
 link_directories(./3rd_party_libs/lib)
 
-find_package(Armadillo)
 find_package(HDF5)
-find_package(OpenBLAS)
 find_package(OpenMP)
 find_package(muparserx)
 find_package(exprtk)
-find_package(wt)
-find_package(Boost)
 
-include_directories(${Armadillo_INCLUDE_DIRS})
 include_directories(${muparserx_INCLUDE_DIRS})
 include_directories(${HDF5_INCLUDE_DIRS})
-include_directories(${Wt_INCLUDE_DIRS})
 include_directories(${exprtk_SOURCE_DIR})
-#target_include_directories(QSimCoreLib PUBLIC ${exprtk_SOURCE_DIR})
+
+if(WT_WEB_GUI)
+    find_package(wt)
+    find_package(Boost)
+    include_directories(${Wt_INCLUDE_DIRS})
+    add_subdirectory(WebGUI)
+endif ()
 
 add_executable(MewtwoMegaEvo
                 main.cpp command_arg_parser.h)
 
-add_subdirectory(WebGUI)
 add_subdirectory(QSimTask)
 add_subdirectory(Noise)
 
@@ -71,9 +70,8 @@ if(NOT json_POPULATED)
     add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-FetchContent_Declare(
-        exprtk
-        GIT_REPOSITORY https://github.com/ArashPartow/exprtk.git
-        GIT_TAG cmake # Change this to the desired version
-)
+FetchContent_Declare(exprtk GIT_REPOSITORY https://github.com/ArashPartow/exprtk.git GIT_TAG cmake)
 FetchContent_MakeAvailable(exprtk)
+
+FetchContent_Declare(armadillo GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code.git GIT_TAG v11.4.x)
+FetchContent_MakeAvailable(armadillo)
