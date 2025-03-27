@@ -177,7 +177,7 @@ xlabel('Mod Freq');ylabel('i^{th} Meas Marker');
 ````
 
 ## Design and Features
-![archetechture](docs/archetechture.png)
+![archetechture](docs/archetechture.jpg)
 
 ### Symbolic gate and sequence
 Lying on top of the architecture, symbolic gate sequence is the key to organise the timing logic of the Hamiltonians. We can put
@@ -209,6 +209,8 @@ Further, to make multi-dimensional parametric sweeping, each parameter vector (a
 has to be spanned to be n-dimensional grid. (Providing matlab function ParamSpan.m for processing multi-dimensional param vector)
 
 ### Parallelization
+![parallelization1](docs/parallelization.jpg)
+
 Mewtwo has implemented different levels and strategies of parallelization for various purposes of time-dependent simulations.
 Since the simulation workload is majorly scaled up by repeating(if we have noise hamiltonian incorporated) and parametric
 sweeping, proper parallelization can tremendously reduce the computation time.
@@ -221,6 +223,8 @@ Parameter-wised parallelization will be efficient when the parameter space is la
 especially when the number of repeat is smaller than the number of threads available.
 
 ### Job slicing for high performance computer
+![jobslizing](docs/jobslice.jpg)
+
 When we need to launch very large scale simulation on HPCs, we may wish to slice the whole job into multiple submissions
 to different nodes to reduce the simulation time. Job slicing feature is aiming to provide a HPC-node level parallelization to further
 reduce the computation time. Computation time will depend on the most complicated simulation job if we slice the tasks to multiple
@@ -230,7 +234,6 @@ divide the whole task into groups with same size. If the complexity growing with
 different strategy like logarithmic or reversed logarithmic slicing.
 
 #### Job slicing strategy (Parameter-wise)
-![parallelization1](docs/parallelization1.png)
 For example, if a parametric sweeping task has n parameters to sweep through. The whole task can be sliced into several
 groups by the strategies listed in the table below, so that HPC users can submit each sliced job to different HPC nodes.
 
@@ -247,6 +250,8 @@ e.x.: Task with n parameters will be sliced into g groups, then the end paramete
 | inv_logspace | n - round(logspace(0,log10(n),g)), repeated indices will be shifted by +1 |
 
 ### Arb Noise Generator
+![noisegen](docs/noisegen.jpg)
+
 NoiseGen is the noise generator for generating Gaussian noise. Two generation modes, arb and colored are
 provided to generate general simple colored noise and arbituary spectrum noise by providing symbolic function.
 
