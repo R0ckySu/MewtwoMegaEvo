@@ -35,6 +35,7 @@
 *.wt
 *.dSYM
 
+build/
 cmake-build-debug/
 cmake-build-release/
 .idea/*
@@ -48,3 +49,12 @@ cmake-build-release/
 Playground/config_files/*
 */MewtwoMegaEvo
 */NoiseGen
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+.venv/
+*.whl

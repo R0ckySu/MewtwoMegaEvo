@@ -20,8 +20,6 @@ target_link_libraries(QSimTask PRIVATE hdf5::hdf5)
 target_link_libraries(QSimTask PUBLIC rttr_core)
 target_link_libraries(QSimTask PUBLIC nlohmann_json::nlohmann_json)
 
-set(CMAKE_CXX_FLAGS -fopenmp)
-set(CMAKE_C_FLAGS -fopenmp)
 #set(CMAKE_CXX_FLAGS -O3)
 #set(CMAKE_C_FLAGS -O3)
 

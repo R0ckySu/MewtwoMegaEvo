@@ -31,8 +31,6 @@ target_link_libraries(QSimCoreLib PUBLIC exprtk::exprtk)
 #set(CMAKE_CXX_FLAGS -g)
 #set(CMAKE_C_FLAGS  -g)
 
-set(CMAKE_CXX_FLAGS -fopenmp)
-set(CMAKE_C_FLAGS -fopenmp)
 
 #set(CMAKE_CXX_FLAGS -O3)
 #set(CMAKE_C_FLAGS -O3)

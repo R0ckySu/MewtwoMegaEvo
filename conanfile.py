@@ -11,6 +11,10 @@ class ProjectMewtwoConan(ConanFile):
     options = {"wt_web_GUI": [True, False]}
     default_options = {"wt_web_GUI": False}
 
+    def package_info(self):
+        if self.settings.os == "Macos":
+            self.cpp_info.frameworks = ["Accelerate"]
+
     def requirements(self):
         # Conditionally include OpenBLAS for non-macOS platforms
         if platform.system() != "Darwin":

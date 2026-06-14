@@ -34,8 +34,6 @@ add_subdirectory(Noise)
 target_link_libraries(MewtwoMegaEvo ${CONAN_LIBS})
 target_link_libraries(MewtwoMegaEvo PRIVATE QSimTask)
 
-set(CMAKE_CXX_FLAGS -fopenmp)
-set(CMAKE_C_FLAGS -fopenmp)
 set(CMAKE_CXX_FLAGS -O3)
 set(CMAKE_C_FLAGS -O3)
 
@@ -66,6 +64,28 @@ FetchContent_GetProperties(json)
 if(NOT json_POPULATED)
     FetchContent_Populate(json)
     add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+
+FetchContent_Declare(
+  rttr
+  GIT_REPOSITORY https://github.com/rttrorg/rttr.git
+  GIT_TAG        v0.9.6
+)
+
+FetchContent_MakeAvailable(rttr)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if (TARGET rttr_core)
+        target_compile_options(rttr_core PRIVATE
+            -Wno-implicit-const-int-float-conversion
+        )
+    endif()
+    if (TARGET rttr_core_lib)
+        target_compile_options(rttr_core_lib PRIVATE
+            -Wno-implicit-const-int-float-conversion
+        )
+    endif()
 endif()
 
 FetchContent_Declare(exprtk GIT_REPOSITORY https://github.com/ArashPartow/exprtk.git GIT_TAG cmake)
