@@ -4,6 +4,7 @@
 
 #include "QuantumSimulationTask.h"
 #include <iostream>
+#include <stdexcept>
 #include <rttr/registration.h>
 #include <rttr/property.h>
 #include <rttr/type.h>
@@ -64,6 +65,23 @@ void QSimTask::launch_task() {
 #ifdef _TASK_PROGRESS_
     writeToSharedMemory(std::string("/datardy_").append(task_time_stamp), 1);
 #endif
+}
+
+bool QSimTask::validate_all_configs() {
+    ConfigValidator validator(config_file_folder);
+
+    validator.validate_sim_config(sim_configs);
+    validator.validate_gate_config(gate_configs);
+    validator.validate_hamiltonian_config(hamiltonian_configs);
+
+    // Always print the report (to stderr) so the user sees it.
+    validator.print_report();
+
+    // HALT the program immediately if any errors were found.
+    // This prevents a confusing nlohmann type_error crash later in process_*_configs().
+    validator.throw_on_error();
+
+    return validator.is_valid();
 }
 
 void QSimTask::sweeping_repeat_parallel() {
@@ -246,10 +264,14 @@ void QSimTask::sweeping_param_parallel() {
 
 
 void QSimTask::load_sim_configs() {
-    task_log("Loading simulation configs",1);
-
+    // Legacy wrapper — preload() now loads JSON and calls process_sim_configs().
     std::string sim_configfile_path = std::string(config_file_folder).append("/sim_config.json");
     sim_configs = load_config_from_path(sim_configfile_path);
+    process_sim_configs();
+}
+
+void QSimTask::process_sim_configs() {
+    task_log("Processing simulation configs",1);
 
     task_name = sim_configs["task_name"];
     log_level_threshold = sim_configs["log_level"];
@@ -310,9 +332,14 @@ void QSimTask::load_sim_configs() {
 }
 
 void QSimTask::load_gate_configs() {
-    task_log("Loading Gate prototypes",1);
+    // Legacy wrapper — preload() now loads JSON and calls process_gate_configs().
     std::string gate_configfile_path = std::string(config_file_folder).append("/gate_config.json");
     gate_configs = load_config_from_path(gate_configfile_path);
+    process_gate_configs();
+}
+
+void QSimTask::process_gate_configs() {
+    task_log("Processing Gate prototypes",1);
     auto gate_prototype_map = std::map<gate_tag_type,Gate *>();
 
     std::vector<nlohmann::json> gate_defs = gate_configs["gate_defs"];
@@ -329,10 +356,15 @@ void QSimTask::load_gate_configs() {
 }
 
 void QSimTask::load_hamiltonian_configs() {
-    task_log("Loading Hamiltonian prototypes",1);
-
+    // Legacy wrapper — preload() now loads JSON and calls process_hamiltonian_configs().
     std::string hamiltonian_configfile_path = std::string(config_file_folder).append("/hamiltonian_config.json");
     hamiltonian_configs = load_config_from_path(hamiltonian_configfile_path);
+    process_hamiltonian_configs();
+}
+
+void QSimTask::process_hamiltonian_configs() {
+    task_log("Processing Hamiltonian prototypes",1);
+
     auto ctrl_hamiltonian_prototype_map = std::map<hamiltonian_tag_type,Hamiltonian *>();
     auto noise_hamiltonian_prototype_map = std::map<hamiltonian_tag_type,Noise_Hamiltonian *>();
 
@@ -430,10 +462,17 @@ SimPrototypes* QSimTask::reload_prototypes_with_sweeping_parameter(int index) {
 nlohmann::json QSimTask::load_config_from_path(const std::string& path) {
     nlohmann::json config_json;
     std::ifstream file(path);
-    if (file) {
-        file >> config_json;
-        file.close();
+    if (!file) {
+        throw std::runtime_error(
+            "FATAL: Cannot open configuration file: " + path +
+            "\n  Check that the config folder (-c <path>) exists and "
+            "contains the required JSON files:\n"
+            "    - sim_config.json\n"
+            "    - gate_config.json\n"
+            "    - hamiltonian_config.json");
     }
+    file >> config_json;
+    file.close();
     return config_json;
 }
 

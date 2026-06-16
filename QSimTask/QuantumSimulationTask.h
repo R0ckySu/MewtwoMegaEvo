@@ -11,6 +11,7 @@
 #include "ParamScheduler.h"
 #include "SimPrototypes.h"
 #include "QSimCoreLib/ExtSigCache.h"
+#include "ConfigValidator.h"
 #include <type_traits>
 
 #define CONFIG_FOLDER_NAME "config_files"
@@ -56,16 +57,27 @@ public:
     virtual void load_sim_configs();
     virtual void load_gate_configs();
     virtual void load_hamiltonian_configs();
+    virtual void process_sim_configs();
+    virtual void process_gate_configs();
+    virtual void process_hamiltonian_configs();
     void preload() {
-        load_sim_configs();
-        load_hamiltonian_configs();
-        load_gate_configs();
+        // Phase 1: Load raw JSON and validate BEFORE processing
+        sim_configs = load_config_from_path(config_file_folder + "/sim_config.json");
+        hamiltonian_configs = load_config_from_path(config_file_folder + "/hamiltonian_config.json");
+        gate_configs = load_config_from_path(config_file_folder + "/gate_config.json");
+        validate_all_configs();
+
+        // Phase 2: Process validated configs (loads matrix files, creates objects)
+        process_sim_configs();
+        process_hamiltonian_configs();
+        process_gate_configs();
     }
 
     virtual SimPrototypes* reload_prototypes_with_sweeping_parameter(int index);
     virtual void sweeping_repeat_parallel();
     virtual void sweeping_param_parallel();
     virtual void launch_task();
+    virtual bool validate_all_configs();
 
     arma::cx_cube* compile_time_dep_ctrl_hamiltonian(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map, std::map<gate_tag_type, Gate *> gate_map ,Sequence seq);
     arma::cx_mat get_static_hamiltonian_per_step(std::map<hamiltonian_tag_type, Hamiltonian *> hamiltonian_prototype_map);

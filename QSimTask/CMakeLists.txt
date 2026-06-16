@@ -7,6 +7,7 @@ add_library(
         QuantumSimulationTask.h QuantumSimulationTask.cpp
         ParamScheduler.h ParamScheduler.cpp
         SimPrototypes.h SimPrototypes.cpp
+        ConfigValidator.h ConfigValidator.cpp
 )
 
 add_subdirectory(QSimCoreLib)
