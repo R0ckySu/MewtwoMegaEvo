@@ -1,0 +1,31 @@
+[project]
+name = "mewtwo-web"
+version = "0.1.0"
+description = "Web interface and post-processing (mewtwo) tools for MewtwoMegaEvo."
+requires-python = ">=3.10"
+dependencies = [
+    # web app
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "passlib>=1.7.4",
+    "itsdangerous>=2.0",
+    "python-multipart>=0.0.6",
+    "psutil>=5.9",
+    # data loading / plotting (the mewtwo package)
+    "numpy>=1.24",
+    "h5py>=3.8",
+    "xarray>=2023.1",
+    "netCDF4>=1.6",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "jupyter>=1.0", "matplotlib>=3.3", "ipykernel>=6.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["webapp", "mewtwo"]
+exclude = ["webapp/userdata", "webapp/users.db", "**/__pycache__", "**/.venv"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

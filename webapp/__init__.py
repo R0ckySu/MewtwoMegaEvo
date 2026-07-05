@@ -1,0 +1,1 @@
+"""MewtwoMegaEvo web application package."""

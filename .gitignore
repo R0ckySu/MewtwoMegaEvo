@@ -50,6 +50,10 @@ Playground/config_files/*
 */MewtwoMegaEvo
 */NoiseGen
 
+# Web app runtime data
+webapp/users.db
+webapp/userdata/
+
 # Python
 __pycache__/
 *.py[cod]

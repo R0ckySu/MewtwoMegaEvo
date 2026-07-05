@@ -1,0 +1,62 @@
+"""FastAPI application entry point.
+
+Run with:  uvicorn webapp.main:app --reload --port 8000
+"""
+from fastapi import Depends, FastAPI
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+
+from . import (auth, configs, files, noise, plots, projects, results, runner,
+               schema, settings, system, workspaces)
+from .auth import get_current_user
+
+app = FastAPI(title="MewtwoMegaEvo Web")
+app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET,
+                   same_site="lax")
+
+
+def _lan_ip():
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # no packets sent; just picks the outbound iface
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except OSError:
+        return None
+
+
+@app.on_event("startup")
+def _startup():
+    auth.init_db()
+    print(f"[mewtwo-web] user data dir: {settings.USERDATA_DIR}")
+    print(f"[mewtwo-web] users db:      {settings.USERS_DB}")
+    ip = _lan_ip()
+    if ip:
+        print(f"[mewtwo-web] LAN access:   http://{ip}:<port>  "
+              f"(start uvicorn with --host 0.0.0.0 to allow it)")
+    if settings.SESSION_SECRET == "dev-insecure-change-me":
+        print("[mewtwo-web] WARNING: set MEWTWO_SECRET for multi-user use "
+              "(sessions won't survive restart otherwise).")
+
+
+@app.get("/api/schema")
+def get_schema(user: str = Depends(get_current_user)):
+    return schema.get_schema()
+
+
+app.include_router(auth.router, prefix="/api", tags=["auth"])
+app.include_router(workspaces.router, prefix="/api", tags=["workspaces"])
+app.include_router(configs.router, prefix="/api", tags=["configs"])
+app.include_router(files.router, prefix="/api", tags=["files"])
+app.include_router(runner.router, prefix="/api", tags=["runner"])
+app.include_router(results.router, prefix="/api", tags=["results"])
+app.include_router(projects.router, prefix="/api", tags=["projects"])
+app.include_router(noise.router, prefix="/api", tags=["noise"])
+app.include_router(plots.router, prefix="/api", tags=["plots"])
+app.include_router(system.router, prefix="/api", tags=["system"])
+
+# The zero-build SPA. Registered last so /api/* routes win.
+app.mount("/", StaticFiles(directory=str(settings.WEBAPP_DIR / "static"), html=True),
+          name="static")

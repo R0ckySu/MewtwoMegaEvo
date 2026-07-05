@@ -1,0 +1,206 @@
+# MewtwoMegaEvo Web Interface
+
+A browser UI for configuring and running the MewtwoMegaEvo simulator. It edits the
+three JSON configs with type-aware forms, lets you browse/edit the referenced
+matrix/vector files, launches the compiled binary, and streams a live progress bar.
+
+This is the successor to the deprecated Wt-based `WebGUI/`. It is fully decoupled from
+the C++ code: it drives the already-compiled `Playground/MewtwoMegaEvo` binary as a
+subprocess. **No C++ changes are required.**
+
+## Stack
+
+- **Backend:** FastAPI + uvicorn (Python), managed with **uv**. Session-cookie auth, SQLite user store.
+- **Frontend:** zero-build single-page app (Vue 3 from CDN) served by FastAPI. No Node.
+- **Progress:** parsed from the binary's stdout `Solver job done! [N/M]` lines and pushed
+  to the browser via Server-Sent Events.
+
+## Project layout
+
+```
+<repo root>/
+  pyproject.toml       # single uv project: web app + mewtwo dataloader, one env
+  uv.lock
+  webapp/              # the FastAPI app (this package)
+  mewtwo/              # HDF5 dataloader / post-processing package (importable, reusable)
+  Playground/          # the compiled binary, Demo_configs/, NoiseData/, ...
+```
+
+## Setup
+
+```bash
+cd /Users/rockysu/CodeRepo/MewtwoMegaEvo.git
+uv sync          # creates ./.venv with the web app AND the mewtwo dataloader (Python 3.10+)
+```
+
+Both `webapp` and `mewtwo` are installed into one environment, so plotting loads HDF5 results
+with `mewtwo` from the same interpreter — no separate env to manage. (`import mewtwo` also works
+in notebooks via `uv run python` or by activating `.venv`.)
+
+## Run
+
+```bash
+uv run uvicorn webapp.main:app --host 127.0.0.1 --port 8000
+```
+
+### Sharing with other users on your LAN
+
+Bind to all interfaces and set a persistent secret so login sessions survive restarts:
+
+```bash
+MEWTWO_SECRET="$(python3 -c 'import secrets;print(secrets.token_hex(32))')" \
+  uv run uvicorn webapp.main:app --host 0.0.0.0 --port 8000
+```
+
+Others then open `http://<this-machine-LAN-IP>:8000` (the server prints the LAN IP on startup).
+Make sure your firewall allows inbound TCP on the port. It serves plain HTTP, which is fine on a
+trusted lab network; don't expose it to the public internet as-is. Each person registers their own
+account and gets an isolated data sandbox; noise data is shared.
+
+Open http://127.0.0.1:8000 and register a user. Each user gets one Playground-like sandbox
+on disk:
+
+```
+webapp/userdata/<user>/config_files/        # the single editable config
+webapp/userdata/<user>/<task><timestamp>/   # each run's output (directly here)
+```
+
+## Workflow
+
+1. **Editor** – edit your single config. **Load demo…** (top bar) replaces it with one of the
+   `Playground/Demo_configs` templates (configs + matrix/vector files); **Reset** clears it.
+2. **Sim / Gates / Hamiltonians** tabs – type-aware forms. The Hamiltonian `type`
+   dropdown (`static` / `static_RF` / `mw` / `mw_RF` / `awg` / `noise`) renders exactly
+   that type's fields. Add multiple sweep-parameter rows in the Sim tab.
+   - Gates and Hamiltonians render as **cards in a waterfall/masonry layout**, each with a
+     subtle colour accent per type (gate: `switch`/`shaped`/`sticky`; Hamiltonian: the six
+     types). A gate's Hamiltonians field is a chip-list with autocomplete over the
+     Hamiltonians you've defined.
+   - Within each card, fields are ordered **to match your JSON file's key order**.
+
+### Noise (shared)
+
+The **Noise** view generates and browses noise data via the `NoiseGen` binary. Because the
+data is large, it is **shared by all users** in one global store (`Playground/NoiseData`),
+not per user.
+
+- **Generate** — a `noise_config` form (tag, mode `colored`/`arb`, channels, start index,
+  time step, length, amplitude, plus `alpha` for colored or a spectrum `noise_expr` for arb).
+  Shows a rough size estimate and a live progress bar (channels written, parsed from NoiseGen's
+  output). Runs with cwd = Playground so `./NoiseData/...` resolves.
+- **Cached noise groups** — a table with `time_step`, `channels`, `length`, mode and size.
+  **Click a row** to see the complete noise config it was generated with; **Delete** removes a
+  group from the shared store.
+
+The top bar has three views: **Editor**, **Noise** (above), and **Projects** — a portal
+listing your previous runs (the `<task><timestamp>` folders under your user directory). From
+the portal you can:
+
+- **Plot** — browse `meas_marker` data (see below).
+- **Download** a run as a zip.
+- **Load config** — replaces your editor config with the one that run used (auto-migrated),
+  then drops you into the editor.
+- **Delete** a run (removes its results and saved config permanently).
+
+### Plots (meas_marker)
+
+An interactive Plotly browser for `meas_marker` expectation values, available both from
+**Projects → Plot** and inline on the **Editor → Run** tab (it appears automatically when a
+run finishes). The mewtwo loader reconstructs the N-D sweep grid — including multi-parameter
+runs where params were meshgrid-spanned into `<name>_span` files, which `param_fold` reverts
+back to labelled axes — and caches a NetCDF next to the result for fast re-opening. Controls:
+
+- **Observable** and **Init state** — separate dropdowns selecting the `meas_marker_<obs>_<init>`
+  variable.
+- **Line** or **Heatmap** — 1-D trace vs a chosen axis, or a 2-D map (e.g. sweep × marker,
+  i.e. a Rabi chevron).
+- **X / Y axis** — any dimension (a swept parameter, `marker_index`, or `marker_repeat`).
+- **X / Y scale** — linear or log per axis.
+- **Sliders** fix the remaining dimensions (showing the coordinate value for swept params),
+  so for d>2 runs you choose which 2 dimensions to plot and slice the rest.
+- **Save plot** — writes a PNG into the run's `plots/` folder; the default name embeds the
+  sliced coordinates (e.g. `Z_Z_line_pw_span=5e-06.png`) so different slices don't collide.
+  Saved plots show as thumbnails below and are browsable on any later visit.
+
+The Run tab also shows a **live** panel while a simulation is running. Note the current binary
+writes its HDF5 without SWMR / incremental flush, so completed points aren't readable until the
+run finishes — in practice the live panel shows "waiting…" and the full plot appears the moment
+the run completes. (The live path already streams if a future build flushes per point.)
+   Any file-reference field (matrix symbols like `h_pauli_mat`, sweep parameter files,
+   observable/state symbols) shows a **⤢ preview** button / is clickable — it opens a popup
+   that renders the matrix as a grid (or the vector as text) without leaving the form. In the
+   sweep table the numeric/string **value type** is an inline control on the parameter file
+   itself (editable only for Hamiltonian sweeps; Gate is always numeric, Sequence always string).
+3. **Files** tab – browse and edit the referenced matrix/vector/parameter files. Files
+   referenced by a config are tagged `ref`; referenced-but-absent files are tagged
+   `missing`.
+4. **Run** tab – *Save all* then *Launch*. Watch the progress bar; on completion, download
+   the result folder as a zip. Past results are listed below. A **Host resources** dashboard
+   at the top shows, graphically, live **CPU-average and memory donut gauges**, a **per-core
+   CPU** bar grid (scales to many-core machines), and a memory/swap breakdown with pressure —
+   polled every 1.5 s while on the tab. Per-core CPU is sampled by a background thread (1 s
+   window) so requests never block; memory pressure uses Linux PSI (`/proc/pressure/memory`)
+   when available.
+
+Runs are **restart-safe**: the simulator is launched in its own session with stdout going to
+a log file (not a pipe), so a server restart/crash cannot kill an in-progress run — it keeps
+running, finishes writing its results, and the server just tails the log for progress. User
+data lives in `webapp/userdata/<user>/` (override with `MEWTWO_USERDATA`); nothing in the app
+ever deletes a whole user folder.
+
+### Job queue (single concurrent job, server-wide)
+
+Only **one simulation runs at a time** across the whole server; further submissions **queue**
+(FIFO). The **Job queue** card on the Run tab shows the running job and everyone's queued jobs
+with positions and an **ETA**. Your own job's status card shows your queue position and estimated
+start time, then switches to a progress bar + estimated time remaining when it starts.
+
+- Each job **snapshots your config at submit time**, so editing afterwards doesn't affect a
+  queued job.
+- **Launch** enqueues; **Cancel** removes a queued job, **Stop** terminates a running one.
+- ETA is learned online: a moving average of seconds-per-work-unit (`num_params × repeat`) from
+  completed jobs, so estimates sharpen after the first run finishes.
+
+## Legacy demo migration
+
+The demos in `Playground/Demo_configs/` predate the current binary and omit fields
+its C++ constructors now read unconditionally (e.g. a gate's `type`, or a noise
+Hamiltonian's `rand_shift` / `num_available_channels`). Loading such a config makes the
+binary throw `nlohmann type_error ... is null` before any solver step.
+
+`migrate.py` fixes this **non-destructively** — it fills the required fields with safe
+defaults derived directly from the constructors (`Gate`, `*_Hamiltonian`):
+
+- **Load demo** / **Load config** (from a past run) auto-migrates the configs and reports
+  what changed and any remaining blockers.
+- The **"Migrate legacy configs"** button (Sim tab) migrates your current config on demand
+  and reloads the forms.
+
+It also flags blockers it can't fix — most commonly an `enable`d `noise` Hamiltonian whose
+`NoiseData/` directory is absent (those files are gitignored). Provide the data or disable
+that Hamiltonian. After migration, noise-free demos (RabiChevron, CNOT, …) run end-to-end.
+
+## Configuration (`settings.py`, env-overridable)
+
+| Env var             | Default                          | Meaning                                  |
+|---------------------|----------------------------------|------------------------------------------|
+| `MEWTWO_BINARY`     | `Playground/MewtwoMegaEvo`       | The simulator executable.                |
+| `MEWTWO_PLAYGROUND` | `Playground/`                    | subprocess cwd (so `./NoiseData/...` resolves). |
+| `MEWTWO_DEMOS`      | `Playground/Demo_configs/`       | Demo templates ("Load demo").            |
+| `MEWTWO_NOISEGEN`   | `Playground/NoiseGen`            | The noise generator binary.              |
+| `MEWTWO_NOISEDATA`  | `Playground/NoiseData/`          | Shared noise-data store.                 |
+| `MEWTWO_USERDATA`   | `webapp/userdata/`               | Per-user config + run outputs.           |
+| `MEWTWO_PY`         | the app's own interpreter (`sys.executable`) | Interpreter with `mewtwo` (for plots). |
+| `MEWTWO_USERS_DB`   | `webapp/users.db`                | SQLite user store.                       |
+| `MEWTWO_SECRET`     | `dev-insecure-change-me`         | **Set this in production** (cookie signing). |
+
+The simulator is invoked as:
+`MewtwoMegaEvo -c <user>/config_files -o <user> -t <timestamp>` (cwd = Playground), so a run
+produces `userdata/<user>/<task><timestamp>/`.
+
+## Notes
+
+- Progress relies on the binary being built with `-D_TASK_PROGRESS_` (it is, per
+  `QSimTask/CMakeLists.txt`) and on `sim_config.log_level` being high enough that the
+  `Solver job done! [N/M]` line prints (the demo default `4` works).
+- The file editor loads files up to 2 MB; larger files open read-only as a preview.
