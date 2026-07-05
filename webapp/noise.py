@@ -47,6 +47,28 @@ def _group_config(d: Path) -> Optional[dict]:
     return None
 
 
+def _noisedata_prefix() -> str:
+    """Path prefix for the noise store as the simulator expects it: relative
+    ('./NoiseData') when it lives under Playground, else an absolute path."""
+    try:
+        rel = settings.NOISEDATA_DIR.relative_to(settings.PLAYGROUND_DIR)
+        return "./" + str(rel)
+    except ValueError:
+        return str(settings.NOISEDATA_DIR)
+
+
+def _waveform_path(d: Path) -> str:
+    """The waveform_path to paste into a noise Hamiltonian: points at the
+    channel files with '#' as the channel-index placeholder."""
+    chan = sorted(d.glob("*#*.csv"))
+    if chan:
+        prefix = chan[0].name.split("#")[0]
+    else:
+        cfg = _group_config(d) or {}
+        prefix = cfg.get("tag", d.name)
+    return f"{_noisedata_prefix()}/{d.name}/{prefix}#.csv"
+
+
 # --------------------------------------------------------------------------
 # Generation job management
 # --------------------------------------------------------------------------
@@ -98,7 +120,9 @@ class NoiseManager:
         export_dir.mkdir(parents=True, exist_ok=True)
 
         run_cfg = dict(cfg)
-        run_cfg["export_dir"] = f"./NoiseData/{tag}/"
+        # Absolute export dir so it lands in the configured store regardless of
+        # the subprocess cwd (which is Playground).
+        run_cfg["export_dir"] = str(export_dir) + "/"
         run_cfg["length"] = int(cfg["length"])
         # Temp config outside the export dir; NoiseGen copies it inside as
         # <tag>_config.json (copying onto itself would error).
@@ -165,6 +189,7 @@ def list_noise(user: str = Depends(get_current_user)):
                 "length": cfg.get("length"),
                 "mode": cfg.get("mode"),
                 "size": size,
+                "waveform_path": _waveform_path(d),
                 "has_config": bool(_group_config(d)),
                 "generating": d.name in active,
             })

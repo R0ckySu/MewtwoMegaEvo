@@ -29,8 +29,10 @@ a { color: var(--accent); }
 
 /* Layout */
 .topbar {
-  display: flex; align-items: center; gap: 14px; padding: 10px 18px;
+  display: flex; align-items: center; gap: 14px;
+  padding: calc(10px + env(safe-area-inset-top)) 18px 10px;
   background: var(--panel); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 30;
 }
 .topbar h1 { font-size: 16px; margin: 0; }
 .topbar .spacer { flex: 1; }
@@ -163,6 +165,9 @@ table.matrix td { border: 1px solid var(--border); padding: 3px 8px; text-align:
 @keyframes indet { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
 .progress .label { position: absolute; inset: 0; display: flex; align-items: center;
   justify-content: center; font-size: 12px; }
+.copyname { cursor: copy; border-bottom: 1px dashed var(--muted); }
+.copyname:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
 /* Job queue rows */
 .qrow { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13px;
   border-bottom: 1px solid var(--border); }
@@ -207,3 +212,55 @@ table.matrix td { border: 1px solid var(--border); padding: 3px 8px; text-align:
   border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 10px 14px;
   border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
 .toast.err { border-left-color: var(--err); }
+
+/* ------------------------------------------------------------------ */
+/* iPhone / small screens                                              */
+/* ------------------------------------------------------------------ */
+@media (max-width: 640px) {
+  .wrap { padding: 12px; }
+  .wrap.wide { max-width: 100%; }
+  .card { padding: 13px; margin-bottom: 12px; }
+
+  /* Inputs >=16px so iOS Safari doesn't zoom in on focus */
+  input, select, textarea, .symlist .sym-input { font-size: 16px; }
+
+  /* Top bar: title + account on row 1, nav on its own full-width row,
+     workspace controls below that */
+  .topbar { flex-wrap: wrap; gap: 8px 10px; padding: 8px 12px; }
+  .topbar h1 { font-size: 15px; }
+  .topbar .spacer { display: none; }
+  .topbar > span.muted { margin-left: auto; }
+  .topbar .nav { order: 5; flex: 1 1 100%; }
+  .topbar .nav button { flex: 1; text-align: center; }
+  .topbar > .row { order: 6; flex: 1 1 100%; }
+  .topbar > .row select { flex: 1; }
+
+  /* Tabs: horizontally scrollable strip */
+  .tabs { padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 0 0 auto; padding: 11px 13px; }
+
+  /* Wide tables scroll inside their own box instead of the whole page */
+  table.sweep { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Files: stack the browser above the editor */
+  .files-layout { grid-template-columns: 1fr; }
+  .file-list { max-height: 34vh; }
+  .editor textarea { height: 42vh; }
+
+  /* Host dashboard: center the gauges, memory details full width */
+  .gauges { justify-content: center; gap: 16px; }
+  .mem-detail { min-width: 100%; }
+
+  .plotbox { height: 340px; }
+  .saved-thumb, .saved-thumb img { width: 100%; }
+  .saved-plots { flex-direction: column; }
+
+  .login { margin: 8vh 12px; }
+
+  /* Toast spans the width so long paths/messages stay readable */
+  .toast { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+  /* Bigger tap targets */
+  button { padding: 9px 14px; }
+}

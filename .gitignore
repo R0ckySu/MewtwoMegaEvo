@@ -62,3 +62,5 @@ __pycache__/
 dist/
 .venv/
 *.whl
+# Server-specific config (use server_config.example.yaml as a template)
+server_config.yaml

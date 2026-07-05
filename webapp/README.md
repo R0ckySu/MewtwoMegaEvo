@@ -45,17 +45,30 @@ uv run uvicorn webapp.main:app --host 127.0.0.1 --port 8000
 
 ### Sharing with other users on your LAN
 
-Bind to all interfaces and set a persistent secret so login sessions survive restarts:
+Just bind to all interfaces:
+
+```bash
+uv run uvicorn webapp.main:app --host 0.0.0.0 --port 8000
+```
+
+Others then open `http://<this-machine-LAN-IP>:8000` (the server prints the LAN IP on startup).
+Each person registers their own account, logs in independently, and gets an isolated data sandbox;
+noise data is shared. **Multi-user login works out of the box** — each browser holds its own signed
+session cookie, so on one computer you're one user at a time (use another browser / a private window
+to test two accounts on the same machine).
+
+The cookie-signing **secret is managed for you**: a strong random secret is generated on first run
+and saved to `userdata/.session_secret`, so logins stay valid across restarts. To use a shared
+secret across several server hosts (or supply your own), set `MEWTWO_SECRET`:
 
 ```bash
 MEWTWO_SECRET="$(python3 -c 'import secrets;print(secrets.token_hex(32))')" \
   uv run uvicorn webapp.main:app --host 0.0.0.0 --port 8000
 ```
 
-Others then open `http://<this-machine-LAN-IP>:8000` (the server prints the LAN IP on startup).
 Make sure your firewall allows inbound TCP on the port. It serves plain HTTP, which is fine on a
-trusted lab network; don't expose it to the public internet as-is. Each person registers their own
-account and gets an isolated data sandbox; noise data is shared.
+trusted lab network; don't expose it to the public internet as-is. (Changing the secret invalidates
+existing cookies — everyone just logs in again.)
 
 Open http://127.0.0.1:8000 and register a user. Each user gets one Playground-like sandbox
 on disk:
@@ -89,8 +102,9 @@ not per user.
   Shows a rough size estimate and a live progress bar (channels written, parsed from NoiseGen's
   output). Runs with cwd = Playground so `./NoiseData/...` resolves.
 - **Cached noise groups** — a table with `time_step`, `channels`, `length`, mode and size.
-  **Click a row** to see the complete noise config it was generated with; **Delete** removes a
-  group from the shared store.
+  **Click a group's name** to copy its `waveform_path` (in the exact form a noise Hamiltonian
+  expects, with `#` as the channel placeholder) to your clipboard; **click elsewhere in the row**
+  to see the config it was generated with; **Delete** removes a group from the shared store.
 
 The top bar has three views: **Editor**, **Noise** (above), and **Projects** — a portal
 listing your previous runs (the `<task><timestamp>` folders under your user directory). From
@@ -180,19 +194,35 @@ It also flags blockers it can't fix — most commonly an `enable`d `noise` Hamil
 `NoiseData/` directory is absent (those files are gitignored). Provide the data or disable
 that Hamiltonian. After migration, noise-free demos (RabiChevron, CNOT, …) run end-to-end.
 
-## Configuration (`settings.py`, env-overridable)
+## Configuration
 
-| Env var             | Default                          | Meaning                                  |
-|---------------------|----------------------------------|------------------------------------------|
-| `MEWTWO_BINARY`     | `Playground/MewtwoMegaEvo`       | The simulator executable.                |
-| `MEWTWO_PLAYGROUND` | `Playground/`                    | subprocess cwd (so `./NoiseData/...` resolves). |
-| `MEWTWO_DEMOS`      | `Playground/Demo_configs/`       | Demo templates ("Load demo").            |
-| `MEWTWO_NOISEGEN`   | `Playground/NoiseGen`            | The noise generator binary.              |
-| `MEWTWO_NOISEDATA`  | `Playground/NoiseData/`          | Shared noise-data store.                 |
-| `MEWTWO_USERDATA`   | `webapp/userdata/`               | Per-user config + run outputs.           |
-| `MEWTWO_PY`         | the app's own interpreter (`sys.executable`) | Interpreter with `mewtwo` (for plots). |
-| `MEWTWO_USERS_DB`   | `webapp/users.db`                | SQLite user store.                       |
-| `MEWTWO_SECRET`     | `dev-insecure-change-me`         | **Set this in production** (cookie signing). |
+Set locations either in a **YAML config file** or via **environment variables** (env wins, then
+YAML, then the default). Copy `server_config.example.yaml` to `server_config.yaml` in the repo
+root (or point `MEWTWO_CONFIG` at any path) and fill in what you need:
+
+```yaml
+user_data_dir:  /srv/mewtwo/userdata    # per-user configs + run outputs
+noise_data_dir: /srv/mewtwo/NoiseData   # shared cached noise data
+users_db:       /srv/mewtwo/users.db    # SQLite user store
+# secret: "..."   # optional shared cookie secret (else auto-generated)
+```
+
+| Env var / YAML key                | Default                          | Meaning                                  |
+|-----------------------------------|----------------------------------|------------------------------------------|
+| `MEWTWO_USERDATA` / `user_data_dir`  | `webapp/userdata/`            | Per-user config + run outputs.           |
+| `MEWTWO_NOISEDATA` / `noise_data_dir`| `Playground/NoiseData/`       | Shared noise-data store.                 |
+| `MEWTWO_USERS_DB` / `users_db`       | `webapp/users.db`             | SQLite user store.                       |
+| `MEWTWO_SECRET` / `secret`           | auto-gen → `userdata/.session_secret` | Cookie-signing secret.           |
+| `MEWTWO_BINARY` / `binary_path`      | `Playground/MewtwoMegaEvo`    | The simulator executable.                |
+| `MEWTWO_PLAYGROUND` / `playground_dir`| `Playground/`                | Subprocess cwd (so `./NoiseData/...` resolves). |
+| `MEWTWO_NOISEGEN` / `noisegen_binary`| `Playground/NoiseGen`         | The noise generator binary.              |
+| `MEWTWO_DEMOS` / `demos_dir`         | `Playground/Demo_configs/`    | Demo templates ("Load demo").            |
+| `MEWTWO_PY` / `mewtwo_py`            | the app's own interpreter     | Interpreter with `mewtwo` (for plots).   |
+| `MEWTWO_CONFIG`                      | `server_config.yaml`          | Path to the YAML config file itself.     |
+
+The noise store honours whichever `noise_data_dir` you set — generation writes there and the
+copied `waveform_path` is relative (`./NoiseData/...`) when it lives under Playground, else an
+absolute path so the simulator finds it regardless of cwd.
 
 The simulator is invoked as:
 `MewtwoMegaEvo -c <user>/config_files -o <user> -t <timestamp>` (cwd = Playground), so a run

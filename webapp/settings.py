@@ -1,53 +1,115 @@
 """Central configuration for the MewtwoMegaEvo web app.
 
-All paths are derived from the repository layout but can be overridden with
-environment variables so the app is portable across machines.
+Paths can be set three ways, in priority order:
+  1. environment variable  (e.g. MEWTWO_USERDATA)
+  2. a YAML config file     (default: <repo>/server_config.yaml, or MEWTWO_CONFIG)
+  3. built-in default
+See server_config.example.yaml for the available keys.
 """
 import os
+import secrets
 import sys
 from pathlib import Path
+
+try:
+    import yaml
+except ImportError:  # pyyaml is a declared dependency, but degrade gracefully
+    yaml = None
 
 # webapp/ -> project root (the MewtwoMegaEvo repo)
 WEBAPP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = WEBAPP_DIR.parent
 
+# ---- load the optional YAML server config --------------------------------
+CONFIG_FILE = Path(os.environ.get("MEWTWO_CONFIG",
+                                  PROJECT_ROOT / "server_config.yaml")).expanduser()
+_cfg: dict = {}
+if yaml is not None and CONFIG_FILE.is_file():
+    try:
+        _cfg = yaml.safe_load(CONFIG_FILE.read_text()) or {}
+    except Exception:
+        _cfg = {}
 
-def _env_path(name: str, default: Path) -> Path:
-    val = os.environ.get(name)
-    return Path(val).expanduser().resolve() if val else default
+
+def _path(env_name: str, yaml_key: str, default: Path) -> Path:
+    val = os.environ.get(env_name)
+    if val:
+        return Path(val).expanduser().resolve()
+    if _cfg.get(yaml_key):
+        return Path(str(_cfg[yaml_key])).expanduser().resolve()
+    return default
 
 
-# Directory that holds the compiled binary and NoiseData/ (relative noise
-# waveform paths like "./NoiseData/..." resolve against this cwd).
-PLAYGROUND_DIR = _env_path("MEWTWO_PLAYGROUND", PROJECT_ROOT / "Playground")
+def _value(env_name: str, yaml_key: str, default):
+    val = os.environ.get(env_name)
+    if val is not None:
+        return val
+    if _cfg.get(yaml_key) is not None:
+        return _cfg[yaml_key]
+    return default
 
-# The compiled simulator binary.
-BINARY_PATH = _env_path("MEWTWO_BINARY", PLAYGROUND_DIR / "MewtwoMegaEvo")
 
-# The noise generator binary and the shared noise-data store (shared by all
-# users because the generated data is large).
-NOISEGEN_BINARY = _env_path("MEWTWO_NOISEGEN", PLAYGROUND_DIR / "NoiseGen")
-NOISEDATA_DIR = _env_path("MEWTWO_NOISEDATA", PLAYGROUND_DIR / "NoiseData")
+# Directory that holds the compiled binary (subprocess cwd; relative noise
+# waveform paths like "./NoiseData/..." resolve against it).
+PLAYGROUND_DIR = _path("MEWTWO_PLAYGROUND", "playground_dir", PROJECT_ROOT / "Playground")
 
-# Where template configs are copied from when creating a workspace.
-DEMO_CONFIGS_DIR = _env_path("MEWTWO_DEMOS", PLAYGROUND_DIR / "Demo_configs")
+# The compiled simulator + noise binaries.
+BINARY_PATH = _path("MEWTWO_BINARY", "binary_path", PLAYGROUND_DIR / "MewtwoMegaEvo")
+NOISEGEN_BINARY = _path("MEWTWO_NOISEGEN", "noisegen_binary", PLAYGROUND_DIR / "NoiseGen")
 
-# Per-user data lives here: userdata/<user>/{config_files, <task><timestamp>}
-USERDATA_DIR = _env_path("MEWTWO_USERDATA", WEBAPP_DIR / "userdata")
+# Shared, large noise-data store (shared by all users).
+NOISEDATA_DIR = _path("MEWTWO_NOISEDATA", "noise_data_dir", PLAYGROUND_DIR / "NoiseData")
 
-# Python interpreter used to load HDF5 results for plotting. The `mewtwo`
-# package lives in this same uv environment, so by default we reuse the app's
-# own interpreter (override with MEWTWO_PY if you keep it in a separate env).
-MEWTWO_PY = _env_path("MEWTWO_PY", Path(sys.executable))
-PLOT_EXTRACTOR = WEBAPP_DIR / "plot_extract.py"
+# Demo config templates.
+DEMO_CONFIGS_DIR = _path("MEWTWO_DEMOS", "demos_dir", PLAYGROUND_DIR / "Demo_configs")
+
+# Per-user data: userdata/<user>/{config_files, <task><timestamp>}
+USERDATA_DIR = _path("MEWTWO_USERDATA", "user_data_dir", WEBAPP_DIR / "userdata")
 
 # SQLite user store.
-USERS_DB = _env_path("MEWTWO_USERS_DB", WEBAPP_DIR / "users.db")
+USERS_DB = _path("MEWTWO_USERS_DB", "users_db", WEBAPP_DIR / "users.db")
 
-# Secret used to sign session cookies. Set MEWTWO_SECRET in production.
-SESSION_SECRET = os.environ.get("MEWTWO_SECRET", "dev-insecure-change-me")
+# Python interpreter that has the `mewtwo` package (for plotting). Defaults to
+# the app's own interpreter since mewtwo lives in the same uv env.
+MEWTWO_PY = _path("MEWTWO_PY", "mewtwo_py", Path(sys.executable))
+PLOT_EXTRACTOR = WEBAPP_DIR / "plot_extract.py"
 
 # The three config filenames the binary requires.
 CONFIG_FILES = ("sim_config.json", "gate_config.json", "hamiltonian_config.json")
 
-USERDATA_DIR.mkdir(parents=True, exist_ok=True)
+# Make sure the configured locations exist.
+for _d in (USERDATA_DIR, NOISEDATA_DIR, USERS_DB.parent):
+    try:
+        _d.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+
+
+def _session_secret() -> str:
+    """Cookie-signing secret: MEWTWO_SECRET / YAML `secret`, else a random
+    secret persisted to userdata/.session_secret (strong + stable, no setup)."""
+    explicit = _value("MEWTWO_SECRET", "secret", None)
+    if explicit:
+        return str(explicit)
+    secret_file = USERDATA_DIR / ".session_secret"
+    try:
+        if secret_file.is_file():
+            existing = secret_file.read_text().strip()
+            if existing:
+                return existing
+        generated = secrets.token_hex(32)
+        secret_file.write_text(generated)
+        try:
+            secret_file.chmod(0o600)
+        except OSError:
+            pass
+        return generated
+    except OSError:
+        return "dev-insecure-change-me"
+
+
+SESSION_SECRET = _session_secret()
+SESSION_SECRET_SOURCE = (
+    "explicit (env/yaml)" if _value("MEWTWO_SECRET", "secret", None)
+    else "auto-generated (userdata/.session_secret)")
+CONFIG_FILE_LOADED = CONFIG_FILE if _cfg else None

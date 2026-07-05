@@ -30,15 +30,16 @@ def _lan_ip():
 @app.on_event("startup")
 def _startup():
     auth.init_db()
-    print(f"[mewtwo-web] user data dir: {settings.USERDATA_DIR}")
-    print(f"[mewtwo-web] users db:      {settings.USERS_DB}")
+    if settings.CONFIG_FILE_LOADED:
+        print(f"[mewtwo-web] config file:  {settings.CONFIG_FILE_LOADED}", flush=True)
+    print(f"[mewtwo-web] user data dir: {settings.USERDATA_DIR}", flush=True)
+    print(f"[mewtwo-web] noise data:    {settings.NOISEDATA_DIR}", flush=True)
+    print(f"[mewtwo-web] users db:      {settings.USERS_DB}", flush=True)
+    print(f"[mewtwo-web] session secret: {settings.SESSION_SECRET_SOURCE}", flush=True)
     ip = _lan_ip()
     if ip:
         print(f"[mewtwo-web] LAN access:   http://{ip}:<port>  "
-              f"(start uvicorn with --host 0.0.0.0 to allow it)")
-    if settings.SESSION_SECRET == "dev-insecure-change-me":
-        print("[mewtwo-web] WARNING: set MEWTWO_SECRET for multi-user use "
-              "(sessions won't survive restart otherwise).")
+              f"(start uvicorn with --host 0.0.0.0 to allow it)", flush=True)
 
 
 @app.get("/api/schema")

@@ -1,0 +1,24 @@
+# MewtwoMegaEvo web server configuration.
+#
+# Copy this to `server_config.yaml` (in the repo root, or point MEWTWO_CONFIG at
+# it) and set the paths you want. Anything omitted uses the built-in default.
+# Precedence: environment variable > this file > default.
+#
+#   uv run uvicorn webapp.main:app --host 0.0.0.0 --port 8000
+#   # or with a custom location:
+#   MEWTWO_CONFIG=/etc/mewtwo/server_config.yaml uv run uvicorn webapp.main:app ...
+
+# --- Where per-user data, cached noise, and the user database live ---------
+user_data_dir: /srv/mewtwo/userdata        # per-user configs + run outputs
+noise_data_dir: /srv/mewtwo/NoiseData      # shared, large cached noise data
+users_db: /srv/mewtwo/users.db             # SQLite user store
+
+# --- Optional: locations of the simulator pieces ---------------------------
+# playground_dir: /path/to/Playground      # subprocess cwd
+# binary_path: /path/to/Playground/MewtwoMegaEvo
+# noisegen_binary: /path/to/Playground/NoiseGen
+# demos_dir: /path/to/Playground/Demo_configs
+# mewtwo_py: /path/to/.venv/bin/python     # interpreter with the mewtwo package
+
+# --- Optional: shared cookie-signing secret (else auto-generated & persisted)
+# secret: "put-a-long-random-hex-string-here"

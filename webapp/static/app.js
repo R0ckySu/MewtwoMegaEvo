@@ -380,6 +380,22 @@ const SystemDashboard = {
   </div>`
 };
 
+// Clipboard copy that also works over plain-HTTP LAN (non-secure context).
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    ok ? resolve() : reject(new Error('copy failed'));
+  });
+}
+
 // ---- Global job queue panel ----------------------------------------------
 function fmtDur(s) {
   if (s == null) return '—';
@@ -635,6 +651,10 @@ createApp({
         const cfg = await this.api('/noise/' + encodeURIComponent(group) + '/config');
         this.cfgModal = { title: group, json: JSON.stringify(cfg, null, 2) };
       } catch (e) { this.notify(e.detail, true); }
+    },
+    async copyNoisePath(n) {
+      try { await copyText(n.waveform_path); this.notify('Copied: ' + n.waveform_path); }
+      catch (e) { this.notify('Copy failed — path: ' + n.waveform_path, true); }
     },
     async deleteNoise(group) {
       if (!confirm('Delete noise group "' + group + '"? This is shared by all users '
@@ -954,15 +974,18 @@ createApp({
             <h2 style="margin:0">Cached noise groups</h2>
             <button class="ghost" @click="loadNoise">Refresh</button>
           </div>
-          <p class="muted">Shared by all users. Click a row to see the complete noise config
-            it was generated with.</p>
+          <p class="muted">Shared by all users. <strong>Click a group's name</strong> to copy its
+            <span class="mono">waveform_path</span> (for a noise Hamiltonian); click elsewhere in the
+            row to view the config it was generated with.</p>
           <table class="sweep" v-if="noiseList.length">
             <thead><tr><th>Group</th><th>time_step</th><th>channels</th><th>length</th>
               <th>mode</th><th>size</th><th></th></tr></thead>
             <tbody>
               <tr v-for="n in noiseList" :key="n.group" class="clickrow"
                 @click="viewNoiseConfig(n.group)">
-                <td class="mono">{{ n.group }}
+                <td class="mono">
+                  <span class="copyname" @click.stop="copyNoisePath(n)"
+                    :title="'Click to copy: ' + n.waveform_path">{{ n.group }}</span>
                   <span v-if="n.generating" class="chip">generating…</span></td>
                 <td class="muted">{{ n.time_step != null ? n.time_step : '—' }}</td>
                 <td class="muted">{{ n.channels != null ? n.channels : '—' }}</td>
