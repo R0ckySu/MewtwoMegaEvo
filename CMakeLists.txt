@@ -18,13 +18,6 @@ include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${exprtk_SOURCE_DIR})
 include_directories(${Armadillo_INCLUDE_DIR})
 
-if(WT_WEB_GUI)
-    find_package(wt)
-    find_package(Boost)
-    include_directories(${Wt_INCLUDE_DIRS})
-    add_subdirectory(WebGUI)
-endif ()
-
 add_executable(MewtwoMegaEvo
                 main.cpp command_arg_parser.h)
 

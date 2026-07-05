@@ -8,9 +8,6 @@ class ProjectMewtwoConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     # generators = "CMakeToolchain", "CMakeDeps"
 
-    options = {"wt_web_GUI": [True, False]}
-    default_options = {"wt_web_GUI": False}
-
     def package_info(self):
         if self.settings.os == "Macos":
             self.cpp_info.frameworks = ["Accelerate"]
@@ -24,22 +21,11 @@ class ProjectMewtwoConan(ConanFile):
         self.requires("armadillo/11.4.3")
         self.requires("llvm-openmp/18.1.8")
         self.requires("muparserx/4.0.12")
-        self.requires("exprtk/0.0.3")
-
-        # Optional dependencies
-        if self.options.get_safe("wt_web_GUI", True):
-            self.requires("wt/4.10.1")
-            self.requires("boost/1.83.0")
-
-    # def configure(self):
-    #     # Define optional dependencies
-    #     self.options["wt_web_GUI"] = [True, False]
-    #     self.default_options = {"wt_web_GUI": False}
+        self.requires("zlib/1.2.13")
+        # self.requires("exprtk/0.0.3")
 
     def generate(self):
-        # Pass options as CMake variables
         tc = CMakeToolchain(self)
-        tc.variables["wt_web_GUI"] = "ON" if self.options.wt_web_GUI else "OFF"
         tc.generate()
 
         deps = CMakeDeps(self)

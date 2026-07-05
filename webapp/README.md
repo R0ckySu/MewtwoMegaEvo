@@ -4,9 +4,9 @@ A browser UI for configuring and running the MewtwoMegaEvo simulator. It edits t
 three JSON configs with type-aware forms, lets you browse/edit the referenced
 matrix/vector files, launches the compiled binary, and streams a live progress bar.
 
-This is the successor to the deprecated Wt-based `WebGUI/`. It is fully decoupled from
-the C++ code: it drives the already-compiled `Playground/MewtwoMegaEvo` binary as a
-subprocess. **No C++ changes are required.**
+It replaces an earlier Wt-based C++ GUI (now removed). It is fully decoupled from the C++
+code: it drives the already-compiled `Playground/MewtwoMegaEvo` binary as a subprocess.
+**No C++ changes are required.**
 
 ## Stack
 
