@@ -300,4 +300,47 @@ table.matrix td { border: 1px solid var(--border); padding: 3px 8px; text-align:
 
   /* Bigger tap targets */
   button { padding: 9px 14px; }
+
+  /* Info bubbles: anchor to the icon's right edge and cap to the viewport so
+     they never push the layout wide on a phone. */
+  .infotip .bubble { left: auto; right: 0; transform: none; max-width: 78vw; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Inline info tooltips (ⓘ) and the Help / Getting Started view        */
+/* ------------------------------------------------------------------ */
+.infotip { position: relative; display: inline-flex; vertical-align: middle;
+  margin-left: 5px; }
+.infotip .i {
+  appearance: none; -webkit-appearance: none;
+  box-sizing: border-box; padding: 0; margin: 0;
+  cursor: pointer;
+  width: 15px; height: 15px; line-height: 13px; text-align: center;
+  font-size: 11px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;
+  border-radius: 50%; border: 1px solid var(--border);
+  background: var(--chip); color: var(--muted);
+  -webkit-user-select: none; user-select: none;
+}
+.infotip .i:hover { color: var(--text); border-color: var(--accent); }
+.infotip.static .i { cursor: default; }
+.infotip .bubble {
+  display: none; position: absolute; z-index: 60;
+  top: 21px; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 260px;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; font-size: 12px; font-weight: 400; line-height: 1.45;
+  text-align: left; white-space: normal;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+}
+.infotip:hover .bubble, .infotip .bubble.pinned { display: block; }
+/* keep tooltips readable inside compact card field labels */
+label .infotip .i { font-weight: 400; }
+
+.help-view .help-card { line-height: 1.55; }
+.help-view .help-card h2 { margin: 0 0 6px; }
+.help-view .help-card p { margin: 8px 0; }
+.help-steps, .help-list { margin: 8px 0 0; padding-left: 20px; }
+.help-steps li, .help-list li { margin: 6px 0; }
+.help-view .chip { vertical-align: middle; }
+.help-view .infotip.static { margin: 0 1px; }

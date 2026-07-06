@@ -179,6 +179,87 @@ NOISE_MODE_EXTRA: Dict[str, List[Dict[str, Any]]] = {
 }
 
 
+# --------------------------------------------------------------------------
+# Field help text (rendered as ⓘ tooltips in the UI). Keyed by JSON field name
+# and injected into every schema list below, so the forms stay self-documenting
+# without duplicating the text at each definition site.
+# --------------------------------------------------------------------------
+FIELD_HELP: Dict[str, str] = {
+    # sim_config
+    "task_name": "Name for this run. The output folder is <task_name><timestamp>.",
+    "log_level": "Console verbosity (0–5). Keep it ≥1 so the 'Solver job done [N/M]' "
+                 "progress lines print — the progress bar depends on them. Demos use 4.",
+    "job_slicing_strategy": "How swept values are spaced when a run is split into job "
+                            "groups: linspace (even), logspace, or inv_logspace.",
+    "record_propagator": "Also save the evolution operator U for each parameter point.",
+    "record_all_meas": "Record observables at every time step, not just at 'M' markers "
+                       "(much larger output).",
+    "record_density_mat": "Save the full density matrix ρ(t). Large — usually off.",
+    "reset_rotating_frame": "Rotate back out of the rotating frame before measuring. "
+                            "Uses a matrix exponential (LAPACK).",
+    "enable_param_parallel_mode": "Parallelise across swept parameters (one thread per "
+        "parameter) instead of across repeats. Best when you sweep many parameters. Needs "
+        "a reentrant BLAS (MKL / AMD AOCL / Apple Accelerate); plain OpenBLAS livelocks here.",
+    "system_dim": "Hilbert-space dimension: 2 for one qubit, 4 for two qubits, …",
+    "observables": "Operators measured at each 'M' marker — built-in symbols (e.g. Z, IZ) "
+                   "or a matrix file name.",
+    "init_states": "Initial density matrices ρ₀ — built-in symbols (e.g. Z) or a file name.",
+    "repeat": "Number of noise realisations / repeats averaged per parameter point.",
+    "step_size": "Time-integration step Δt, in seconds.",
+    "sequence": "Pulse-sequence string: gate tags joined by '-', 'M' = measurement marker, "
+                "[ … ]^n repeats a block, $X is a sequence alias. E.g. [Xpi(T/20)-M]^80.",
+    # sweep rows
+    "class": "What is swept — Sequence (a list of sequence strings), Gate (a gate "
+             "property), or Hamiltonian (a Hamiltonian property).",
+    "tag": "Tag of the Gate/Hamiltonian being swept (not used for Sequence).",
+    # gate
+    "hamiltonians": "Which of your defined Hamiltonians this gate switches on.",
+    "pulse_width": "How long the gate is active, in seconds.",
+    "shift_time": "Time offset applied to the gate's window, in seconds.",
+    "ext_shaped_sig_path": "Envelope/waveform file used by a 'shaped' gate.",
+    # hamiltonian
+    "enable": "Include this Hamiltonian in the simulation. Disabled ones are greyed out "
+              "and skipped.",
+    "amplitude": "Overall scaling coefficient for this term.",
+    "h_pauli_mat": "The operator matrix — a built-in symbol (X, Z, IZ, J, …) or a matrix "
+                   "file name.",
+    "waveform_path": "Optional external waveform/noise file that drives this term. For "
+                     "noise, '#' is the channel placeholder.",
+    "rising_time": "Envelope ramp-up time, in seconds.",
+    "falling_time": "Envelope ramp-down time, in seconds.",
+    "freq": "Drive frequency, in Hz.",
+    "phase": "Drive phase, in radians.",
+    "chirp_rate": "Linear frequency-sweep rate, in Hz/s.",
+    "wave_forward_propagate": "Propagate the RF waveform forward in time.",
+    "RF_freq_mat": "Matrix of RF frequencies — a file name or symbol.",
+    "lag_time": "Time lag applied to the noise waveform, in seconds.",
+    "rand_shift": "Randomly time-shift the noise waveform on each repeat.",
+    "rand_channel": "Pick a random noise channel on each repeat.",
+    "num_available_channels": "Total number of channels present in the noise data set.",
+    # noise_config
+    "mode": "colored = 1/f^alpha noise; arb = arbitrary spectrum from an expression.",
+    "channels": "Number of independent noise channels to generate.",
+    "start_idx": "Index of the first channel written (for appending to a group).",
+    "time_step": "Sample spacing of the generated noise, in seconds.",
+    "length": "Number of samples per channel.",
+    "alpha": "1/f exponent for colored noise (1 ≈ pink, 2 ≈ brown).",
+}
+
+
+def _inject_help(fields: List[Dict[str, Any]]) -> None:
+    for f in fields:
+        if "help" not in f and f["name"] in FIELD_HELP:
+            f["help"] = FIELD_HELP[f["name"]]
+
+
+for _flist in (SIM_FIELDS, SWEEP_FIELDS, GATE_FIELDS, NOISE_FIELDS):
+    _inject_help(_flist)
+for _tfields in HAMILTONIAN_TYPES.values():
+    _inject_help(_tfields)
+for _efields in NOISE_MODE_EXTRA.values():
+    _inject_help(_efields)
+
+
 def get_schema() -> Dict[str, Any]:
     """JSON-serializable schema for the frontend."""
     return {

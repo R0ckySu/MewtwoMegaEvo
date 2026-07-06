@@ -16,7 +16,8 @@ const FieldInput = {
   },
   template: `
   <div class="field">
-    <label>{{ field.label }}<span v-if="field.optional" class="muted"> (opt)</span></label>
+    <label>{{ field.label }}<span v-if="field.optional" class="muted"> (opt)</span><info-tip
+      v-if="field.help" :text="field.help"></info-tip></label>
 
     <input v-if="field.type==='bool'" type="checkbox"
            :checked="!!modelValue" @change="emit($event.target.checked)"
@@ -438,7 +439,19 @@ const QueuePanel = {
   <p v-else class="muted">Loading queue…</p>`
 };
 
-createApp({
+// ---- Inline info tooltip: hover on desktop, tap-to-pin on touch -----------
+const InfoTip = {
+  props: ['text'],
+  data() { return { pinned: false }; },
+  template: `
+  <span class="infotip">
+    <button type="button" class="i" @click.stop="pinned=!pinned"
+      :aria-label="text" title="">i</button>
+    <span class="bubble" :class="{pinned}" @click.stop>{{ text }}</span>
+  </span>`
+};
+
+const app = createApp({
   components: { FieldInput, SymbolList, PlotPanel, SystemDashboard, QueuePanel },
   data() {
     return {
@@ -922,6 +935,8 @@ createApp({
           @click="showProjects">Projects</button>
         <button class="ghost" :class="{active: view==='noise'}"
           @click="showNoise">Noise</button>
+        <button class="ghost" :class="{active: view==='help'}"
+          @click="view='help'">Help</button>
       </div>
       <div class="row" v-show="view==='workspace'">
         <select :value="loadDemoSel" @change="loadDemoSel=$event.target.value; loadDemo()"
@@ -939,6 +954,135 @@ createApp({
     <div class="tabs" v-if="view==='workspace'">
       <button v-for="t in ['sim','gates','hamiltonians','files','run']" :key="t"
         :class="{active: tab===t}" @click="tab=t">{{ t }}</button>
+    </div>
+
+    <!-- HELP / GETTING STARTED -->
+    <div class="wrap help-view" v-if="view==='help'">
+      <div class="card help-card">
+        <h2>Getting started</h2>
+        <p>MewtwoMegaEvo simulates the time evolution of a small quantum system under a
+          programmable pulse sequence. You describe <em>what</em> to simulate in three
+          configs — <strong>Sim</strong>, <strong>Gates</strong>, and
+          <strong>Hamiltonians</strong> — plus the matrix/vector <strong>Files</strong> they
+          reference, then run it and plot the result. Everything below has a matching
+          <span class="infotip static"><span class="i">i</span></span> tooltip on the form,
+          so you can also learn as you go.</p>
+        <ol class="help-steps">
+          <li><strong>Load a demo.</strong> Top bar → <em>Load demo…</em> picks a ready-made
+            template (e.g. <span class="mono">RabiChevron</span>, <span class="mono">CNOT</span>)
+            with all its files. Legacy demos are auto-upgraded on load.</li>
+          <li><strong>Sim tab.</strong> Set the system dimension, time step, repeats, the
+            observables/initial states, and the <em>Sequence</em>. Add
+            <em>Sweep parameters</em> if you want a curve or map.</li>
+          <li><strong>Hamiltonians tab.</strong> Define the physical terms of H. The
+            <em>type</em> dropdown reveals that type's fields.</li>
+          <li><strong>Gates tab.</strong> Group Hamiltonians into named gates and give them a
+            timing; reference the gate tags from the Sequence.</li>
+          <li><strong>Files tab.</strong> Check the referenced matrices/vectors exist
+            (<span class="chip ref">ref</span>) and none are
+            <span class="chip missing">missing</span>.</li>
+          <li><strong>Run tab.</strong> <em>Save all</em> → <em>Launch</em>. Watch the progress
+            bar; the plot and a zip download appear when it finishes.</li>
+        </ol>
+      </div>
+
+      <div class="card help-card">
+        <h2>How the pieces fit together</h2>
+        <ul class="help-list">
+          <li><strong>Hamiltonians</strong> are the physical terms (a static coupling, a
+            microwave drive, an AWG waveform, a noise channel). Each has a <em>tag</em>.</li>
+          <li><strong>Gates</strong> switch one or more Hamiltonians on for a window of time.
+            Each gate has a <em>tag</em> too.</li>
+          <li>The <strong>Sequence</strong> string lays gates out on a timeline and marks where
+            to measure.</li>
+          <li><strong>Files</strong> supply the numbers: operator matrices
+            (<span class="mono">h_pauli_mat</span>), sweep value vectors, shaped-pulse
+            envelopes, etc. Built-in symbols like <span class="mono">X</span>,
+            <span class="mono">Z</span>, <span class="mono">IZ</span>,
+            <span class="mono">J</span> don't need a file.</li>
+        </ul>
+      </div>
+
+      <div class="card help-card">
+        <h2>Sequence syntax</h2>
+        <ul class="help-list">
+          <li><span class="mono">A-B-M</span> — run gate <span class="mono">A</span>, then
+            <span class="mono">B</span>, then measure. <span class="mono">M</span> is a
+            measurement marker (where observables are recorded).</li>
+          <li><span class="mono">[ … ]^n</span> — repeat a block n times, e.g.
+            <span class="mono">[Xpi(T/20)-M]^80</span>.</li>
+          <li><span class="mono">$X</span> — a sequence alias (a named sub-sequence).</li>
+          <li>Gate names must match a <em>tag</em> you defined on the Gates tab.</li>
+        </ul>
+      </div>
+
+      <div class="card help-card">
+        <h2>Hamiltonian types</h2>
+        <ul class="help-list">
+          <li><strong>static</strong> — a constant term (e.g. a static Z or exchange coupling).</li>
+          <li><strong>static_RF</strong> — static term evaluated in an RF/rotating frame
+            (needs an RF-frequency matrix).</li>
+          <li><strong>mw</strong> — a microwave drive with envelope (rise/fall), frequency,
+            phase and chirp.</li>
+          <li><strong>mw_RF</strong> — a microwave drive in the rotating frame.</li>
+          <li><strong>awg</strong> — an arbitrary-waveform drive from a waveform file.</li>
+          <li><strong>noise</strong> — a stochastic term driven by generated noise data
+            (see the Noise view); <span class="mono">#</span> in its waveform path is the
+            channel placeholder.</li>
+        </ul>
+        <p class="muted">Gate types: <strong>switch</strong> (on during its window),
+          <strong>shaped</strong> (uses an external envelope file), <strong>sticky</strong>
+          (stays applied).</p>
+      </div>
+
+      <div class="card help-card">
+        <h2>Sweeps, parallelism &amp; plots</h2>
+        <ul class="help-list">
+          <li><strong>Sweep parameters</strong> turn one point into a curve: each row sweeps a
+            property over the values in a file. Several rows mesh into an N-D grid.</li>
+          <li><strong>Param-parallel mode</strong> (Sim → Recording &amp; mode) parallelises
+            across swept parameters — fastest when you sweep many values. It needs a reentrant
+            BLAS (Intel MKL, AMD AOCL, or Apple Accelerate); plain OpenBLAS stalls under it.</li>
+          <li><strong>Plots</strong> appear on the Run tab when a run finishes, and under
+            Projects → Plot. Choose a line or heatmap, pick the X/Y axes, and use sliders to
+            slice extra dimensions. <em>Save plot</em> writes a PNG into the run's
+            <span class="mono">plots/</span> folder.</li>
+        </ul>
+      </div>
+
+      <div class="card help-card">
+        <h2>Noise, Projects &amp; sharing</h2>
+        <ul class="help-list">
+          <li><strong>Noise</strong> view generates and browses noise data via
+            <span class="mono">NoiseGen</span>. It's <em>shared by all users</em>. Click a
+            group's name to copy its <span class="mono">waveform_path</span> (with
+            <span class="mono">#</span> placeholder) for a noise Hamiltonian.</li>
+          <li><strong>Projects</strong> lists your past runs: plot, download a zip, load its
+            config back into the editor, or delete it.</li>
+          <li>Each account gets an isolated data sandbox; use a second browser / private window
+            to try two accounts on one machine.</li>
+        </ul>
+      </div>
+
+      <div class="card help-card">
+        <h2>Troubleshooting</h2>
+        <ul class="help-list">
+          <li><strong>Progress bar doesn't move / no plot:</strong> ensure
+            <span class="mono">log_level</span> ≥ 1 (demos use 4), and that referenced files
+            aren't <span class="chip missing">missing</span> on the Files tab.</li>
+          <li><strong>"is null" / validation error on run:</strong> click
+            <em>Migrate legacy configs</em> (Sim tab) to fill fields the current binary
+            requires.</li>
+          <li><strong>Param-parallel run hangs on a big AMD box:</strong> rebuild with the AOCL
+            backend (<span class="mono">./install.sh</span> auto-selects it on AMD).</li>
+          <li><strong>Noise Hamiltonian blocked:</strong> its
+            <span class="mono">NoiseData/</span> is absent — generate it in the Noise view or
+            disable that Hamiltonian.</li>
+        </ul>
+        <p class="muted">Every form field and section has an
+          <span class="infotip static"><span class="i">i</span></span> icon — hover (desktop)
+          or tap (mobile) for a focused explanation.</p>
+      </div>
     </div>
 
     <!-- PROJECTS PORTAL -->
@@ -1058,7 +1202,7 @@ createApp({
       </div>
     </div>
 
-    <div class="wrap" v-else>
+    <div class="wrap" v-else-if="view==='workspace'">
       <template v-if="sim && gate && ham">
         <!-- migration warnings banner -->
         <div v-if="migrationReport && migrationReport.warnings && migrationReport.warnings.length"
@@ -1079,35 +1223,41 @@ createApp({
                 Migrate legacy configs</button>
             </div>
 
-            <h3>General</h3>
+            <h3>General<info-tip text="Core run settings: what to simulate, how finely, and what to record."></info-tip></h3>
             <div class="grid">
               <field-input v-for="f in simScalarFields" :key="f.name"
                 :field="f" v-model="sim[f.name]" :on-peek="peekFile"></field-input>
             </div>
 
-            <h3 style="margin-top:16px">Recording &amp; mode</h3>
+            <h3 style="margin-top:16px">Recording &amp; mode<info-tip
+              text="Toggle what data is saved and how the run is parallelised."></info-tip></h3>
             <div class="checks">
               <label class="check" v-for="f in simBoolFields" :key="f.name">
                 <input type="checkbox" :checked="!!sim[f.name]"
-                  @change="sim[f.name]=$event.target.checked"> {{ f.label }}
+                  @change="sim[f.name]=$event.target.checked"> {{ f.label }}<info-tip
+                  v-if="f.help" :text="f.help"></info-tip>
               </label>
             </div>
 
-            <h3 style="margin-top:16px">States &amp; observables</h3>
+            <h3 style="margin-top:16px">States &amp; observables<info-tip
+              text="ρ₀ (initial states) and the operators measured at each 'M' marker. Entries are matrix symbols (e.g. Z, IZ) or file names — click a chip to preview it."></info-tip></h3>
             <div class="grid">
               <div class="field">
-                <label>Observables <span class="muted">(operator symbols)</span></label>
+                <label>Observables <span class="muted">(operator symbols)</span><info-tip
+                  text="Operators measured at each 'M' marker — built-in symbols (Z, IZ, …) or a matrix file name."></info-tip></label>
                 <symbol-list v-model="sim.observables" placeholder="add symbol…"
                   :on-peek="peekFile"></symbol-list>
               </div>
               <div class="field">
-                <label>Initial states <span class="muted">(density-matrix symbols)</span></label>
+                <label>Initial states <span class="muted">(density-matrix symbols)</span><info-tip
+                  text="Initial density matrices ρ₀ — built-in symbols (Z, …) or a matrix file name."></info-tip></label>
                 <symbol-list v-model="sim.init_states" placeholder="add symbol…"
                   :on-peek="peekFile"></symbol-list>
               </div>
             </div>
 
-            <h3 style="margin-top:16px">Sequence</h3>
+            <h3 style="margin-top:16px">Sequence<info-tip
+              text="The pulse timeline. Join gate tags with '-', use 'M' for a measurement marker, [ … ]^n to repeat a block, and $X for a sequence alias. E.g. [Xpi(T/20)-M]^80."></info-tip></h3>
             <div class="field">
               <input class="mono" v-model="sim.sequence"
                 placeholder="e.g. $S-M   or   [X]^2-F-M">
@@ -1116,7 +1266,8 @@ createApp({
 
           <div class="card">
             <div class="row" style="justify-content:space-between">
-              <h2 style="margin:0">Sweep parameters</h2>
+              <h2 style="margin:0">Sweep parameters<info-tip
+                text="Optional. Each row sweeps one property over the values in a file, so the run produces a curve/map instead of a single point. Multiple rows are meshed into an N-D grid."></info-tip></h2>
               <button @click="addSweep">+ Add sweep</button>
             </div>
             <p class="muted">Each entry sweeps a property over the values in a file. The
@@ -1164,7 +1315,8 @@ createApp({
         <!-- GATES -->
         <div v-show="tab==='gates'">
           <div class="row" style="justify-content:space-between">
-            <h2 style="margin:0">Gates</h2>
+            <h2 style="margin:0">Gates<info-tip
+              text="A gate switches one or more Hamiltonians on for a window of time. Give it a tag, then reference that tag in the Sequence. Cards are colour-coded by type; click a card to edit."></info-tip></h2>
             <button @click="addGate">+ Add gate</button>
           </div>
           <div class="cardgrid">
@@ -1213,7 +1365,8 @@ createApp({
         <!-- HAMILTONIANS -->
         <div v-show="tab==='hamiltonians'">
           <div class="row" style="justify-content:space-between">
-            <h2 style="margin:0">Hamiltonians</h2>
+            <h2 style="margin:0">Hamiltonians<info-tip
+              text="The physical terms of H. Pick a type (static / static_RF / mw / mw_RF / awg / noise) to reveal that type's fields. Gates reference these by tag. Disabled ones are greyed out."></info-tip></h2>
             <button @click="addHam">+ Add Hamiltonian</button>
           </div>
           <div class="cardgrid">
@@ -1257,7 +1410,8 @@ createApp({
 
         <!-- FILES -->
         <div v-show="tab==='files'">
-          <h2>Matrix / vector / parameter files</h2>
+          <h2>Matrix / vector / parameter files<info-tip
+            text="The data your configs point at: operator matrices (comma-separated rows), vectors/parameter files (one value per line), and shaped-signal files. 'ref' = referenced by a config; 'missing' = referenced but absent."></info-tip></h2>
           <div class="files-layout">
             <div>
               <div class="row" style="margin-bottom:8px">
@@ -1307,13 +1461,15 @@ createApp({
         <!-- RUN -->
         <div v-show="tab==='run'">
           <div class="card" v-if="tab==='run'">
-            <h2>Host resources</h2>
+            <h2>Host resources<info-tip
+              text="Live CPU-average and memory gauges plus a per-core bar grid, polled while you're on this tab. Handy to see param-parallel mode using all cores."></info-tip></h2>
             <system-dashboard :api="apiFn"></system-dashboard>
           </div>
 
           <div class="card" v-if="tab==='run'">
             <div class="row" style="justify-content:space-between">
-              <h2 style="margin:0">Job queue</h2>
+              <h2 style="margin:0">Job queue<info-tip
+                text="Only one simulation runs at a time across the whole server; others queue (FIFO). Your job snapshots its config at submit time, so later edits don't affect it. ETA sharpens after the first run completes."></info-tip></h2>
               <span class="muted" style="font-size:12px">one job runs at a time, server-wide</span>
             </div>
             <queue-panel :api="apiFn" :me="user"></queue-panel>
@@ -1321,7 +1477,8 @@ createApp({
 
           <div class="card">
             <div class="row" style="justify-content:space-between">
-              <h2 style="margin:0">Run simulation</h2>
+              <h2 style="margin:0">Run simulation<info-tip
+                text="'Save all' writes every config, then 'Launch' enqueues the run. Watch the progress bar; when it finishes, the result appears below with a plot and a zip download."></info-tip></h2>
               <div class="row">
                 <button class="ghost" @click="saveAll()">Save all</button>
                 <button @click="startRun"
@@ -1408,6 +1565,7 @@ createApp({
           </table>
           <pre v-else class="mono">{{ peek.content }}</pre>
           <p v-if="peek.truncated" class="muted">Preview truncated (large file).</p>
+      <!-- (info tooltips registered globally as <info-tip>) -->
         </div>
       </div>
     </div>
@@ -1425,4 +1583,6 @@ createApp({
 
     <div v-if="toast" class="toast" :class="{err: toastErr}">{{ toast }}</div>
   </div>`
-}).mount('#app');
+});
+app.component('info-tip', InfoTip);
+app.mount('#app');
