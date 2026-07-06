@@ -7,11 +7,16 @@
 # Armadillo BLAS backend is chosen automatically:
 #   macOS         -> Accelerate (built in)
 #   Intel x86_64  -> Intel oneMKL (OneAPI)      [override: --blas=openblas]
-#   AMD  x86_64   -> OpenBLAS (via conan)
+#   AMD  x86_64   -> AMD AOCL (BLIS + libFLAME)  [override: --blas=openblas]
+#
+# Why not plain OpenBLAS on AMD: OpenBLAS serialises concurrent BLAS calls on a
+# global allocator mutex, which livelocks the param-parallel OpenMP loop on
+# many-core EPYC. AOCL/BLIS uses thread-local scratch and scales; MKL and macOS
+# Accelerate are likewise reentrant.
 #
 # Usage:
 #   ./install.sh [options]
-#     --blas=auto|mkl|openblas|accelerate   backend (default: auto)
+#     --blas=auto|mkl|aocl|openblas|accelerate   backend (default: auto)
 #     --skip-cpp        don't build the C++ binaries
 #     --skip-python     don't set up the Python env
 #     --jobs=N          parallel build jobs (default: all cores)
@@ -30,7 +35,7 @@ ok()   { printf '%s %s\n' "$(c '1;32' ' ok')" "$1"; }
 warn() { printf '%s %s\n' "$(c '1;33' ' !!')" "$1" >&2; }
 die()  { printf '%s %s\n' "$(c '1;31' 'err')" "$1" >&2; exit 1; }
 
-usage() { sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
+usage() { sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
 
 for arg in "$@"; do
   case "$arg" in
@@ -81,7 +86,7 @@ if [ "$BLAS" = "auto" ]; then
   case "$CPU_VENDOR" in
     apple)  BLAS="accelerate";;
     intel)  [ "$OS" = "Darwin" ] && BLAS="accelerate" || BLAS="mkl";;
-    amd)    BLAS="openblas";;
+    amd)    [ "$OS" = "Darwin" ] && BLAS="accelerate" || BLAS="aocl";;
     *)      BLAS=$([ "$OS" = "Darwin" ] && echo accelerate || echo openblas);;
   esac
 fi
@@ -89,8 +94,11 @@ log "Armadillo BLAS backend: $(c '1;36' "$BLAS")"
 
 # ----------------------------------------------------------------------------
 # Package-manager helpers
+# can_sudo: passwordless sudo available (non-interactive)?
+can_sudo() { [ "$(id -u)" = 0 ] || sudo -n true 2>/dev/null; }
+SUDO=""; can_sudo && [ "$(id -u)" != 0 ] && SUDO="sudo"
 brew_install() { for p in "$@"; do brew list "$p" >/dev/null 2>&1 || brew install "$p"; done; }
-apt_install()  { sudo apt-get install -y "$@"; }
+apt_install()  { $SUDO apt-get install -y "$@"; }
 
 ensure_pkg_manager() {
   if [ "$PKG" = "brew" ]; then
@@ -103,19 +111,27 @@ ensure_pkg_manager() {
     }
     # Command Line Tools provide clang/make
     have clang || xcode-select --install 2>/dev/null || true
-  elif [ "$PKG" = "apt" ]; then
-    log "Updating apt package lists…"; sudo apt-get update -y
-  else
+  elif [ "$PKG" != "apt" ] && [ "$OS" = "Linux" ]; then
+    warn "No apt found; assuming build tools (cmake/gcc/git) are already installed."
+  elif [ "$PKG" != "apt" ]; then
     die "No supported package manager found (need Homebrew on macOS or apt on Linux)."
   fi
 }
 
+# True if all core build tools are already present (managed HPC, no sudo needed).
+have_build_tools() { have cmake && { have gcc || have clang || have g++; } && have git; }
+
 install_build_prereqs() {
-  log "Installing build prerequisites (compiler, cmake, git)…"
+  if have_build_tools; then ok "build tools already present (cmake, compiler, git)"; return; fi
   if [ "$PKG" = "brew" ]; then
+    log "Installing build prerequisites (compiler, cmake, git)…"
     brew_install cmake git pkg-config
-  else
+  elif [ "$PKG" = "apt" ] && can_sudo; then
+    log "Installing build prerequisites (compiler, cmake, git)…"
+    $SUDO apt-get update -y
     apt_install build-essential cmake git curl pkg-config ca-certificates
+  else
+    die "Missing build tools (need cmake + a C++ compiler + git) and no way to install them (no sudo/apt). Please install them and re-run, e.g.: apt-get install build-essential cmake git"
   fi
   ok "build tools ready"
 }
@@ -150,22 +166,57 @@ setup_mkl() {
   if [ -f "$setvars" ]; then
     MKL_ENV="$setvars"; return
   fi
-  if [ "$PKG" != "apt" ]; then
-    warn "MKL requested but auto-install only supported via apt; falling back to OpenBLAS."
-    BLAS="openblas"; return
+  if [ "$PKG" != "apt" ] || ! can_sudo; then
+    warn "MKL auto-install needs apt + sudo; falling back to AOCL/OpenBLAS."
+    [ "$CPU_VENDOR" = "amd" ] && BLAS="aocl" || BLAS="openblas"; return
   fi
   if ! confirm "Install Intel oneMKL (OneAPI) via apt? (large download)"; then
     warn "Skipping MKL; using OpenBLAS instead."; BLAS="openblas"; return
   fi
   log "Adding Intel OneAPI apt repository…"
   wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
-    | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg >/dev/null
+    | gpg --dearmor | $SUDO tee /usr/share/keyrings/oneapi-archive-keyring.gpg >/dev/null
   echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
-    | sudo tee /etc/apt/sources.list.d/oneAPI.list >/dev/null
-  sudo apt-get update -y
+    | $SUDO tee /etc/apt/sources.list.d/oneAPI.list >/dev/null
+  $SUDO apt-get update -y
   apt_install intel-oneapi-mkl intel-oneapi-mkl-devel
   MKL_ENV=/opt/intel/oneapi/setvars.sh
   [ -f "$MKL_ENV" ] || { warn "MKL setvars not found after install; using OpenBLAS."; BLAS="openblas"; }
+}
+
+# ----------------------------------------------------------------------------
+# AMD AOCL (BLIS + libFLAME) on Linux — no root needed, extracted into the repo.
+# We statically link the single-threaded BLIS + libFLAME, so AOCL_ROOT is only
+# needed at build time (the resulting binary is self-contained).
+AOCL_VER="5.0.0"
+AOCL_URL="https://download.amd.com/developer/eula/aocl/aocl-5-0/aocl-linux-gcc-${AOCL_VER}.tar.gz"
+setup_aocl() {
+  local root="$REPO_DIR/third_party/aocl"
+  if [ -f "$root/amd-blis/lib/LP64/libblis.a" ] && [ -f "$root/amd-libflame/lib/LP64/libflame.a" ]; then
+    export AOCL_ROOT="$root"; ok "AOCL already present at $root"; return
+  fi
+  if [ "$OS" != "Linux" ]; then
+    warn "AOCL is Linux-only; falling back to OpenBLAS."; BLAS="openblas"; return
+  fi
+  if ! confirm "Download AMD AOCL ${AOCL_VER} (~116 MB, no root needed)?"; then
+    warn "Skipping AOCL; using OpenBLAS instead."; BLAS="openblas"; return
+  fi
+  local tmp; tmp="$(mktemp -d)"
+  log "Downloading AMD AOCL ${AOCL_VER}…"
+  if ! curl -fSL --max-time 600 -o "$tmp/aocl.tar.gz" "$AOCL_URL"; then
+    warn "AOCL download failed; falling back to OpenBLAS."; BLAS="openblas"; rm -rf "$tmp"; return
+  fi
+  log "Extracting BLIS + libFLAME…"
+  mkdir -p "$root"; tar xzf "$tmp/aocl.tar.gz" -C "$tmp"
+  local inner; inner="$(find "$tmp" -maxdepth 1 -type d -name 'aocl-linux-gcc-*' | head -1)"
+  tar xzf "$inner"/aocl-blis-linux-gcc-*.tar.gz     -C "$root"
+  tar xzf "$inner"/aocl-libflame-linux-gcc-*.tar.gz -C "$root"
+  rm -rf "$tmp"
+  if [ -f "$root/amd-blis/lib/LP64/libblis.a" ]; then
+    export AOCL_ROOT="$root"; ok "AOCL ready at $root"
+  else
+    warn "AOCL extraction incomplete; falling back to OpenBLAS."; BLAS="openblas"
+  fi
 }
 
 # ----------------------------------------------------------------------------
@@ -175,6 +226,10 @@ build_cpp() {
   export MEWTWO_BLAS="$BLAS"
   if [ "$BLAS" = "mkl" ] && [ -n "$MKL_ENV" ]; then
     log "Sourcing $MKL_ENV"; set +u; source "$MKL_ENV"; set -u
+  fi
+  if [ "$BLAS" = "aocl" ]; then
+    [ -n "${AOCL_ROOT:-}" ] || die "AOCL selected but AOCL_ROOT unset (setup_aocl did not run)."
+    log "Using AOCL at $AOCL_ROOT"
   fi
   local jobs="${JOBS:-$( (nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) )}"
 
@@ -204,7 +259,8 @@ setup_python() {
 ensure_pkg_manager
 [ "$SKIP_CPP" = 0 ] && { install_build_prereqs; install_conan; }
 install_uv
-[ "$BLAS" = "mkl" ] && setup_mkl
+[ "$SKIP_CPP" = 0 ] && [ "$BLAS" = "mkl" ]  && setup_mkl
+[ "$SKIP_CPP" = 0 ] && [ "$BLAS" = "aocl" ] && setup_aocl
 [ "$SKIP_CPP" = 0 ] && build_cpp || warn "Skipping C++ build (--skip-cpp)."
 [ "$SKIP_PY"  = 0 ] && setup_python || warn "Skipping Python setup (--skip-python)."
 

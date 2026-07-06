@@ -64,3 +64,8 @@ dist/
 *.whl
 # Server-specific config (use server_config.example.yaml as a template)
 server_config.yaml
+
+# AOCL (downloaded by install.sh on AMD)
+third_party/aocl/
+build_aocl/
+build_ppfix/

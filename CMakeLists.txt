@@ -28,6 +28,21 @@ if(DEFINED ENV{MEWTWO_BLAS} AND "$ENV{MEWTWO_BLAS}" STREQUAL "mkl" AND DEFINED E
     add_compile_definitions(ARMA_USE_BLAS ARMA_USE_LAPACK)
 endif()
 
+# Optional AMD AOCL backend for Armadillo (set MEWTWO_BLAS=aocl with AOCL_ROOT
+# pointing at the extracted AOCL tree, i.e. $AOCL_ROOT/amd-blis + amd-libflame).
+# We statically link the single-threaded BLIS (no internal thread pool, no global
+# allocator lock) + libFLAME so concurrent BLAS calls from the param-parallel
+# OpenMP loop scale (unlike OpenBLAS, whose blas_memory_alloc mutex serialises
+# them). --start-group resolves the libFLAME<->BLIS mutual references.
+if(DEFINED ENV{MEWTWO_BLAS} AND "$ENV{MEWTWO_BLAS}" STREQUAL "aocl" AND DEFINED ENV{AOCL_ROOT})
+    message(STATUS "Armadillo backend: AMD AOCL BLIS+libFLAME ($ENV{AOCL_ROOT})")
+    add_compile_definitions(ARMA_USE_BLAS ARMA_USE_LAPACK)
+    link_libraries(-Wl,--start-group
+        $ENV{AOCL_ROOT}/amd-libflame/lib/LP64/libflame.a
+        $ENV{AOCL_ROOT}/amd-blis/lib/LP64/libblis.a
+        -Wl,--end-group m pthread)
+endif()
+
 add_executable(MewtwoMegaEvo
                 main.cpp command_arg_parser.h)
 

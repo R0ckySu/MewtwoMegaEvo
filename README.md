@@ -11,7 +11,7 @@ In a nutshell, the core functionality of this software is to solve the time-depe
 
 One script builds the C++ simulator **and** sets up the Python web-app env, on
 **macOS, Ubuntu, or WSL**, picking the right Armadillo BLAS backend automatically
-(Accelerate on macOS, Intel oneMKL on Intel, OpenBLAS on AMD):
+(Accelerate on macOS, Intel oneMKL on Intel, **AMD AOCL (BLIS + libFLAME) on AMD**):
 
 ```bash
 ./install.sh
@@ -21,7 +21,7 @@ It installs any missing prerequisites (Homebrew/apt packages, `uv`, `conan`), ru
 `conan install` + `cmake`, and `uv sync`. Useful options:
 
 ```bash
-./install.sh --blas=openblas   # force a backend: mkl | openblas | accelerate
+./install.sh --blas=openblas   # force a backend: mkl | aocl | openblas | accelerate
 ./install.sh --skip-cpp        # only set up the Python env
 ./install.sh --skip-python     # only build the C++ binaries
 ./install.sh --jobs=8 -y       # parallelism + non-interactive
@@ -29,6 +29,14 @@ It installs any missing prerequisites (Homebrew/apt packages, `uv`, `conan`), ru
 
 On an Intel Linux box, `--blas=mkl` (the auto default there) will offer to install
 Intel oneMKL via the OneAPI apt repo; decline and it falls back to OpenBLAS.
+
+On an AMD Linux box, `--blas=aocl` (the auto default) downloads AMD AOCL and
+statically links single-threaded BLIS + libFLAME. **This matters for
+`enable_param_parallel_mode`:** plain OpenBLAS serialises concurrent BLAS calls on
+a global allocator mutex, so the param-parallel OpenMP loop livelocks on many-core
+EPYC/Threadripper. BLIS (like MKL and Accelerate) uses thread-local scratch and
+scales. Prefer AOCL on AMD; `--blas=openblas` still works but avoid it with
+param-parallel mode on high-core-count machines.
 
 After it finishes:
 
