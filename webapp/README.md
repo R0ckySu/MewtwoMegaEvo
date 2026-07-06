@@ -28,6 +28,14 @@ code: it drives the already-compiled `Playground/MewtwoMegaEvo` binary as a subp
 
 ## Setup
 
+Easiest is the repo-root installer, which also builds the C++ binaries:
+
+```bash
+./install.sh                 # everything; or `./install.sh --skip-cpp` for just the web env
+```
+
+Or set up only the Python side by hand:
+
 ```bash
 cd /Users/rockysu/CodeRepo/MewtwoMegaEvo.git
 uv sync          # creates ./.venv with the web app AND the mewtwo dataloader (Python 3.10+)

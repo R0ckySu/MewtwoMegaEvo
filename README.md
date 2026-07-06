@@ -7,6 +7,37 @@ In a nutshell, the core functionality of this software is to solve the time-depe
 
 ## 2. Installation
 
+### Quick install (recommended)
+
+One script builds the C++ simulator **and** sets up the Python web-app env, on
+**macOS, Ubuntu, or WSL**, picking the right Armadillo BLAS backend automatically
+(Accelerate on macOS, Intel oneMKL on Intel, OpenBLAS on AMD):
+
+```bash
+./install.sh
+```
+
+It installs any missing prerequisites (Homebrew/apt packages, `uv`, `conan`), runs
+`conan install` + `cmake`, and `uv sync`. Useful options:
+
+```bash
+./install.sh --blas=openblas   # force a backend: mkl | openblas | accelerate
+./install.sh --skip-cpp        # only set up the Python env
+./install.sh --skip-python     # only build the C++ binaries
+./install.sh --jobs=8 -y       # parallelism + non-interactive
+```
+
+On an Intel Linux box, `--blas=mkl` (the auto default there) will offer to install
+Intel oneMKL via the OneAPI apt repo; decline and it falls back to OpenBLAS.
+
+After it finishes:
+
+```bash
+uv run uvicorn webapp.main:app --host 0.0.0.0 --port 8000
+```
+
+The manual steps below are still available if you prefer to do it by hand.
+
 ### Best performance recommendations
 Mewtwo is a high efficiency simulator and its performance is highly depending on the hardware performance and math libraries.
 All linear algebra calculations are implemented by armadillo, which is an open source linear algebra library. 

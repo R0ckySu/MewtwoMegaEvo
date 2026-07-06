@@ -18,6 +18,16 @@ include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${exprtk_SOURCE_DIR})
 include_directories(${Armadillo_INCLUDE_DIR})
 
+# Optional Intel MKL backend for Armadillo (set MEWTWO_BLAS=mkl with OneAPI
+# sourced, i.e. MKLROOT set). Applies to all targets below (dir-scoped).
+if(DEFINED ENV{MEWTWO_BLAS} AND "$ENV{MEWTWO_BLAS}" STREQUAL "mkl" AND DEFINED ENV{MKLROOT})
+    message(STATUS "Armadillo backend: Intel MKL ($ENV{MKLROOT})")
+    include_directories($ENV{MKLROOT}/include)
+    link_directories($ENV{MKLROOT}/lib $ENV{MKLROOT}/lib/intel64)
+    link_libraries(mkl_rt)
+    add_compile_definitions(ARMA_USE_BLAS ARMA_USE_LAPACK)
+endif()
+
 add_executable(MewtwoMegaEvo
                 main.cpp command_arg_parser.h)
 
