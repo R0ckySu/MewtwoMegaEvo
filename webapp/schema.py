@@ -152,6 +152,10 @@ FILE_REF_FIELDS = {"val_file", "string_file", "ext_shaped_sig_path", "h_pauli_ma
 # Pauli symbol or an absolute/relative path). Only these drive "missing" flags,
 # since h_pauli_mat/RF_freq_mat may legitimately be symbols like "X", "IZ", "J".
 STRICT_FILE_FIELDS = {"val_file", "string_file"}
+# List-valued fields whose entries are matrix/vector symbols that map to files
+# (observable operators, initial density matrices). Flagged "ref" if the file
+# exists, but not "missing" (they may be built-in symbols like "Z").
+FILE_REF_LIST_FIELDS = {"observables", "init_states"}
 
 
 # --------------------------------------------------------------------------

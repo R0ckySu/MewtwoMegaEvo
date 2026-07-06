@@ -505,7 +505,7 @@ createApp({
     },
     async api(path, opts = {}) {
       const o = Object.assign({ headers: {} }, opts);
-      if (o.body !== undefined && typeof o.body !== 'string') {
+      if (o.body !== undefined && typeof o.body !== 'string' && !(o.body instanceof FormData)) {
         o.headers['Content-Type'] = 'application/json';
         o.body = JSON.stringify(o.body);
       }
@@ -721,7 +721,7 @@ createApp({
 
     addGate() { this.gate.gate_defs.push(
       { tag: '', type: 'switch', hamiltonians: [], pulse_width: 0, shift_time: 0,
-        ext_shaped_sig_path: '' }); },
+        ext_shaped_sig_path: '', _expanded: true }); },
     removeGate(i) { this.gate.gate_defs.splice(i, 1); },
 
     hamFields(type) { return (this.schema.hamiltonian_types[type]) || []; },
@@ -754,7 +754,7 @@ createApp({
       const f = {};
       this.hamFields('static').forEach(fd => {
         f[fd.name] = fd.type === 'bool' ? false : (fd.type === 'float' || fd.type === 'int' ? 0 : ''); });
-      f.type = 'static'; f.enable = true;
+      f.type = 'static'; f.enable = true; f._expanded = true;
       this.ham.hamiltonian_prototype_defs.push(f);
     },
     changeHamType(h, type) {
@@ -784,6 +784,19 @@ createApp({
         this.fileDirty = false; this.notify('Saved ' + this.currentFile);
         await this.loadFiles();
       } catch (e) { this.notify(e.detail, true); }
+    },
+    triggerUpload() { this.$refs.uploadInput.click(); },
+    async uploadFiles(ev) {
+      const list = ev.target.files;
+      if (!list || !list.length) return;
+      const fd = new FormData();
+      for (const f of list) fd.append('files', f);
+      try {
+        const res = await this.api('/files/upload', { method: 'POST', body: fd });
+        await this.loadFiles();
+        this.notify('Uploaded ' + res.saved.join(', '));
+      } catch (e) { this.notify(e.detail, true); }
+      ev.target.value = '';  // allow re-uploading the same file
     },
     async newFile() {
       const name = prompt('New file name:');
@@ -1110,28 +1123,26 @@ createApp({
               <strong>value type</strong> sets how the vector is decoded: numerical (val_file)
               or string (string_file). Sequence sweeps are always string; Gate sweeps are always
               numerical; Hamiltonian sweeps may be either.</p>
-            <table class="sweep" v-if="sim.sweep_param_info.length">
-              <thead><tr><th>Class</th><th>Tag</th><th>Property</th>
-                <th>Parameter file</th><th></th></tr></thead>
-              <tbody>
-                <tr v-for="(s,i) in sim.sweep_param_info" :key="i">
-                  <td style="width:120px">
+            <div class="sweep-list" v-if="sim.sweep_param_info.length">
+              <div class="sweep-item" v-for="(s,i) in sim.sweep_param_info" :key="i">
+                <div class="sweep-fields">
+                  <div class="field sw-class"><label>Class</label>
                     <select v-model="s.class" @change="onSweepClass(s)">
                       <option v-for="c in schema.sweep_classes" :key="c" :value="c">{{ c }}</option>
-                    </select>
-                  </td>
-                  <td><input v-model="s.tag" placeholder="tag"></td>
-                  <td><input v-model="s.property" :disabled="s.class==='Sequence'"
-                        :placeholder="s.class==='Sequence' ? 'n/a' : 'e.g. amplitude'"></td>
-                  <td>
-                    <div class="filecell">
-                      <select class="vtype" :value="sweepIsString(s) ? 'string' : 'numerical'"
-                        :disabled="s.class!=='Hamiltonian'"
-                        @change="onSweepVType(s,$event.target.value)"
-                        title="How the file is decoded">
-                        <option value="numerical">num</option>
-                        <option value="string">str</option>
-                      </select>
+                    </select></div>
+                  <div class="field sw-type" v-if="s.class==='Hamiltonian'"><label>Value type</label>
+                    <select :value="sweepIsString(s) ? 'string' : 'numerical'"
+                      @change="onSweepVType(s,$event.target.value)">
+                      <option value="numerical">numerical</option>
+                      <option value="string">string</option>
+                    </select></div>
+                  <div class="field sw-tag"><label>Tag</label>
+                    <input v-model="s.tag" placeholder="tag"></div>
+                  <div class="field sw-prop"><label>Property</label>
+                    <input v-model="s.property" :disabled="s.class==='Sequence'"
+                      :placeholder="s.class==='Sequence' ? 'n/a' : 'e.g. amplitude'"></div>
+                  <div class="field sw-file"><label>Parameter file</label>
+                    <div class="fileinput">
                       <input v-if="sweepIsString(s)" v-model="s.string_file" list="wsFiles"
                         class="mono" placeholder="string file">
                       <input v-else v-model="s.val_file" list="wsFiles" class="mono"
@@ -1140,12 +1151,11 @@ createApp({
                         v-if="sweepIsString(s) ? s.string_file : s.val_file"
                         @click="peekFile(sweepIsString(s) ? s.string_file : s.val_file)"
                         title="Preview file">⤢</button>
-                    </div>
-                  </td>
-                  <td style="width:34px"><button class="danger" @click="removeSweep(i)">×</button></td>
-                </tr>
-              </tbody>
-            </table>
+                    </div></div>
+                </div>
+                <button class="danger sw-remove" @click="removeSweep(i)" title="Remove">×</button>
+              </div>
+            </div>
             <p v-else class="muted">No sweep parameters.</p>
           </div>
           <button @click="saveConfig('sim', sim)">Save sim config</button>
@@ -1157,32 +1167,44 @@ createApp({
             <h2 style="margin:0">Gates</h2>
             <button @click="addGate">+ Add gate</button>
           </div>
-          <div class="masonry">
-            <div class="item masonry-card" v-for="(g,i) in gate.gate_defs" :key="i"
-              :style="cardStyle(g.type)">
-              <div class="item-head">
-                <div class="row">
-                  <span class="type-dot" :style="{background: typeColor(g.type)}"></span>
-                  <strong class="mono">{{ g.tag || '(untitled gate)' }}</strong>
-                  <label>type</label>
-                  <select v-model="g.type">
-                    <option v-for="t in gateTypes" :key="t" :value="t">{{ t }}</option>
-                  </select>
+          <div class="cardgrid">
+            <template v-for="(g,i) in gate.gate_defs" :key="i">
+              <div v-if="!g._expanded" class="item minicard" :style="cardStyle(g.type)"
+                @click="g._expanded=true" title="Click to edit">
+                <span class="chev">▸</span>
+                <span class="type-dot" :style="{background: typeColor(g.type)}"></span>
+                <div class="mini-body">
+                  <strong class="mono">{{ g.tag || '(gate)' }}</strong>
+                  <span class="mini-sub muted">{{ g.type }} · {{ (g.hamiltonians||[]).length }} H</span>
                 </div>
-                <button class="danger" @click="removeGate(i)">Remove</button>
               </div>
-              <div class="cardfields">
-                <template v-for="f in orderedGateFields(g).filter(f=>f.name!=='type')" :key="f.name">
-                  <div v-if="f.type==='hamiltonian_multiselect'" class="field">
-                    <label>{{ f.label }} <span class="muted">(defined Hamiltonians)</span></label>
-                    <symbol-list v-model="g.hamiltonians" list-id="hamTags"
-                      placeholder="add Hamiltonian…"></symbol-list>
+              <div v-else class="item expanded" :style="cardStyle(g.type)">
+                <div class="item-head cardtoggle" @click="g._expanded=false"
+                  title="Click header to collapse">
+                  <div class="row">
+                    <span class="chev">▾</span>
+                    <span class="type-dot" :style="{background: typeColor(g.type)}"></span>
+                    <strong class="mono">{{ g.tag || '(untitled gate)' }}</strong>
+                    <label>type</label>
+                    <select v-model="g.type" @click.stop>
+                      <option v-for="t in gateTypes" :key="t" :value="t">{{ t }}</option>
+                    </select>
                   </div>
-                  <field-input v-else :field="f" v-model="g[f.name]"
-                    :on-peek="peekFile"></field-input>
-                </template>
+                  <button class="danger" @click.stop="removeGate(i)">Remove</button>
+                </div>
+                <div class="cardfields">
+                  <template v-for="f in orderedGateFields(g).filter(f=>f.name!=='type')" :key="f.name">
+                    <div v-if="f.type==='hamiltonian_multiselect'" class="field">
+                      <label>{{ f.label }} <span class="muted">(defined Hamiltonians)</span></label>
+                      <symbol-list v-model="g.hamiltonians" list-id="hamTags"
+                        placeholder="add Hamiltonian…"></symbol-list>
+                    </div>
+                    <field-input v-else :field="f" v-model="g[f.name]"
+                      :on-peek="peekFile"></field-input>
+                  </template>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
           <p v-if="!gate.gate_defs.length" class="muted">No gates defined.</p>
           <button @click="saveConfig('gate', gate)">Save gate config</button>
@@ -1194,26 +1216,40 @@ createApp({
             <h2 style="margin:0">Hamiltonians</h2>
             <button @click="addHam">+ Add Hamiltonian</button>
           </div>
-          <div class="masonry">
-            <div class="item masonry-card" v-for="(h,i) in ham.hamiltonian_prototype_defs" :key="i"
-              :style="cardStyle(h.type)">
-              <div class="item-head">
-                <div class="row">
-                  <span class="type-dot" :style="{background: typeColor(h.type)}"></span>
+          <div class="cardgrid">
+            <template v-for="(h,i) in ham.hamiltonian_prototype_defs" :key="i">
+              <div v-if="!h._expanded" class="item minicard" :class="{disabled: h.enable===false}"
+                :style="cardStyle(h.type)" @click="h._expanded=true" title="Click to edit">
+                <span class="chev">▸</span>
+                <span class="type-dot" :style="{background: typeColor(h.type)}"></span>
+                <div class="mini-body">
                   <strong class="mono">{{ h.tag || '(untitled)' }}</strong>
-                  <label>type</label>
-                  <select :value="h.type" @change="changeHamType(h,$event.target.value)">
-                    <option v-for="t in Object.keys(schema.hamiltonian_types)" :key="t" :value="t">
-                      {{ t }}</option>
-                  </select>
+                  <span class="mini-sub muted">{{ h.type }}<span v-if="h.enable===false"> · off</span></span>
                 </div>
-                <button class="danger" @click="removeHam(i)">Remove</button>
               </div>
-              <div class="cardfields">
-                <field-input v-for="f in orderedHamFields(h)" :key="f.name"
-                  :field="f" v-model="h[f.name]" :on-peek="peekFile"></field-input>
+              <div v-else class="item expanded" :class="{disabled: h.enable===false}"
+                :style="cardStyle(h.type)">
+                <div class="item-head cardtoggle" @click="h._expanded=false"
+                  title="Click header to collapse">
+                  <div class="row">
+                    <span class="chev">▾</span>
+                    <span class="type-dot" :style="{background: typeColor(h.type)}"></span>
+                    <strong class="mono">{{ h.tag || '(untitled)' }}</strong>
+                    <label>type</label>
+                    <select :value="h.type" @click.stop
+                      @change="changeHamType(h,$event.target.value)">
+                      <option v-for="t in Object.keys(schema.hamiltonian_types)" :key="t" :value="t">
+                        {{ t }}</option>
+                    </select>
+                  </div>
+                  <button class="danger" @click.stop="removeHam(i)">Remove</button>
+                </div>
+                <div class="cardfields">
+                  <field-input v-for="f in orderedHamFields(h)" :key="f.name"
+                    :field="f" v-model="h[f.name]" :on-peek="peekFile"></field-input>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
           <p v-if="!ham.hamiltonian_prototype_defs.length" class="muted">No Hamiltonians defined.</p>
           <button @click="saveConfig('hamiltonian', ham)">Save Hamiltonian config</button>
@@ -1226,15 +1262,20 @@ createApp({
             <div>
               <div class="row" style="margin-bottom:8px">
                 <button @click="newFile">+ New</button>
+                <button class="ghost" @click="triggerUpload">Upload</button>
                 <button class="ghost" @click="loadFiles">Refresh</button>
+                <input type="file" ref="uploadInput" multiple @change="uploadFiles"
+                  style="display:none">
               </div>
               <div class="file-list">
                 <div v-for="f in files" :key="f.name" class="f"
                   :class="{active: currentFile===f.name}" @click="openFile(f)">
                   <span class="fn mono">{{ f.name }}</span>
-                  <span>
+                  <span class="frow-right">
                     <span v-if="f.missing" class="chip missing">missing</span>
                     <span v-else-if="f.referenced" class="chip ref">ref</span>
+                    <button v-if="!f.missing" class="fdel" @click.stop="deleteFile(f)"
+                      title="Delete file">×</button>
                   </span>
                 </div>
                 <div v-if="!files.length" class="f muted">No files.</div>

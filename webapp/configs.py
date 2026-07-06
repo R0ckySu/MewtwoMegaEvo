@@ -79,6 +79,10 @@ def collect_referenced_files(cfg_dir):
                     referenced.add(name)
                     if k in schema.STRICT_FILE_FIELDS:
                         strict.add(name)
+                elif k in schema.FILE_REF_LIST_FIELDS and isinstance(v, list):
+                    for item in v:
+                        if isinstance(item, str) and item:
+                            referenced.add(item.lstrip("./"))
                 else:
                     scan(v)
         elif isinstance(obj, list):

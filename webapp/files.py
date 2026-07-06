@@ -3,7 +3,10 @@
 These are the plain-text files referenced by the JSON configs (comma-separated
 matrix rows, newline-separated vectors, sequence lists, etc.).
 """
-from fastapi import APIRouter, Body, Depends, HTTPException
+import os
+import re
+
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from . import paths, schema
@@ -12,9 +15,17 @@ from .configs import collect_referenced_files
 
 router = APIRouter()
 
-MAX_EDIT_BYTES = 2_000_000  # files larger than this are read-only in the editor
+MAX_EDIT_BYTES = 2_000_000     # files larger than this are read-only in the editor
+MAX_UPLOAD_BYTES = 64_000_000  # per uploaded file
 _HIDDEN = {".DS_Store"}
 _CONFIG_JSONS = set(schema.CONFIG_FILENAMES.values())
+
+
+def _safe_upload_name(filename: str) -> str:
+    base = os.path.basename(filename or "")
+    base = re.sub(r"[^A-Za-z0-9._-]", "_", base)
+    base = re.sub(r"^[^A-Za-z0-9]+", "", base)[:80]
+    return base or "upload"
 
 
 @router.get("/files")
@@ -73,6 +84,23 @@ def create_file(body: NewFile, user: str = Depends(get_current_user)):
         raise HTTPException(status_code=409, detail="File already exists")
     path.write_text(body.content)
     return {"ok": True, "name": body.name}
+
+
+@router.post("/files/upload")
+async def upload_files(files: list[UploadFile] = File(...),
+                       user: str = Depends(get_current_user)):
+    """Upload one or more local files into the user's config dir (overwrites)."""
+    cfg = paths.ensure_config_dir(user)
+    saved = []
+    for f in files:
+        name = _safe_upload_name(f.filename)
+        data = await f.read()
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413,
+                                detail=f"{name} exceeds the 64 MB upload limit")
+        (cfg / name).write_bytes(data)
+        saved.append(name)
+    return {"ok": True, "saved": saved}
 
 
 @router.delete("/files/{name}")
