@@ -15,6 +15,17 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET,
                    same_site="lax")
 
 
+@app.middleware("http")
+async def _revalidate_static(request, call_next):
+    """The SPA is served without a build step, so the browser must always pick up
+    the latest app.js/styles.css/index.html. `no-cache` = revalidate every load;
+    StaticFiles' ETag/Last-Modified still make that a cheap 304 when unchanged."""
+    response = await call_next(request)
+    if not request.url.path.startswith("/api"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 def _lan_ip():
     import socket
     try:
