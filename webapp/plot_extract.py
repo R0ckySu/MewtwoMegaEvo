@@ -8,8 +8,9 @@ Usage:  python plot_extract.py <run_dir> '<json-request>'
 
 Request modes:
   {"mode": "meta"}
-  {"mode": "series",  "var": <v>, "x": <dim>, "fixed": {<dim>: <idx>, ...}}
-  {"mode": "heatmap", "var": <v>, "x": <dim>, "y": <dim>, "fixed": {...}}
+  {"mode": "series",      "var": <v>, "x": <dim>, "fixed": {<dim>: <idx>, ...}}
+  {"mode": "multiseries", "var": <v>, "x": <dim>, "series": <dim>, "fixed": {...}}
+  {"mode": "heatmap",     "var": <v>, "x": <dim>, "y": <dim>, "fixed": {...}}
 """
 import json
 import sys
@@ -29,6 +30,15 @@ def _coord_values(ds, dim):
     if dim in ds.coords:
         return _clean(np.asarray(ds.coords[dim].values))
     return list(range(int(ds.sizes[dim])))
+
+
+def _fmt_label(val):
+    """Compact legend label for a coordinate value."""
+    if val is None:
+        return "n/a"
+    if isinstance(val, float):
+        return f"{val:g}"
+    return str(val)
 
 
 def _split_var(var, obs_list, init_list):
@@ -147,6 +157,32 @@ def main():
         sub = da.isel(**sel)
         print(json.dumps({"x": _coord_values(ds, xdim), "y": _clean(sub.values),
                           "x_label": xdim, "y_label": v}))
+        return
+
+    if mode == "multiseries":
+        # One line per value of `series` dim (a legend); `x` is the shared axis.
+        xdim, sdim = req["x"], req["series"]
+        fixed = req.get("fixed", {})
+        sel = {d: int(fixed.get(d, 0)) for d in da.dims if d not in (xdim, sdim)}
+        sub = da.isel(**sel)  # now spans only xdim and sdim
+        n_s = int(ds.sizes[sdim])
+        svals = _coord_values(ds, sdim)
+        # Cap the number of legend traces (subsample evenly) so it stays readable.
+        max_traces = int(req.get("max_traces", 40))
+        if n_s > max_traces:
+            idxs = sorted({int(round(k * (n_s - 1) / (max_traces - 1)))
+                           for k in range(max_traces)})
+        else:
+            idxs = list(range(n_s))
+        series = []
+        for k in idxs:
+            line = sub.isel(**{sdim: k})
+            series.append({"name": _fmt_label(svals[k] if k < len(svals) else k),
+                           "y": _clean(line.values)})
+        print(json.dumps({
+            "x": _coord_values(ds, xdim), "series": series,
+            "x_label": xdim, "y_label": v, "series_label": sdim,
+            "truncated": len(idxs) < n_s, "n_series_total": n_s}))
         return
 
     if mode == "heatmap":

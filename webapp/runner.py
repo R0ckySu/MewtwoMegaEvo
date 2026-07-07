@@ -35,6 +35,17 @@ router = APIRouter()
 _PROGRESS_RE = re.compile(r"Solver job done! \[(\d+)/(\d+)\]")
 
 
+def _fmt_dur(seconds: float) -> str:
+    s = int(round(seconds))
+    h, s = divmod(s, 3600)
+    m, s = divmod(s, 60)
+    if h:
+        return f"{h}h {m}m {s}s"
+    if m:
+        return f"{m}m {s}s"
+    return f"{s}s"
+
+
 def _estimate_units(cfg_dir: Path) -> int:
     """num_params * repeat, from the (snapshotted) sim config."""
     try:
@@ -201,10 +212,49 @@ class QueueManager:
             with self._lock:
                 self._secs_per_unit = (sample if self._secs_per_unit is None
                                        else 0.3 * sample + 0.7 * self._secs_per_unit)
+        try:
+            self._maybe_email_report(job)
+        except Exception as e:  # never let reporting break the queue
+            print(f"[runner] report email error: {e}")
         shutil.rmtree(job.cfg_snapshot.parent, ignore_errors=True)
         with self._lock:
             self._current = None
         self._start_next()
+
+    def _maybe_email_report(self, job: Job):
+        """Email a short report if this job ran longer than the threshold."""
+        from . import mailer
+        from .auth import get_email
+        if not mailer.is_configured():
+            return
+        if not job.started_at or not job.finished_at:
+            return
+        duration = job.finished_at - job.started_at
+        if duration < settings.EMAIL_MIN_SECONDS:
+            return
+        to = get_email(job.user)
+        if not to:
+            return
+        outcome = {"done": "completed", "error": "FAILED",
+                   "stopped": "was stopped"}.get(job.status, job.status)
+        run_folder = f"{job.task_name}{job.timestamp}"
+        lines = [
+            f"Your MewtwoMegaEvo job '{job.task_name}' {outcome}.",
+            "",
+            f"  Status     : {job.status}",
+            f"  Duration   : {_fmt_dur(duration)}",
+            f"  Progress   : {job.progress}/{job.total}" if job.total else
+            f"  Progress   : {job.progress}",
+            f"  Work units : {job.units}  (num_params x repeat)",
+            f"  Result     : userdata/{job.user}/{run_folder}/",
+        ]
+        if job.status == "error":
+            tail = list(job.log)[-12:]
+            if tail:
+                lines += ["", "Last log lines:", *(f"  {ln}" for ln in tail)]
+        lines += ["", "— MewtwoMegaEvo"]
+        subject = f"[MewtwoMegaEvo] {job.task_name} {outcome} ({_fmt_dur(duration)})"
+        mailer.send_async(to, subject, "\n".join(lines))
 
     def cancel(self, job: Job):
         with self._lock:

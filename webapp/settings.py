@@ -77,6 +77,27 @@ PLOT_EXTRACTOR = WEBAPP_DIR / "plot_extract.py"
 # The three config filenames the binary requires.
 CONFIG_FILES = ("sim_config.json", "gate_config.json", "hamiltonian_config.json")
 
+
+def _flag(env_name: str, yaml_key: str, default: bool) -> bool:
+    v = _value(env_name, yaml_key, None)
+    if v is None:
+        return default
+    return str(v).strip().lower() in ("1", "true", "yes", "on")
+
+
+# ---- Email (optional): completion reports for long-running jobs ----------
+# If SMTP_HOST + MAIL_FROM are set, users who registered an address get a short
+# report when a job that ran longer than EMAIL_MIN_SECONDS finishes. Unset = off.
+SMTP_HOST = str(_value("MEWTWO_SMTP_HOST", "smtp_host", "") or "")
+SMTP_PORT = int(_value("MEWTWO_SMTP_PORT", "smtp_port", 587) or 587)
+SMTP_USER = str(_value("MEWTWO_SMTP_USER", "smtp_user", "") or "")
+SMTP_PASSWORD = str(_value("MEWTWO_SMTP_PASSWORD", "smtp_password", "") or "")
+MAIL_FROM = str(_value("MEWTWO_MAIL_FROM", "mail_from", SMTP_USER) or "")
+SMTP_SSL = _flag("MEWTWO_SMTP_SSL", "smtp_ssl", False)          # implicit TLS (port 465)
+SMTP_STARTTLS = _flag("MEWTWO_SMTP_STARTTLS", "smtp_starttls", True)
+# Only email for jobs at least this many seconds long.
+EMAIL_MIN_SECONDS = int(_value("MEWTWO_EMAIL_MIN_SECONDS", "email_min_seconds", 300) or 300)
+
 # Make sure the configured locations exist.
 for _d in (USERDATA_DIR, NOISEDATA_DIR, USERS_DB.parent):
     try:

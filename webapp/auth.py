@@ -12,6 +12,7 @@ from . import settings
 router = APIRouter()
 _pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 _USERNAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,32}$")
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def init_db() -> None:
@@ -20,8 +21,13 @@ def init_db() -> None:
             "CREATE TABLE IF NOT EXISTS users ("
             "  username TEXT PRIMARY KEY,"
             "  pwd_hash TEXT NOT NULL,"
+            "  email TEXT,"
             "  created_at TEXT DEFAULT CURRENT_TIMESTAMP)"
         )
+        # Add the email column to pre-existing databases.
+        cols = [r[1] for r in db.execute("PRAGMA table_info(users)").fetchall()]
+        if "email" not in cols:
+            db.execute("ALTER TABLE users ADD COLUMN email TEXT")
         db.commit()
 
 
@@ -33,9 +39,24 @@ def _get_hash(username: str):
     return row[0] if row else None
 
 
+def get_email(username: str):
+    """The registered email for a user, or None."""
+    with closing(sqlite3.connect(settings.USERS_DB)) as db:
+        row = db.execute(
+            "SELECT email FROM users WHERE username = ?", (username,)
+        ).fetchone()
+    return row[0] if row and row[0] else None
+
+
 class Credentials(BaseModel):
     username: str
     password: str
+
+
+class Registration(BaseModel):
+    username: str
+    password: str
+    email: str
 
 
 def get_current_user(request: Request) -> str:
@@ -47,18 +68,21 @@ def get_current_user(request: Request) -> str:
 
 
 @router.post("/register")
-def register(creds: Credentials, request: Request):
+def register(creds: Registration, request: Request):
     if not _USERNAME_RE.match(creds.username):
         raise HTTPException(
             status_code=400,
             detail="Username must be 3-32 chars: letters, digits, _ or -")
     if len(creds.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be >= 6 characters")
+    email = (creds.email or "").strip()
+    if not _EMAIL_RE.match(email):
+        raise HTTPException(status_code=400, detail="A valid email address is required")
     try:
         with closing(sqlite3.connect(settings.USERS_DB)) as db:
             db.execute(
-                "INSERT INTO users (username, pwd_hash) VALUES (?, ?)",
-                (creds.username, _pwd.hash(creds.password)))
+                "INSERT INTO users (username, pwd_hash, email) VALUES (?, ?, ?)",
+                (creds.username, _pwd.hash(creds.password), email))
             db.commit()
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=409, detail="Username already taken")
@@ -83,4 +107,4 @@ def logout(request: Request):
 
 @router.get("/me")
 def me(user: str = Depends(get_current_user)):
-    return {"username": user}
+    return {"username": user, "email": get_email(user)}

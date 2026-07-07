@@ -227,6 +227,26 @@ users_db:       /srv/mewtwo/users.db    # SQLite user store
 | `MEWTWO_DEMOS` / `demos_dir`         | `Playground/Demo_configs/`    | Demo templates ("Load demo").            |
 | `MEWTWO_PY` / `mewtwo_py`            | the app's own interpreter     | Interpreter with `mewtwo` (for plots).   |
 | `MEWTWO_CONFIG`                      | `server_config.yaml`          | Path to the YAML config file itself.     |
+| `MEWTWO_SMTP_HOST` / `smtp_host`     | *(unset → email off)*         | SMTP server for long-run email reports.  |
+| `MEWTWO_SMTP_PORT` / `smtp_port`     | `587`                         | SMTP port (465 for implicit TLS).        |
+| `MEWTWO_SMTP_USER` / `smtp_user`     | *(none)*                      | SMTP login user.                         |
+| `MEWTWO_SMTP_PASSWORD` / `smtp_password` | *(none)*                  | SMTP password / app password.            |
+| `MEWTWO_MAIL_FROM` / `mail_from`     | = `smtp_user`                 | From address for reports.                |
+| `MEWTWO_SMTP_STARTTLS` / `smtp_starttls` | `true`                    | Use STARTTLS (port 587).                 |
+| `MEWTWO_SMTP_SSL` / `smtp_ssl`       | `false`                       | Implicit TLS (port 465).                 |
+| `MEWTWO_EMAIL_MIN_SECONDS` / `email_min_seconds` | `300`             | Only email for runs at least this long.  |
+
+**Registration now requires an email address.** If SMTP is configured (above), a
+user gets a short report by email whenever one of their jobs runs longer than
+`email_min_seconds` (default 5 min) — with status, duration, work units, the result
+folder, and (on failure) the last log lines. Email is entirely optional: leave
+`smtp_host` unset and nothing is sent (addresses are still collected).
+
+**Plot defaults:** a result with two or more swept dimensions opens as a 2-D
+**heatmap** first. Switch **Type → Line** and the second dimension becomes a set of
+**legend traces** (many lines on one plot); pick which dimension via the **Series**
+control, or set it to *(single line)* to slice with a slider instead. Large series
+are subsampled evenly so the legend stays readable.
 
 The noise store honours whichever `noise_data_dir` you set — generation writes there and the
 copied `waveform_path` is relative (`./NoiseData/...`) when it lives under Playground, else an

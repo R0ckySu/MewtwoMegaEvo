@@ -75,7 +75,7 @@ const PlotPanel = {
   props: ['runName', 'api', 'notify', 'live', 'refreshSignal'],
   data() {
     return { meta: null, varName: '', obs: '', init: '', mode: 'line',
-      x: '', y: '', fixed: {}, xScale: 'linear', yScale: 'linear',
+      x: '', y: '', series: '', fixed: {}, xScale: 'linear', yScale: 'linear',
       data: null, liveInfo: null, saved: [], saveName: '', busy: false };
   },
   watch: {
@@ -105,7 +105,8 @@ const PlotPanel = {
     fixedDims() {
       const dims = this.varObj()?.dims || [];
       return dims.filter(d => d.size > 1 && d.name !== this.x
-        && !(this.mode === 'heatmap' && d.name === this.y));
+        && !(this.mode === 'heatmap' && d.name === this.y)
+        && !(this.mode === 'line' && d.name === this.series));
     },
     dimLabel(dim, idx) { return (dim.is_coord && dim.values) ? dim.values[idx] : idx; },
     async loadFull() {
@@ -116,9 +117,15 @@ const PlotPanel = {
         if (!meta.vars.length) return;
         this.varName = meta.vars[0].name;
         this.obs = meta.vars[0].obs; this.init = meta.vars[0].init;
+        // Prefer the richer view: for 2-D+ data (>=2 sweepable dims) show a
+        // heatmap first; a single sweepable dim gets a plain line.
+        const sweepable = (this.varObj()?.dims || []).filter(d => d.size > 1);
+        this.mode = sweepable.length >= 2 ? 'heatmap' : 'line';
         this.resetAxes(); this.updateFull(); this.loadSaved();
       } catch (e) { this.notify(e.detail, true); }
     },
+    sweepableDims() { return (this.varObj()?.dims || []).filter(d => d.size > 1); },
+    seriesOptions() { return this.sweepableDims().filter(d => d.name !== this.x); },
     resetAxes() {
       const dims = this.varObj()?.dims || [];
       const coord = dims.filter(d => d.is_coord && d.size > 1);
@@ -127,15 +134,26 @@ const PlotPanel = {
         const yc = dims.find(d => d.name !== this.x && d.size > 1)
           || dims.find(d => d.name !== this.x);
         this.y = yc ? yc.name : this.x;
+      } else {
+        // Line mode: split the second sweepable dim into legend traces by default.
+        const sc = dims.find(d => d.size > 1 && d.name !== this.x);
+        this.series = sc ? sc.name : '';
       }
       const f = {}; dims.forEach(d => { f[d.name] = 0; }); this.fixed = f;
     },
     onVarOrMode() { this.resetAxes(); this.updateFull(); },
     async updateFull() {
       if (!this.varName || !this.x) return;
-      const req = { mode: this.mode === 'heatmap' ? 'heatmap' : 'series',
-        var: this.varName, x: this.x, fixed: this.fixed };
-      if (this.mode === 'heatmap') req.y = this.y;
+      if (this.mode === 'line' && this.series === this.x) this.series = '';
+      let req;
+      if (this.mode === 'heatmap') {
+        req = { mode: 'heatmap', var: this.varName, x: this.x, y: this.y, fixed: this.fixed };
+      } else if (this.series) {
+        req = { mode: 'multiseries', var: this.varName, x: this.x,
+          series: this.series, fixed: this.fixed };
+      } else {
+        req = { mode: 'series', var: this.varName, x: this.x, fixed: this.fixed };
+      }
       this.busy = true;
       try {
         const d = await this.api('/runs/' + encodeURIComponent(this.runName) + '/plot/data',
@@ -153,10 +171,19 @@ const PlotPanel = {
         yaxis: { title: d.y_label, type: this.yScale },
         paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: '#dce3f0' } };
-      const traces = this.mode === 'heatmap'
-        ? [{ type: 'heatmap', x: d.x, y: d.y, z: d.z, colorscale: 'Viridis' }]
-        : [{ x: d.x, y: d.y, mode: 'lines+markers', type: 'scatter',
-             line: { color: '#4f9cff' } }];
+      let traces;
+      if (this.mode === 'heatmap') {
+        traces = [{ type: 'heatmap', x: d.x, y: d.y, z: d.z, colorscale: 'Viridis' }];
+      } else if (d.series) {
+        // one line per value of the series dim, with a legend
+        traces = d.series.map(s => ({ x: d.x, y: s.y, name: String(s.name),
+          mode: 'lines+markers', type: 'scatter' }));
+        layout.showlegend = true;
+        layout.legend = { title: { text: d.series_label }, font: { size: 11 } };
+      } else {
+        traces = [{ x: d.x, y: d.y, mode: 'lines+markers', type: 'scatter',
+          line: { color: '#4f9cff' } }];
+      }
       window.Plotly.react(el, traces, layout, { responsive: true, displaylogo: false });
     },
     rerender() {
@@ -166,6 +193,7 @@ const PlotPanel = {
     // Default save name includes the sliced coordinates to avoid conflicts.
     defaultSaveName() {
       let n = this.obs + '_' + this.init + '_' + this.mode;
+      if (this.mode === 'line' && this.series) n += '_by_' + this.series;
       this.fixedDims().forEach(d => {
         n += '_' + d.name + '=' + this.dimLabel(d, this.fixed[d.name]);
       });
@@ -261,6 +289,13 @@ const PlotPanel = {
             <option v-for="d in varObj().dims.filter(d=>d.name!==x)" :key="d.name"
               :value="d.name">{{ d.name }}</option>
           </select></div>
+        <div class="field" v-if="mode==='line' && seriesOptions().length" style="min-width:150px">
+          <label>Series (traces)<info-tip
+            text="Draw one line per value of this dimension, with a legend — instead of fixing it to a single slice."></info-tip></label>
+          <select v-model="series" @change="updateFull">
+            <option value="">(single line)</option>
+            <option v-for="d in seriesOptions()" :key="d.name" :value="d.name">{{ d.name }}</option>
+          </select></div>
         <div class="field" style="min-width:90px"><label>X scale</label>
           <select v-model="xScale" @change="rerender">
             <option value="linear">linear</option><option value="log">log</option>
@@ -280,6 +315,10 @@ const PlotPanel = {
         </div>
       </div>
       <div ref="plotDiv" class="plotbox"></div>
+      <p v-if="mode==='line' && series && data && data.truncated" class="muted"
+        style="margin-top:6px">Showing {{ data.series.length }} of
+        {{ data.n_series_total }} <span class="mono">{{ series }}</span> traces
+        (subsampled evenly for a readable legend).</p>
       <div class="row" style="margin-top:8px;gap:8px">
         <input v-model="saveName" :placeholder="defaultSaveName()" style="width:340px">
         <button @click="savePlot">Save plot</button>
@@ -456,7 +495,7 @@ const app = createApp({
   data() {
     return {
       user: null,
-      auth: { mode: 'login', username: '', password: '', error: '' },
+      auth: { mode: 'login', username: '', password: '', email: '', error: '' },
       schema: null,
       tab: 'sim',
       demos: [], loadDemoSel: '',
@@ -536,8 +575,9 @@ const app = createApp({
       this.auth.error = '';
       try {
         const ep = this.auth.mode === 'login' ? '/login' : '/register';
-        const res = await this.api(ep, { method: 'POST',
-          body: { username: this.auth.username, password: this.auth.password } });
+        const body = { username: this.auth.username, password: this.auth.password };
+        if (this.auth.mode === 'register') body.email = this.auth.email;
+        const res = await this.api(ep, { method: 'POST', body });
         this.user = res.username;
         this.auth.password = '';
         await this.boot();
@@ -906,6 +946,11 @@ const app = createApp({
       <h2>MewtwoMegaEvo</h2>
       <div class="field"><label>Username</label>
         <input v-model="auth.username" @keyup.enter="doAuth"></div>
+      <div class="field" v-if="auth.mode==='register'"><label>Email</label>
+        <input type="email" v-model="auth.email" @keyup.enter="doAuth"
+          placeholder="you@example.com">
+        <span class="muted" style="font-size:12px">Used to email you a report when a
+          run takes longer than 5 minutes.</span></div>
       <div class="field"><label>Password</label>
         <input type="password" v-model="auth.password" @keyup.enter="doAuth"></div>
       <div class="err" v-if="auth.error">{{ auth.error }}</div>

@@ -22,3 +22,16 @@ users_db: /srv/mewtwo/users.db             # SQLite user store
 
 # --- Optional: shared cookie-signing secret (else auto-generated & persisted)
 # secret: "put-a-long-random-hex-string-here"
+
+# --- Optional: email reports for long-running jobs -------------------------
+# If smtp_host + mail_from are set, a user who registered an email address gets
+# a short report when a job that ran longer than email_min_seconds finishes.
+# Leave unset to disable email entirely.
+# smtp_host: smtp.gmail.com
+# smtp_port: 587
+# smtp_user: you@gmail.com
+# smtp_password: "an-app-password"     # e.g. a Gmail app password, not your login
+# mail_from: "MewtwoMegaEvo <you@gmail.com>"   # defaults to smtp_user
+# smtp_starttls: true                  # STARTTLS on port 587 (default true)
+# smtp_ssl: false                      # implicit TLS on port 465 (set port 465 too)
+# email_min_seconds: 300               # only email for runs at least this long

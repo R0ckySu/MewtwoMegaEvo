@@ -59,10 +59,13 @@ def plot_meta(name: str, user: str = Depends(get_current_user)):
 def plot_data(name: str, req: Dict[str, Any] = Body(...),
               user: str = Depends(get_current_user)):
     mode = req.get("mode")
-    if mode not in ("series", "heatmap"):
-        raise HTTPException(status_code=400, detail="mode must be 'series' or 'heatmap'")
+    if mode not in ("series", "multiseries", "heatmap"):
+        raise HTTPException(status_code=400,
+                            detail="mode must be 'series', 'multiseries' or 'heatmap'")
     if not req.get("var"):
         raise HTTPException(status_code=400, detail="var is required")
+    if mode == "multiseries" and not req.get("series"):
+        raise HTTPException(status_code=400, detail="series dim is required")
     return _extract(_run_dir(user, name), req)
 
 
