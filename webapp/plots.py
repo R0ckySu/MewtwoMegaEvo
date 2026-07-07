@@ -69,6 +69,15 @@ def plot_data(name: str, req: Dict[str, Any] = Body(...),
     return _extract(_run_dir(user, name), req)
 
 
+@router.post("/runs/{name}/plot/density")
+def plot_density(name: str, req: Dict[str, Any] = Body(default={}),
+                 user: str = Depends(get_current_user)):
+    """Density-matrix stack (n_markers x dim x dim) for one init/param point."""
+    return _extract(_run_dir(user, name),
+                    {"mode": "densitymatrix", "init": req.get("init"),
+                     "param": req.get("param", 0)})
+
+
 @router.post("/runs/{name}/plot/live")
 def plot_live(name: str, req: Dict[str, Any] = Body(default={}),
               user: str = Depends(get_current_user)):

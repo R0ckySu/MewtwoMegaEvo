@@ -70,13 +70,148 @@ const SymbolList = {
   </div>`
 };
 
+// ---- Density-matrix viewer: marker slider + selectable matrix + traces ---
+const DM_COLORS = ['#4f9cff', '#ff7f6b', '#5fd08a', '#f4c04e', '#b98cff',
+  '#ff6bd0', '#57d4d4', '#c0d04e', '#ff9f43', '#8c9eff'];
+const DensityPanel = {
+  props: ['runName', 'api', 'notify', 'inits'],
+  data() {
+    return { dm: null, init: '', param: 0, marker: 0, selected: [],
+      component: 're', busy: false };
+  },
+  watch: { runName() { this.init = ''; this.param = 0; this.selected = []; this.reload(); } },
+  mounted() { this.reload(); },
+  methods: {
+    async reload() {
+      if (!this.init) this.init = (this.inits && this.inits[0]) || '';
+      await this.fetchDM();
+    },
+    async fetchDM() {
+      if (!this.init) return;
+      this.busy = true;
+      try {
+        const d = await this.api('/runs/' + encodeURIComponent(this.runName) + '/plot/density',
+          { method: 'POST', body: { init: this.init, param: this.param } });
+        this.dm = d;
+        if (this.marker > d.n_markers - 1) this.marker = 0;
+        this.$nextTick(() => this.renderPlot());
+      } catch (e) { this.notify(e.detail || 'Failed to load density matrix', true); }
+      finally { this.busy = false; }
+    },
+    onInit() { this.selected = []; this.marker = 0; this.param = 0; this.fetchDM(); },
+    range(n) { return Array.from({ length: n }, (_, i) => i); },
+    p3(x) { return Number(x.toPrecision(3)).toString(); },
+    cellVal(m, r, c) {
+      if (!this.dm) return 0;
+      const re = this.dm.re[m][r][c], im = this.dm.im[m][r][c];
+      if (this.component === 're') return re;
+      if (this.component === 'im') return im;
+      return Math.hypot(re, im);
+    },
+    fmtCell(r, c) {
+      if (!this.dm || !this.dm.re[this.marker]) return '';
+      const re = this.dm.re[this.marker][r][c], im = this.dm.im[this.marker][r][c];
+      if (Math.abs(im) < 1e-9) return this.p3(re);
+      return this.p3(re) + (im >= 0 ? '+' : '−') + this.p3(Math.abs(im)) + 'i';
+    },
+    selIndex(r, c) { return this.selected.findIndex(s => s.r === r && s.c === c); },
+    cellColor(r, c) { const i = this.selIndex(r, c); return i >= 0 ? DM_COLORS[i % DM_COLORS.length] : ''; },
+    toggle(r, c) {
+      const i = this.selIndex(r, c);
+      if (i >= 0) this.selected.splice(i, 1); else this.selected.push({ r, c });
+      this.renderPlot();
+    },
+    renderPlot() {
+      const el = this.$refs.dmPlot;
+      if (!el || !window.Plotly || !this.dm) return;
+      const xs = this.dm.markers || [];
+      const traces = this.selected.map((s, i) => ({
+        x: xs, y: xs.map(m => this.cellVal(m, s.r, s.c)),
+        name: 'ρ[' + s.r + ',' + s.c + ']', mode: 'lines+markers', type: 'scatter',
+        line: { color: DM_COLORS[i % DM_COLORS.length] },
+        marker: { color: DM_COLORS[i % DM_COLORS.length] } }));
+      const compLabel = { re: 'Re', im: 'Im', abs: '|·|' }[this.component];
+      const layout = { margin: { t: 16, r: 16 }, showlegend: true,
+        xaxis: { title: 'marker index' }, yaxis: { title: compLabel + '(ρ element)' },
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#dce3f0' },
+        shapes: [{ type: 'line', x0: this.marker, x1: this.marker, y0: 0, y1: 1,
+          yref: 'paper', line: { color: '#888', width: 1, dash: 'dot' } }] };
+      window.Plotly.react(el, traces, layout, { responsive: true, displaylogo: false });
+    },
+    async savePlot() {
+      const el = this.$refs.dmPlot;
+      if (!el || !window.Plotly || !this.selected.length) return;
+      const name = ('rho_' + this.init + '_p' + this.param + '_' + this.component)
+        .replace(/[^A-Za-z0-9._=-]/g, '_');
+      try {
+        const url = await window.Plotly.toImage(el, { format: 'png', width: 1000, height: 600 });
+        await this.api('/runs/' + encodeURIComponent(this.runName) + '/plot/save',
+          { method: 'POST', body: { filename: name, png: url } });
+        this.notify('Plot saved');
+      } catch (e) { this.notify(e.detail || 'Save failed', true); }
+    },
+  },
+  template: `
+  <div>
+    <div v-if="dm && dm.dim" class="dm-layout">
+      <div class="dm-left">
+        <div class="row" style="gap:12px;flex-wrap:wrap;margin-bottom:6px">
+          <div class="field" v-if="(inits||[]).length>1" style="min-width:110px">
+            <label>Init state</label>
+            <select v-model="init" @change="onInit">
+              <option v-for="i in inits" :key="i" :value="i">{{ i }}</option>
+            </select></div>
+          <div class="field" v-if="dm.n_params>1" style="flex:1;min-width:170px">
+            <label>Param <span class="mono">#{{ param }} / {{ dm.n_params-1 }}</span></label>
+            <input type="range" min="0" :max="dm.n_params-1" v-model.number="param"
+              @change="fetchDM"></div>
+        </div>
+        <div class="field">
+          <label>Marker <span class="mono">{{ marker }} / {{ dm.n_markers-1 }}</span></label>
+          <input type="range" min="0" :max="dm.n_markers-1" v-model.number="marker"
+            @input="renderPlot"></div>
+        <p class="muted" style="font-size:12px;margin:6px 0">ρ at marker {{ marker }} —
+          click cells to plot their trace vs marker index (colours match the lines).</p>
+        <table class="dm-matrix mono">
+          <tr v-for="r in range(dm.dim)" :key="r">
+            <td v-for="c in range(dm.dim)" :key="c" :class="{sel: selIndex(r,c)>=0}"
+              :style="selIndex(r,c)>=0 ? {background: cellColor(r,c), color:'#0d1117'} : {}"
+              @click="toggle(r,c)" :title="'ρ['+r+','+c+']'">{{ fmtCell(r,c) }}</td>
+          </tr>
+        </table>
+        <div class="row" style="gap:8px;margin-top:10px;align-items:flex-end">
+          <div class="field" style="min-width:120px"><label>Plot component</label>
+            <select v-model="component" @change="renderPlot">
+              <option value="re">Real part</option>
+              <option value="im">Imag part</option>
+              <option value="abs">Magnitude</option>
+            </select></div>
+          <button class="ghost" v-if="selected.length" @click="selected=[];renderPlot()">Clear</button>
+        </div>
+      </div>
+      <div class="dm-right">
+        <div ref="dmPlot" class="plotbox"></div>
+        <p v-if="!selected.length" class="muted">Select matrix elements on the left to plot
+          their traces vs marker index.</p>
+        <div class="row" style="margin-top:8px" v-else>
+          <button @click="savePlot">Save plot</button>
+        </div>
+      </div>
+    </div>
+    <p v-else-if="dm" class="muted">No density-matrix data for this init state.</p>
+    <p v-else class="muted">Loading density matrix…</p>
+  </div>`
+};
+
 // ---- Reusable plot panel (used on the Plot page and the Run tab) ---------
 const PlotPanel = {
   props: ['runName', 'api', 'notify', 'live', 'refreshSignal'],
   data() {
     return { meta: null, varName: '', obs: '', init: '', mode: 'line',
       x: '', y: '', series: '', fixed: {}, xScale: 'linear', yScale: 'linear',
-      data: null, liveInfo: null, saved: [], saveName: '', busy: false };
+      data: null, liveInfo: null, saved: [], saveName: '', busy: false,
+      dmView: false };
   },
   watch: {
     runName() { this.reload(); },
@@ -110,7 +245,7 @@ const PlotPanel = {
     },
     dimLabel(dim, idx) { return (dim.is_coord && dim.values) ? dim.values[idx] : idx; },
     async loadFull() {
-      this.meta = null; this.data = null;
+      this.meta = null; this.data = null; this.dmView = false;
       try {
         const meta = await this.api('/runs/' + encodeURIComponent(this.runName) + '/plot/meta');
         this.meta = meta;
@@ -267,6 +402,13 @@ const PlotPanel = {
 
     <!-- FULL (completed run) -->
     <div v-else-if="meta && meta.vars.length">
+      <div class="row" v-if="meta.has_density" style="margin-bottom:10px;gap:8px">
+        <button class="ghost" :class="{active: !dmView}" @click="dmView=false">Measurements</button>
+        <button class="ghost" :class="{active: dmView}" @click="dmView=true">Density matrix</button>
+      </div>
+      <density-panel v-if="dmView" :run-name="runName" :api="api" :notify="notify"
+        :inits="meta.density_inits"></density-panel>
+      <div v-show="!dmView">
       <div class="row" style="gap:14px;flex-wrap:wrap">
         <div class="field" style="min-width:120px"><label>Observable</label>
           <select v-model="obs" @change="onObsInit">
@@ -330,6 +472,7 @@ const PlotPanel = {
             class="saved-thumb"><img :src="plotUrl(s.name)"><span class="mono">{{ s.name }}</span></a>
         </div>
       </div>
+      </div><!-- /v-show measurements -->
     </div>
     <p v-else-if="meta" class="muted">This run has no meas_marker data to plot.</p>
     <p v-else class="muted">Loading result…</p>
@@ -1630,4 +1773,5 @@ const app = createApp({
   </div>`
 });
 app.component('info-tip', InfoTip);
+app.component('density-panel', DensityPanel);
 app.mount('#app');

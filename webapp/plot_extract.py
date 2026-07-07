@@ -99,6 +99,75 @@ def _live(run_dir, req):
     return out
 
 
+def _density_param_map(run_dir):
+    """Flat list of (file, '#p' key) for every recorded density-matrix param,
+    ordered by global param index, plus the init states available."""
+    import os
+    from mewtwo.config import load_all_configs
+    from mewtwo.h5_io import get_file_list_with_pattern
+    import h5py
+
+    sim, _, _ = load_all_configs(run_dir)
+    task = sim.get("task_name", os.path.basename(run_dir))
+    inits = sim.get("init_states", [])
+    flat = []
+    for fn in get_file_list_with_pattern(run_dir, task):
+        try:
+            with h5py.File(os.path.join(run_dir, fn), "r") as f:
+                g = f.get("/rho_marker")
+                if g is None:
+                    continue
+                keys = sorted((k for k in g.keys()
+                               if k.startswith("#") and k[1:].isdigit()),
+                              key=lambda k: int(k[1:]))
+                flat += [(fn, k) for k in keys]
+        except OSError:
+            pass
+    return flat, inits
+
+
+def _density(run_dir, req):
+    """Full density-matrix stack for one init state + param point:
+    (n_markers x dim x dim) split into real/imag, for client-side slicing."""
+    import os
+    from mewtwo.h5_io import read_complex_dataset
+    import h5py
+
+    flat, inits = _density_param_map(run_dir)
+    init = req.get("init") or (inits[0] if inits else "")
+    out = {"inits": inits, "init": init, "n_params": len(flat),
+           "param": 0, "dim": 0, "n_markers": 0, "markers": [],
+           "re": [], "im": []}
+    if not flat or not init:
+        return out
+    p = max(0, min(int(req.get("param", 0) or 0), len(flat) - 1))
+    out["param"] = p
+    fn, key = flat[p]
+    try:
+        with h5py.File(os.path.join(run_dir, fn), "r") as f:
+            path = f"/rho_marker/{key}/{init}"
+            if path not in f:
+                return out
+            c = np.asarray(read_complex_dataset(f, path))
+            if c.ndim == 2:            # single marker -> (1, dim, dim)
+                c = c[None, :, :]
+            if c.ndim != 3:
+                return out
+            m, d, _ = c.shape
+            out["dim"] = int(d)
+            out["n_markers"] = int(m)
+            out["markers"] = list(range(int(m)))
+            re = np.real(c)
+            im = np.imag(c)
+            re[~np.isfinite(re)] = 0.0
+            im[~np.isfinite(im)] = 0.0
+            out["re"] = re.astype(float).tolist()
+            out["im"] = im.astype(float).tolist()
+    except OSError:
+        pass
+    return out
+
+
 def main():
     run_dir = sys.argv[1]
     req = json.loads(sys.argv[2]) if len(sys.argv) > 2 else {"mode": "meta"}
@@ -106,6 +175,10 @@ def main():
 
     if mode == "live":
         print(json.dumps(_live(run_dir, req)))
+        return
+
+    if mode == "densitymatrix":
+        print(json.dumps(_density(run_dir, req)))
         return
 
     # Keep loader chatter off stdout.
@@ -144,6 +217,15 @@ def main():
                 init_seen.append(init)
         out["observables"] = obs_seen
         out["init_states"] = init_seen
+        # Density-matrix availability (raw HDF5 check, independent of the loader).
+        try:
+            flat, dinits = _density_param_map(run_dir)
+            out["has_density"] = bool(flat)
+            out["density_inits"] = dinits if flat else []
+            out["density_n_params"] = len(flat)
+        except Exception:
+            out["has_density"] = False
+            out["density_inits"] = []
         print(json.dumps(out))
         return
 

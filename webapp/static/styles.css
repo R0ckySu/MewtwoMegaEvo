@@ -344,3 +344,24 @@ label .infotip .i { font-weight: 400; }
 .help-steps li, .help-list li { margin: 6px 0; }
 .help-view .chip { vertical-align: middle; }
 .help-view .infotip.static { margin: 0 1px; }
+
+/* ------------------------------------------------------------------ */
+/* Density-matrix viewer                                               */
+/* ------------------------------------------------------------------ */
+.dm-layout { display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  gap: 20px; align-items: start; }
+.dm-matrix { border-collapse: separate; border-spacing: 4px; margin-top: 4px; }
+.dm-matrix td {
+  min-width: 76px; height: 40px; padding: 4px 8px; text-align: center;
+  font-size: 12px; cursor: pointer; user-select: none;
+  background: var(--chip); border: 1px solid var(--border); border-radius: 5px;
+  transition: background .1s, border-color .1s;
+}
+.dm-matrix td:hover { border-color: var(--accent); }
+.dm-matrix td.sel { border-color: transparent; font-weight: 600; }
+.dm-right .plotbox { min-height: 360px; }
+
+@media (max-width: 640px) {
+  .dm-layout { grid-template-columns: minmax(0, 1fr); }
+  .dm-matrix td { min-width: 0; }
+}

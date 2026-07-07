@@ -144,6 +144,15 @@ back to labelled axes — and caches a NetCDF next to the result for fast re-ope
   sliced coordinates (e.g. `Z_Z_line_pw_span=5e-06.png`) so different slices don't collide.
   Saved plots show as thumbnails below and are browsable on any later visit.
 
+If the run had **Record density matrix** enabled, the plot area shows a
+**Measurements / Density matrix** toggle. The density view puts a **marker slider**
+(and a param slider for swept runs) over a table of the ρ matrix at that marker
+(complex entries, 3 significant figures). **Click matrix cells** to plot each
+element's trace against **marker index** on the right; the selected cells are tinted
+with the same colours as their lines, and a Re / Im / Magnitude selector chooses what
+the traces show. (Density matrices are read straight from the HDF5 `rho_marker`
+group.)
+
 The Run tab also shows a **live** panel while a simulation is running. Note the current binary
 writes its HDF5 without SWMR / incremental flush, so completed points aren't readable until the
 run finishes — in practice the live panel shows "waiting…" and the full plot appears the moment
