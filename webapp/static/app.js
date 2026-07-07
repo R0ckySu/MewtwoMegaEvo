@@ -765,6 +765,8 @@ const app = createApp({
       demos: [], loadDemoSel: '',
       sim: null, gate: null, ham: null,
       files: [], currentFile: null, fileContent: '', fileMeta: null, fileDirty: false,
+      vecForm: { name: '', method: 'linspace', start: '0', stop: '1', num: '101' },
+      spanOrder: [],
       runId: null, run: null, es: null,
       results: [],
       migrationReport: null,
@@ -1090,6 +1092,35 @@ const app = createApp({
     async loadFiles() {
       this.files = (await this.api('/files')).files;
     },
+    async createVector() {
+      const f = this.vecForm;
+      if (!f.name) { this.notify('Enter a file name', true); return; }
+      try {
+        const r = await this.api('/files/vector', { method: 'POST', body: {
+          name: f.name, method: f.method,
+          start: parseFloat(f.start), stop: parseFloat(f.stop), num: parseInt(f.num) } });
+        this.notify('Created ' + r.name + ' — ' + r.count + ' values ('
+          + r.first + ' … ' + r.last + ')');
+        await this.loadFiles();
+        this.openFile({ name: r.name });
+      } catch (e) { this.notify(e.detail || 'Create failed', true); }
+    },
+    spanCandidates() {
+      return this.files.filter(f => !f.missing && !f.name.endsWith('_span')
+        && !this.spanOrder.includes(f.name)).map(f => f.name);
+    },
+    spanAdd(n) { this.spanOrder.push(n); },
+    spanRemove(i) { this.spanOrder.splice(i, 1); },
+    async createSpan() {
+      try {
+        const r = await this.api('/files/span', { method: 'POST',
+          body: { names: this.spanOrder } });
+        this.notify('Created ' + r.created.join(', ') + ' — ' + r.dims.join('×')
+          + ' = ' + r.total + ' points');
+        this.spanOrder = [];
+        await this.loadFiles();
+      } catch (e) { this.notify(e.detail || 'Span failed', true); }
+    },
     async openFile(f) {
       if (f.missing) { this.notify('Referenced file is missing on disk', true); return; }
       if (this.fileDirty && !confirm('Discard unsaved changes to ' + this.currentFile + '?'))
@@ -1188,7 +1219,7 @@ const app = createApp({
     },
     closePeek() { this.peek = null; },
     peekToEditor() {
-      const n = this.peek.name; this.closePeek(); this.tab = 'files'; this.openFile({ name: n });
+      const n = this.peek.name; this.closePeek(); this.tab = 'symbols'; this.openFile({ name: n });
     },
 
     // ---- results (runs are listed directly under the user) ----
@@ -1265,7 +1296,7 @@ const app = createApp({
     </div>
 
     <div class="tabs" v-if="view==='workspace'">
-      <button v-for="t in ['sim','gates','hamiltonians','files','run']" :key="t"
+      <button v-for="t in ['sim','gates','hamiltonians','symbols','run']" :key="t"
         :class="{active: tab===t}" @click="tab=t">{{ t }}</button>
     </div>
 
@@ -1770,9 +1801,49 @@ const app = createApp({
         </div>
 
         <!-- FILES -->
-        <div v-show="tab==='files'">
-          <h2>Matrix / vector / parameter files<info-tip
+        <div v-show="tab==='symbols'">
+          <h2>Symbols — matrices, vectors &amp; parameters<info-tip
             text="The data your configs point at: operator matrices (comma-separated rows), vectors/parameter files (one value per line), and shaped-signal files. 'ref' = referenced by a config; 'missing' = referenced but absent."></info-tip></h2>
+
+          <div class="card sym-tools">
+            <h3 style="margin:0 0 8px">Create vector<info-tip
+              text="Generate a numerical vector file (one value per line) with evenly spaced (linspace) or geometrically spaced (logspace) values. Point a sweep-parameter row at it."></info-tip></h3>
+            <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div class="field" style="min-width:140px"><label>File name</label>
+                <input class="mono" v-model="vecForm.name" placeholder="e.g. freq_vec"></div>
+              <div class="field" style="min-width:130px"><label>Method</label>
+                <select v-model="vecForm.method">
+                  <option value="linspace">linspace</option>
+                  <option value="logspace">logspace (geometric)</option></select></div>
+              <div class="field" style="min-width:90px"><label>Start</label>
+                <input class="mono" v-model="vecForm.start" inputmode="decimal"></div>
+              <div class="field" style="min-width:90px"><label>Stop</label>
+                <input class="mono" v-model="vecForm.stop" inputmode="decimal"></div>
+              <div class="field" style="min-width:70px"><label>Count</label>
+                <input class="mono" v-model="vecForm.num" inputmode="numeric"></div>
+              <button @click="createVector">Create</button>
+            </div>
+          </div>
+
+          <div class="card sym-tools">
+            <h3 style="margin:0 0 8px">Span into mesh grid <span class="mono muted">(_span)</span><info-tip
+              text="Pick two or more vector files in order (first varies fastest) and tensor them into a flattened N-D meshgrid. Each input <name> gets a <name>_span file of length = product of the lengths. Point one sweep-parameter row at each _span file to scan several parameters together."></info-tip></h3>
+            <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+              <span class="muted" style="font-size:12px">Order (fastest→slowest):</span>
+              <span v-for="(n,i) in spanOrder" :key="n" class="tag mono">{{ i+1 }}. {{ n }}
+                <span class="x" @click="spanRemove(i)">×</span></span>
+              <span v-if="!spanOrder.length" class="muted" style="font-size:12px">none selected</span>
+            </div>
+            <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+              <span class="muted" style="font-size:12px">Add:</span>
+              <button v-for="f in spanCandidates()" :key="f" class="chip-btn mono"
+                @click="spanAdd(f)">+ {{ f }}</button>
+              <span v-if="!spanCandidates().length" class="muted" style="font-size:12px">
+                (no more vector files)</span>
+            </div>
+            <button @click="createSpan" :disabled="spanOrder.length<2">Create _span files</button>
+          </div>
+
           <div class="files-layout">
             <div>
               <div class="row" style="margin-bottom:8px">

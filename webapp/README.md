@@ -170,9 +170,17 @@ the run completes. (The live path already streams if a future build flushes per 
    that renders the matrix as a grid (or the vector as text) without leaving the form. In the
    sweep table the numeric/string **value type** is an inline control on the parameter file
    itself (editable only for Hamiltonian sweeps; Gate is always numeric, Sequence always string).
-3. **Files** tab – browse and edit the referenced matrix/vector/parameter files. Files
-   referenced by a config are tagged `ref`; referenced-but-absent files are tagged
-   `missing`.
+3. **Symbols** tab (the former Files tab) – browse and edit the referenced
+   matrix/vector/parameter files. Files referenced by a config are tagged `ref`;
+   referenced-but-absent files are tagged `missing`. Two generators sit at the top:
+   - **Create vector** – write a numerical vector file (one value per line) with
+     evenly spaced (`linspace`) or geometrically spaced (`logspace`) values, ready to
+     use as a sweep-parameter file.
+   - **Span into mesh grid** – pick two or more vector files in order (first varies
+     fastest) and tensor them into a flattened N-D meshgrid; each input `<name>` gets a
+     `<name>_span` file of length = product of the input lengths (via `mewtwo.param_span`,
+     the exact form `param_fold` reads back). Point one sweep-parameter row at each
+     `_span` file to scan several parameters together.
 4. **Run** tab – *Save all* then *Launch*. Watch the progress bar; on completion, download
    the result folder as a zip. Past results are listed below. A **Host resources** dashboard
    at the top shows, graphically, live **CPU-average and memory donut gauges**, a **per-core

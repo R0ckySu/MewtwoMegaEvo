@@ -409,3 +409,13 @@ label .infotip .i { font-weight: 400; }
   border: 1px dashed var(--border); border-radius: 6px; cursor: pointer;
 }
 .gal-changes { margin-top: 10px; }
+
+/* Symbols tab: vector/meshgrid tools */
+.sym-tools { margin-bottom: 12px; }
+.sym-tools h3 { font-size: 14px; }
+.chip-btn {
+  background: var(--chip); color: var(--text);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+}
+.chip-btn:hover { border-color: var(--accent); }

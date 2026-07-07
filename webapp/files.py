@@ -6,9 +6,11 @@ matrix rows, newline-separated vectors, sequence lists, etc.).
 import os
 import re
 
+import numpy as np
 from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from mewtwo.params import param_span
 from . import paths, schema
 from .auth import get_current_user
 from .configs import collect_referenced_files
@@ -101,6 +103,75 @@ async def upload_files(files: list[UploadFile] = File(...),
         (cfg / name).write_bytes(data)
         saved.append(name)
     return {"ok": True, "saved": saved}
+
+
+MAX_VECTOR_POINTS = 5_000_000
+
+
+class VectorSpec(BaseModel):
+    name: str
+    method: str = "linspace"        # linspace | logspace
+    start: float
+    stop: float
+    num: int
+
+
+@router.post("/files/vector")
+def create_vector(body: VectorSpec, user: str = Depends(get_current_user)):
+    """Generate a numerical vector file (one value per line) via linspace or a
+    geometric logspace between start and stop."""
+    if body.num < 1 or body.num > MAX_VECTOR_POINTS:
+        raise HTTPException(status_code=400,
+                            detail=f"num must be between 1 and {MAX_VECTOR_POINTS}")
+    if body.method == "linspace":
+        vals = np.linspace(body.start, body.stop, body.num)
+    elif body.method == "logspace":
+        if body.start <= 0 or body.stop <= 0:
+            raise HTTPException(status_code=400,
+                                detail="logspace needs start and stop > 0")
+        vals = np.logspace(np.log10(body.start), np.log10(body.stop), body.num)
+    else:
+        raise HTTPException(status_code=400,
+                            detail="method must be 'linspace' or 'logspace'")
+    path = paths.resolve_in_config(user, body.name)
+    paths.ensure_config_dir(user)
+    path.write_text("\n".join(f"{v:.12g}" for v in vals) + "\n")
+    return {"ok": True, "name": body.name, "count": int(len(vals)),
+            "first": float(vals[0]), "last": float(vals[-1])}
+
+
+class SpanSpec(BaseModel):
+    names: list[str]
+
+
+@router.post("/files/span")
+def span_vectors(body: SpanSpec, user: str = Depends(get_current_user)):
+    """Tensor several vector files (in order, first varies fastest) into a
+    flattened N-D meshgrid, writing a <name>_span file for each input."""
+    if len(body.names) < 2:
+        raise HTTPException(status_code=400,
+                            detail="Select at least two vector files to span")
+    cfg = paths.ensure_config_dir(user)
+    dims, total = [], 1
+    for n in body.names:
+        p = paths.resolve_in_config(user, n)      # validates the filename
+        if n.endswith("_span"):
+            raise HTTPException(status_code=400,
+                                detail=f"'{n}' is already a span file — pick base vectors")
+        if not p.is_file():
+            raise HTTPException(status_code=404, detail=f"File not found: {n}")
+        k = sum(1 for ln in p.read_text().split("\n") if ln.strip())
+        dims.append(k)
+        total *= max(k, 1)
+    if total > MAX_VECTOR_POINTS:
+        raise HTTPException(status_code=400,
+                            detail=f"Meshgrid too large ({total} points)")
+    try:
+        result = param_span(str(cfg), list(body.names))
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Span failed: {e}")
+    return {"ok": True, "created": [f"{n}_span" for n in body.names],
+            "dims": result.get("param_space_dims", dims), "total": total}
 
 
 @router.delete("/files/{name}")
