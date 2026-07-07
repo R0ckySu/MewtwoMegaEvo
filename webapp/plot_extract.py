@@ -168,6 +168,53 @@ def _density(run_dir, req):
     return out
 
 
+def _density_param_stack(run_dir, req):
+    """Density matrix at ONE marker across ALL params: (n_params x dim x dim),
+    for tracing an element against the swept parameter."""
+    import os
+    from mewtwo.h5_io import read_complex_dataset
+    import h5py
+
+    flat, inits = _density_param_map(run_dir)
+    init = req.get("init") or (inits[0] if inits else "")
+    marker = int(req.get("marker", 0) or 0)
+    out = {"init": init, "marker": marker, "n_params": len(flat),
+           "dim": 0, "re": [], "im": []}
+    if not flat or not init:
+        return out
+    re_all = [None] * len(flat)
+    im_all = [None] * len(flat)
+    dim = 0
+    by_file = {}
+    for i, (fn, key) in enumerate(flat):
+        by_file.setdefault(fn, []).append((i, key))
+    for fn, items in by_file.items():
+        try:
+            with h5py.File(os.path.join(run_dir, fn), "r") as f:
+                for i, key in items:
+                    path = f"/rho_marker/{key}/{init}"
+                    if path not in f:
+                        continue
+                    c = np.asarray(read_complex_dataset(f, path))
+                    if c.ndim == 2:
+                        c = c[None, :, :]
+                    m = min(marker, c.shape[0] - 1)
+                    mat = c[m]
+                    dim = mat.shape[0]
+                    re = np.real(mat).astype(float)
+                    im = np.imag(mat).astype(float)
+                    re[~np.isfinite(re)] = 0.0
+                    im[~np.isfinite(im)] = 0.0
+                    re_all[i] = re.tolist()
+                    im_all[i] = im.tolist()
+        except OSError:
+            pass
+    out["dim"] = int(dim)
+    out["re"] = re_all
+    out["im"] = im_all
+    return out
+
+
 def main():
     run_dir = sys.argv[1]
     req = json.loads(sys.argv[2]) if len(sys.argv) > 2 else {"mode": "meta"}
@@ -179,6 +226,10 @@ def main():
 
     if mode == "densitymatrix":
         print(json.dumps(_density(run_dir, req)))
+        return
+
+    if mode == "densityparamstack":
+        print(json.dumps(_density_param_stack(run_dir, req)))
         return
 
     # Keep loader chatter off stdout.

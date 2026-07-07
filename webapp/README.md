@@ -118,11 +118,16 @@ The top bar has three views: **Editor**, **Noise** (above), and **Projects** —
 listing your previous runs (the `<task><timestamp>` folders under your user directory). From
 the portal you can:
 
-- **Plot** — browse `meas_marker` data (see below).
-- **Download** a run as a zip.
-- **Load config** — replaces your editor config with the one that run used (auto-migrated),
-  then drops you into the editor.
-- **Delete** a run (removes its results and saved config permanently).
+- **Plot** (📈) — browse `meas_marker` data (see below).
+- **Download** (⬇) a run as a zip.
+- **Load config** (📂) — replaces your editor config with the one that run used
+  (auto-migrated), then drops you into the editor.
+- **Delete** (🗑) a run (removes its results and saved config permanently).
+
+Actions are compact icon buttons. A **☰ / ▦ toggle** switches between the **list** and a
+**gallery** of each run's saved plot thumbnails. When two neighbouring runs share a task
+name, a short **change note** shows what differs in the config (e.g.
+`repeat: 1 → 4`, `record_density_mat: off → on`, or a changed sweep range).
 
 ### Plots (meas_marker)
 
@@ -148,10 +153,13 @@ If the run had **Record density matrix** enabled, the plot area shows a
 **Measurements / Density matrix** toggle. The density view puts a **marker slider**
 (and a param slider for swept runs) over a table of the ρ matrix at that marker
 (complex entries, 3 significant figures). **Click matrix cells** to plot each
-element's trace against **marker index** on the right; the selected cells are tinted
-with the same colours as their lines, and a Re / Im / Magnitude selector chooses what
-the traces show. (Density matrices are read straight from the HDF5 `rho_marker`
-group.)
+element's trace on the right; the selected cells are tinted with the same colours as
+their lines, and a Re / Im / Magnitude selector chooses what the traces show. The
+trace **x-axis** can be **marker index** or the **swept parameter** (element vs
+parameter at the fixed marker). **Hover a cell** for the value at 9 significant
+figures (the table shows 3). **Save plot** writes a composite PNG — the selected
+matrix, the marker/param slider state, and the traces — into the run's `plots/`
+folder. (Density matrices are read straight from the HDF5 `rho_marker` group.)
 
 The Run tab also shows a **live** panel while a simulation is running. Note the current binary
 writes its HDF5 without SWMR / incremental flush, so completed points aren't readable until the

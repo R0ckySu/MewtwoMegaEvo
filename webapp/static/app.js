@@ -74,10 +74,10 @@ const SymbolList = {
 const DM_COLORS = ['#4f9cff', '#ff7f6b', '#5fd08a', '#f4c04e', '#b98cff',
   '#ff6bd0', '#57d4d4', '#c0d04e', '#ff9f43', '#8c9eff'];
 const DensityPanel = {
-  props: ['runName', 'api', 'notify', 'inits'],
+  props: ['runName', 'api', 'notify', 'inits', 'paramVals', 'paramLabel'],
   data() {
-    return { dm: null, init: '', param: 0, marker: 0, selected: [],
-      component: 're', busy: false };
+    return { dm: null, dmP: null, init: '', param: 0, marker: 0, selected: [],
+      component: 're', xaxis: 'marker', busy: false };
   },
   watch: { runName() { this.init = ''; this.param = 0; this.selected = []; this.reload(); } },
   mounted() { this.reload(); },
@@ -94,13 +94,34 @@ const DensityPanel = {
           { method: 'POST', body: { init: this.init, param: this.param } });
         this.dm = d;
         if (this.marker > d.n_markers - 1) this.marker = 0;
+        if (this.xaxis === 'param') await this.fetchDMP();
         this.$nextTick(() => this.renderPlot());
       } catch (e) { this.notify(e.detail || 'Failed to load density matrix', true); }
       finally { this.busy = false; }
     },
-    onInit() { this.selected = []; this.marker = 0; this.param = 0; this.fetchDM(); },
+    async fetchDMP() {
+      // density at the current marker across all params (for the param x-axis)
+      try {
+        this.dmP = await this.api('/runs/' + encodeURIComponent(this.runName) + '/plot/densityparam',
+          { method: 'POST', body: { init: this.init, marker: this.marker } });
+      } catch (e) { this.dmP = null; }
+    },
+    async onXaxis() {
+      if (this.xaxis === 'param' && (!this.dmP || this.dmP.marker !== this.marker)) {
+        await this.fetchDMP();
+      }
+      this.renderPlot();
+    },
+    async onMarkerRelease() {           // slider released
+      if (this.xaxis === 'param') { await this.fetchDMP(); this.renderPlot(); }
+    },
+    onInit() { this.selected = []; this.marker = 0; this.param = 0; this.dmP = null; this.fetchDM(); },
     range(n) { return Array.from({ length: n }, (_, i) => i); },
-    p3(x) { return Number(x.toPrecision(3)).toString(); },
+    pN(x, n) { return Number(x.toPrecision(n)).toString(); },
+    complexStr(re, im, n) {
+      if (Math.abs(im) < Math.abs(re) * 1e-9 || (im === 0)) return this.pN(re, n);
+      return this.pN(re, n) + (im >= 0 ? '+' : '−') + this.pN(Math.abs(im), n) + 'i';
+    },
     cellVal(m, r, c) {
       if (!this.dm) return 0;
       const re = this.dm.re[m][r][c], im = this.dm.im[m][r][c];
@@ -108,11 +129,22 @@ const DensityPanel = {
       if (this.component === 'im') return im;
       return Math.hypot(re, im);
     },
+    cellValP(p, r, c) {                  // value at param p (fixed marker), from dmP
+      const M = this.dmP && this.dmP.re[p];
+      if (!M) return null;
+      const re = M[r][c], im = this.dmP.im[p][r][c];
+      if (this.component === 're') return re;
+      if (this.component === 'im') return im;
+      return Math.hypot(re, im);
+    },
     fmtCell(r, c) {
       if (!this.dm || !this.dm.re[this.marker]) return '';
-      const re = this.dm.re[this.marker][r][c], im = this.dm.im[this.marker][r][c];
-      if (Math.abs(im) < 1e-9) return this.p3(re);
-      return this.p3(re) + (im >= 0 ? '+' : '−') + this.p3(Math.abs(im)) + 'i';
+      return this.complexStr(this.dm.re[this.marker][r][c], this.dm.im[this.marker][r][c], 3);
+    },
+    cellTitle(r, c) {                    // 9 significant digits on hover
+      if (!this.dm || !this.dm.re[this.marker]) return 'ρ[' + r + ',' + c + ']';
+      return 'ρ[' + r + ',' + c + '] @ marker ' + this.marker + ' = '
+        + this.complexStr(this.dm.re[this.marker][r][c], this.dm.im[this.marker][r][c], 9);
     },
     selIndex(r, c) { return this.selected.findIndex(s => s.r === r && s.c === c); },
     cellColor(r, c) { const i = this.selIndex(r, c); return i >= 0 ? DM_COLORS[i % DM_COLORS.length] : ''; },
@@ -121,31 +153,104 @@ const DensityPanel = {
       if (i >= 0) this.selected.splice(i, 1); else this.selected.push({ r, c });
       this.renderPlot();
     },
-    renderPlot() {
-      const el = this.$refs.dmPlot;
-      if (!el || !window.Plotly || !this.dm) return;
+    compLabel() { return { re: 'Re', im: 'Im', abs: '|·|' }[this.component]; },
+    paramX() {
+      const n = (this.dmP && this.dmP.n_params) || (this.dm && this.dm.n_params) || 0;
+      return (this.paramVals && this.paramVals.length === n)
+        ? this.paramVals : this.range(n);
+    },
+    buildTraces() {
+      if (this.xaxis === 'param') {
+        const xs = this.paramX();
+        return this.selected.map((s, i) => ({
+          x: xs, y: xs.map((_, p) => this.cellValP(p, s.r, s.c)),
+          name: 'ρ[' + s.r + ',' + s.c + ']', mode: 'lines+markers', type: 'scatter',
+          line: { color: DM_COLORS[i % DM_COLORS.length] },
+          marker: { color: DM_COLORS[i % DM_COLORS.length] } }));
+      }
       const xs = this.dm.markers || [];
-      const traces = this.selected.map((s, i) => ({
+      return this.selected.map((s, i) => ({
         x: xs, y: xs.map(m => this.cellVal(m, s.r, s.c)),
         name: 'ρ[' + s.r + ',' + s.c + ']', mode: 'lines+markers', type: 'scatter',
         line: { color: DM_COLORS[i % DM_COLORS.length] },
         marker: { color: DM_COLORS[i % DM_COLORS.length] } }));
-      const compLabel = { re: 'Re', im: 'Im', abs: '|·|' }[this.component];
+    },
+    plotLayout() {
+      const xtitle = this.xaxis === 'param'
+        ? (this.paramLabel || 'parameter') : 'marker index';
       const layout = { margin: { t: 16, r: 16 }, showlegend: true,
-        xaxis: { title: 'marker index' }, yaxis: { title: compLabel + '(ρ element)' },
+        xaxis: { title: xtitle }, yaxis: { title: this.compLabel() + '(ρ element)' },
         paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#dce3f0' },
-        shapes: [{ type: 'line', x0: this.marker, x1: this.marker, y0: 0, y1: 1,
-          yref: 'paper', line: { color: '#888', width: 1, dash: 'dot' } }] };
-      window.Plotly.react(el, traces, layout, { responsive: true, displaylogo: false });
+        font: { color: '#dce3f0' } };
+      if (this.xaxis === 'marker') {
+        layout.shapes = [{ type: 'line', x0: this.marker, x1: this.marker, y0: 0, y1: 1,
+          yref: 'paper', line: { color: '#888', width: 1, dash: 'dot' } }];
+      }
+      return layout;
+    },
+    renderPlot() {
+      const el = this.$refs.dmPlot;
+      if (!el || !window.Plotly || !this.dm) return;
+      window.Plotly.react(el, this.buildTraces(), this.plotLayout(),
+        { responsive: true, displaylogo: false });
+    },
+    // Composite: the selected matrix (with slider state) + the traces plot.
+    async compositeImage() {
+      const el = this.$refs.dmPlot;
+      const plotUrl = await window.Plotly.toImage(el, { format: 'png', width: 900, height: 540 });
+      const plotImg = await new Promise((res) => {
+        const im = new Image(); im.onload = () => res(im); im.src = plotUrl;
+      });
+      const dim = this.dm.dim, cw = 96, ch = 46, pad = 24, gap = 24;
+      const headH = 78;
+      const matW = dim * (cw + 6) + pad;
+      const leftW = Math.max(matW, 340);
+      const W = leftW + gap + plotImg.width + pad;
+      const H = Math.max(headH + dim * (ch + 6) + 90, plotImg.height + pad * 2);
+      const cv = document.createElement('canvas');
+      cv.width = W; cv.height = H;
+      const g = cv.getContext('2d');
+      g.fillStyle = '#0d1117'; g.fillRect(0, 0, W, H);
+      // header / slider state
+      g.fillStyle = '#dce3f0'; g.textBaseline = 'top';
+      g.font = 'bold 15px system-ui, sans-serif';
+      g.fillText('ρ (' + this.init + ')  —  ' + this.compLabel() + ' element traces', pad, 16);
+      g.font = '13px system-ui, sans-serif'; g.fillStyle = '#9aa7bd';
+      g.fillText('marker = ' + this.marker + ' / ' + (this.dm.n_markers - 1)
+        + '     param = #' + this.param + ' / ' + (this.dm.n_params - 1)
+        + '     x-axis = ' + (this.xaxis === 'param' ? (this.paramLabel || 'parameter') : 'marker index'),
+        pad, 40);
+      // matrix grid at current marker
+      const x0 = pad, y0 = headH;
+      g.font = '13px ui-monospace, Menlo, monospace';
+      for (let r = 0; r < dim; r++) {
+        for (let c = 0; c < dim; c++) {
+          const x = x0 + c * (cw + 6), y = y0 + r * (ch + 6);
+          const si = this.selIndex(r, c);
+          g.fillStyle = si >= 0 ? DM_COLORS[si % DM_COLORS.length] : '#1c2333';
+          g.strokeStyle = si >= 0 ? DM_COLORS[si % DM_COLORS.length] : '#2a3550';
+          g.lineWidth = 1; g.beginPath();
+          g.rect(x, y, cw, ch); g.fill(); g.stroke();
+          g.fillStyle = si >= 0 ? '#0d1117' : '#c8d2e4';
+          g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.fillText(this.fmtCell(r, c), x + cw / 2, y + ch / 2);
+          g.textAlign = 'left'; g.textBaseline = 'top';
+        }
+      }
+      g.fillStyle = '#9aa7bd'; g.font = '12px system-ui, sans-serif';
+      g.fillText('selected: ' + (this.selected.map(s => 'ρ[' + s.r + ',' + s.c + ']').join('  ') || 'none'),
+        x0, y0 + dim * (ch + 6) + 8);
+      // plot on the right
+      g.drawImage(plotImg, leftW + gap, pad);
+      return cv.toDataURL('image/png');
     },
     async savePlot() {
       const el = this.$refs.dmPlot;
       if (!el || !window.Plotly || !this.selected.length) return;
-      const name = ('rho_' + this.init + '_p' + this.param + '_' + this.component)
-        .replace(/[^A-Za-z0-9._=-]/g, '_');
+      const name = ('rho_' + this.init + '_p' + this.param + '_m' + this.marker
+        + '_' + this.component + '_vs_' + this.xaxis).replace(/[^A-Za-z0-9._=-]/g, '_');
       try {
-        const url = await window.Plotly.toImage(el, { format: 'png', width: 1000, height: 600 });
+        const url = await this.compositeImage();
         await this.api('/runs/' + encodeURIComponent(this.runName) + '/plot/save',
           { method: 'POST', body: { filename: name, png: url } });
         this.notify('Plot saved');
@@ -170,22 +275,27 @@ const DensityPanel = {
         <div class="field">
           <label>Marker <span class="mono">{{ marker }} / {{ dm.n_markers-1 }}</span></label>
           <input type="range" min="0" :max="dm.n_markers-1" v-model.number="marker"
-            @input="renderPlot"></div>
+            @input="renderPlot" @change="onMarkerRelease"></div>
         <p class="muted" style="font-size:12px;margin:6px 0">ρ at marker {{ marker }} —
-          click cells to plot their trace vs marker index (colours match the lines).</p>
+          click cells to plot their trace (colours match the lines); hover a cell for 9 digits.</p>
         <table class="dm-matrix mono">
           <tr v-for="r in range(dm.dim)" :key="r">
             <td v-for="c in range(dm.dim)" :key="c" :class="{sel: selIndex(r,c)>=0}"
               :style="selIndex(r,c)>=0 ? {background: cellColor(r,c), color:'#0d1117'} : {}"
-              @click="toggle(r,c)" :title="'ρ['+r+','+c+']'">{{ fmtCell(r,c) }}</td>
+              @click="toggle(r,c)" :title="cellTitle(r,c)">{{ fmtCell(r,c) }}</td>
           </tr>
         </table>
-        <div class="row" style="gap:8px;margin-top:10px;align-items:flex-end">
+        <div class="row" style="gap:8px;margin-top:10px;align-items:flex-end;flex-wrap:wrap">
           <div class="field" style="min-width:120px"><label>Plot component</label>
             <select v-model="component" @change="renderPlot">
               <option value="re">Real part</option>
               <option value="im">Imag part</option>
               <option value="abs">Magnitude</option>
+            </select></div>
+          <div class="field" v-if="dm.n_params>1" style="min-width:140px"><label>Trace x-axis</label>
+            <select v-model="xaxis" @change="onXaxis">
+              <option value="marker">Marker index</option>
+              <option value="param">{{ paramLabel || 'Parameter' }}</option>
             </select></div>
           <button class="ghost" v-if="selected.length" @click="selected=[];renderPlot()">Clear</button>
         </div>
@@ -193,7 +303,7 @@ const DensityPanel = {
       <div class="dm-right">
         <div ref="dmPlot" class="plotbox"></div>
         <p v-if="!selected.length" class="muted">Select matrix elements on the left to plot
-          their traces vs marker index.</p>
+          their traces vs {{ xaxis === 'param' ? (paramLabel || 'parameter') : 'marker index' }}.</p>
         <div class="row" style="margin-top:8px" v-else>
           <button @click="savePlot">Save plot</button>
         </div>
@@ -244,6 +354,16 @@ const PlotPanel = {
         && !(this.mode === 'line' && d.name === this.series));
     },
     dimLabel(dim, idx) { return (dim.is_coord && dim.values) ? dim.values[idx] : idx; },
+    densityParamInfo() {
+      // coordinate values of the single swept parameter (for the density
+      // viewer's param x-axis); null if it isn't a clean 1-parameter sweep.
+      const v = (this.meta?.vars || [])[0];
+      if (!v) return { vals: null, label: 'parameter' };
+      const coord = v.dims.filter(d => d.is_coord && d.size > 1 && d.values);
+      return coord.length === 1
+        ? { vals: coord[0].values, label: coord[0].name }
+        : { vals: null, label: 'parameter' };
+    },
     async loadFull() {
       this.meta = null; this.data = null; this.dmView = false;
       try {
@@ -407,7 +527,8 @@ const PlotPanel = {
         <button class="ghost" :class="{active: dmView}" @click="dmView=true">Density matrix</button>
       </div>
       <density-panel v-if="dmView" :run-name="runName" :api="api" :notify="notify"
-        :inits="meta.density_inits"></density-panel>
+        :inits="meta.density_inits" :param-vals="densityParamInfo().vals"
+        :param-label="densityParamInfo().label"></density-panel>
       <div v-show="!dmView">
       <div class="row" style="gap:14px;flex-wrap:wrap">
         <div class="field" style="min-width:120px"><label>Observable</label>
@@ -649,7 +770,7 @@ const app = createApp({
       migrationReport: null,
       peek: null,
       view: 'workspace',   // 'workspace' | 'projects' | 'noise'
-      runsList: [],
+      runsList: [], projView: 'list',
       noiseList: [],
       noiseForm: { tag: '', mode: 'colored', channels: 16, start_idx: 0,
         time_step: 1e-9, length: 100000, amplitude: 1, alpha: 0.9, noise_expr: '' },
@@ -787,6 +908,10 @@ const app = createApp({
     },
     runDownloadUrl(r) {
       return '/api/runs/' + encodeURIComponent(r.name) + '/download';
+    },
+    runPlotUrl(runName, plotName) {
+      return '/api/runs/' + encodeURIComponent(runName) + '/plots/'
+        + encodeURIComponent(plotName);
     },
     fmtDate(t) { return new Date(t * 1000).toLocaleString(); },
     fmtDur,
@@ -1278,34 +1403,82 @@ const app = createApp({
       <div class="card">
         <div class="row" style="justify-content:space-between">
           <h2 style="margin:0">Projects — previous runs</h2>
-          <button class="ghost" @click="loadRuns">Refresh</button>
+          <div class="row" style="gap:6px">
+            <button class="icon-btn" :class="{active: projView==='list'}"
+              @click="projView='list'" title="List view">☰</button>
+            <button class="icon-btn" :class="{active: projView==='gallery'}"
+              @click="projView='gallery'" title="Gallery of saved plots">▦</button>
+            <button class="icon-btn" @click="loadRuns" title="Refresh">⟳</button>
+          </div>
         </div>
         <p class="muted">Your previous runs (each is a <span class="mono">&lt;task&gt;&lt;timestamp&gt;</span>
-          folder). "Load config" replaces your editor config with the one this run used.</p>
-        <table class="sweep" v-if="runsList.length">
+          folder). Change notes compare a run to the previous run with the same task name.
+          Actions: <span class="mono">📈</span> plot · <span class="mono">⬇</span> download ·
+          <span class="mono">📂</span> load config into editor · <span class="mono">🗑</span> delete.</p>
+
+        <!-- LIST VIEW -->
+        <table class="sweep" v-if="projView==='list' && runsList.length">
           <thead><tr><th>Run</th><th>Finished</th><th>Size</th>
-            <th>Results</th><th></th></tr></thead>
+            <th>Data</th><th>Actions</th></tr></thead>
           <tbody>
-            <tr v-for="r in runsList" :key="r.name">
-              <td class="mono">{{ r.name }}</td>
-              <td class="muted">{{ fmtDate(r.mtime) }}</td>
-              <td class="muted">{{ fmtSize(r.size) }}</td>
-              <td class="muted">{{ r.h5_files.join(', ') || '—' }}</td>
-              <td>
-                <div class="row">
-                  <button @click="openPlot(r.name)" :disabled="!r.h5_files.length"
-                    :title="r.h5_files.length ? 'Browse meas_marker plots'
-                      : 'No result data'">Plot</button>
-                  <a :href="runDownloadUrl(r)"><button class="ghost">Download</button></a>
-                  <button class="ghost" @click="copyRunConfig(r)" :disabled="!r.has_config"
-                    :title="r.has_config ? 'Load this run config into the editor'
-                      : 'No saved config for this run'">Load config</button>
-                  <button class="danger" @click="deleteRun(r)">Delete</button>
-                </div>
-              </td>
-            </tr>
+            <template v-for="r in runsList" :key="r.name">
+              <tr>
+                <td class="mono">{{ r.name }}</td>
+                <td class="muted">{{ fmtDate(r.mtime) }}</td>
+                <td class="muted">{{ fmtSize(r.size) }}</td>
+                <td class="muted">{{ r.h5_files.length ? '✓' : '—' }}<span
+                  v-if="r.plots.length"> · {{ r.plots.length }}🖼</span></td>
+                <td>
+                  <div class="icon-row">
+                    <button class="icon-btn" @click="openPlot(r.name)"
+                      :disabled="!r.h5_files.length" title="Plot">📈</button>
+                    <a :href="runDownloadUrl(r)"><button class="icon-btn"
+                      title="Download (zip)">⬇</button></a>
+                    <button class="icon-btn" @click="copyRunConfig(r)"
+                      :disabled="!r.has_config" title="Load config into editor">📂</button>
+                    <button class="icon-btn danger" @click="deleteRun(r)"
+                      title="Delete run">🗑</button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="r.changes" class="change-row">
+                <td colspan="5"><span class="chg-label">changed vs
+                  {{ r.compared_to }}:</span><span v-for="(c,ci) in r.changes" :key="ci"
+                  class="chg mono">{{ c }}</span></td>
+              </tr>
+            </template>
           </tbody>
         </table>
+
+        <!-- GALLERY VIEW -->
+        <div v-else-if="projView==='gallery' && runsList.length" class="gallery">
+          <div v-for="r in runsList" :key="r.name" class="gal-card">
+            <div class="gal-head">
+              <span class="mono gal-name">{{ r.name }}</span>
+              <div class="icon-row">
+                <button class="icon-btn" @click="openPlot(r.name)"
+                  :disabled="!r.h5_files.length" title="Plot">📈</button>
+                <a :href="runDownloadUrl(r)"><button class="icon-btn"
+                  title="Download (zip)">⬇</button></a>
+                <button class="icon-btn" @click="copyRunConfig(r)"
+                  :disabled="!r.has_config" title="Load config">📂</button>
+                <button class="icon-btn danger" @click="deleteRun(r)" title="Delete">🗑</button>
+              </div>
+            </div>
+            <div class="muted gal-date">{{ fmtDate(r.mtime) }} · {{ fmtSize(r.size) }}</div>
+            <div v-if="r.plots.length" class="gal-thumbs">
+              <a v-for="p in r.plots" :key="p" :href="runPlotUrl(r.name,p)" target="_blank"
+                class="gal-thumb"><img :src="runPlotUrl(r.name,p)" :title="p"></a>
+            </div>
+            <div v-else class="gal-empty muted" @click="openPlot(r.name)">
+              No saved plots yet — open <span class="mono">📈</span> and hit "Save plot".</div>
+            <div v-if="r.changes" class="gal-changes">
+              <span class="chg-label">vs {{ r.compared_to }}:</span><span
+                v-for="(c,ci) in r.changes" :key="ci" class="chg mono">{{ c }}</span>
+            </div>
+          </div>
+        </div>
+
         <p v-else class="muted">No runs yet. Launch a simulation from the Editor's Run tab.</p>
       </div>
     </div>
