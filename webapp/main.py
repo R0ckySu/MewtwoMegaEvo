@@ -46,6 +46,9 @@ def _startup():
     print(f"[mewtwo-web] user data dir: {settings.USERDATA_DIR}", flush=True)
     print(f"[mewtwo-web] noise data:    {settings.NOISEDATA_DIR}", flush=True)
     print(f"[mewtwo-web] users db:      {settings.USERS_DB}", flush=True)
+    print(f"[mewtwo-web] lab portal:    "
+          f"{settings.PORTAL_URL or 'NOT CONFIGURED — all sign-ins will fail'}",
+          flush=True)
     print(f"[mewtwo-web] session secret: {settings.SESSION_SECRET_SOURCE}", flush=True)
     ip = _lan_ip()
     if ip:

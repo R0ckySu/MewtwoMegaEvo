@@ -60,10 +60,10 @@ uv run uvicorn webapp.main:app --host 0.0.0.0 --port 8000
 ```
 
 Others then open `http://<this-machine-LAN-IP>:8000` (the server prints the LAN IP on startup).
-Each person registers their own account, logs in independently, and gets an isolated data sandbox;
-noise data is shared. **Multi-user login works out of the box** — each browser holds its own signed
-session cookie, so on one computer you're one user at a time (use another browser / a private window
-to test two accounts on the same machine).
+**Sign-in goes through the lab portal (LabPortal)** — set `MEWTWO_PORTAL` (or `portal_url` in the
+config YAML) to the portal base URL; there is no local registration or password login. A browser
+holding a valid portal session with Mewtwo access is signed in automatically and gets an isolated
+data sandbox keyed by the portal username; noise data is shared.
 
 The cookie-signing **secret is managed for you**: a strong random secret is generated on first run
 and saved to `userdata/.session_secret`, so logins stay valid across restarts. To use a shared
@@ -78,8 +78,8 @@ Make sure your firewall allows inbound TCP on the port. It serves plain HTTP, wh
 trusted lab network; don't expose it to the public internet as-is. (Changing the secret invalidates
 existing cookies — everyone just logs in again.)
 
-Open http://127.0.0.1:8000 and register a user. Each user gets one Playground-like sandbox
-on disk:
+Open http://127.0.0.1:8000 — you'll be bounced through the portal sign-in. Each user gets one
+Playground-like sandbox on disk:
 
 ```
 webapp/userdata/<user>/config_files/        # the single editable config
@@ -252,6 +252,7 @@ users_db:       /srv/mewtwo/users.db    # SQLite user store
 | `MEWTWO_DEMOS` / `demos_dir`         | `Playground/Demo_configs/`    | Demo templates ("Load demo").            |
 | `MEWTWO_PY` / `mewtwo_py`            | the app's own interpreter     | Interpreter with `mewtwo` (for plots).   |
 | `MEWTWO_CONFIG`                      | `server_config.yaml`          | Path to the YAML config file itself.     |
+| `MEWTWO_PORTAL` / `portal_url`       | *(unset → sign-in disabled)*  | Lab portal base URL; the only sign-in path. |
 | `MEWTWO_SMTP_HOST` / `smtp_host`     | *(unset → email off)*         | SMTP server for long-run email reports.  |
 | `MEWTWO_SMTP_PORT` / `smtp_port`     | `587`                         | SMTP port (465 for implicit TLS).        |
 | `MEWTWO_SMTP_USER` / `smtp_user`     | *(none)*                      | SMTP login user.                         |

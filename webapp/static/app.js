@@ -759,7 +759,7 @@ const app = createApp({
   data() {
     return {
       user: null,
-      auth: { mode: 'login', username: '', password: '', email: '', error: '' },
+      portalUrl: '',
       schema: null,
       tab: 'sim',
       demos: [], loadDemoSel: '',
@@ -836,22 +836,16 @@ const app = createApp({
       return data;
     },
 
-    // ---- auth ----
-    async doAuth() {
-      this.auth.error = '';
-      try {
-        const ep = this.auth.mode === 'login' ? '/login' : '/register';
-        const body = { username: this.auth.username, password: this.auth.password };
-        if (this.auth.mode === 'register') body.email = this.auth.email;
-        const res = await this.api(ep, { method: 'POST', body });
-        this.user = res.username;
-        this.auth.password = '';
-        await this.boot();
-      } catch (e) { this.auth.error = e.detail || 'Failed'; }
-    },
+    // ---- auth (portal-only: /api/sso-login handles sign-in) ----
+    ssoLogin() { window.location = '/api/sso-login'; },
     async logout() {
-      try { await this.api('/logout', { method: 'POST' }); } catch (e) {}
+      let portal = this.portalUrl;
+      try { const r = await this.api('/logout', { method: 'POST' });
+            portal = r.portal_url || portal; } catch (e) {}
       this.closeEvents(); this.closeNoiseEvents();
+      // The local session is gone but the portal session may still be live;
+      // land on the portal so the user can sign out fully there if desired.
+      if (portal) { window.location = portal; return; }
       Object.assign(this.$data, { user: null, sim: null, gate: null,
         ham: null, files: [], results: [], run: null, runId: null,
         view: 'workspace', runsList: [], plotRun: '' });
@@ -1236,28 +1230,24 @@ const app = createApp({
     },
   },
   async mounted() {
-    try { const me = await this.api('/me'); this.user = me.username; await this.boot(); }
-    catch (e) { /* not logged in */ }
+    try {
+      const me = await this.api('/me');
+      this.user = me.username; this.portalUrl = me.portal_url || '';
+      await this.boot();
+    } catch (e) {
+      // Not signed in: bounce through the portal (sso-login redirects to the
+      // portal login and back; it renders a readable error page when the
+      // portal is unconfigured or the user lacks Mewtwo access).
+      window.location = '/api/sso-login';
+    }
   },
   template: `
   <div v-if="!user" class="login">
     <div class="card">
       <h2>MewtwoMegaEvo</h2>
-      <div class="field"><label>Username</label>
-        <input v-model="auth.username" @keyup.enter="doAuth"></div>
-      <div class="field" v-if="auth.mode==='register'"><label>Email</label>
-        <input type="email" v-model="auth.email" @keyup.enter="doAuth"
-          placeholder="you@example.com">
-        <span class="muted" style="font-size:12px">Used to email you a report when a
-          run takes longer than 5 minutes.</span></div>
-      <div class="field"><label>Password</label>
-        <input type="password" v-model="auth.password" @keyup.enter="doAuth"></div>
-      <div class="err" v-if="auth.error">{{ auth.error }}</div>
+      <p class="muted">Redirecting to the lab portal sign-in…</p>
       <div class="row" style="margin-top:12px">
-        <button @click="doAuth">{{ auth.mode === 'login' ? 'Log in' : 'Register' }}</button>
-        <button class="ghost" @click="auth.mode = auth.mode==='login'?'register':'login'; auth.error=''">
-          {{ auth.mode === 'login' ? 'Need an account?' : 'Have an account?' }}
-        </button>
+        <button @click="ssoLogin">Sign in via Lab Portal</button>
       </div>
     </div>
   </div>

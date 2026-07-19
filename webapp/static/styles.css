@@ -1,22 +1,34 @@
+/* SEQSI "Entangle" tokens (LabPortal/design_handoff_seqsi): slate neutrals,
+   one violet accent (--accent2 = hover/pressed shade), dark primary. */
 :root {
-  --bg: #0f1420; --panel: #182030; --panel2: #1f2a3d; --border: #2c3a52;
-  --text: #dce3f0; --muted: #8494ad; --accent: #4f9cff; --accent2: #2b6fd6;
-  --ok: #3ecf8e; --warn: #e0b341; --err: #ef6a6a; --chip: #24324a;
+  --bg: #0F0E15; --panel: #1C1A26; --panel2: #262433; --border: #322F40;
+  --text: #F5F4F8; --muted: #A9A7B8; --accent: #8B6CF0; --accent2: #7A5CE0;
+  --ok: #3F9E6A; --warn: #C8912E; --err: #D6584E; --chip: #262433;
+  --accent-soft: #1E1A33; --ok-soft: #1C2F25; --err-soft: #331F1F;
+  --font-ui: "Hanken Grotesk", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #F7F7FA; --panel: #FFFFFF; --panel2: #F1F0F5; --border: #E4E4EA;
+    --text: #16151C; --muted: #5A5963; --chip: #F1F0F5;
+    --accent-soft: #F2EFFC; --ok-soft: #E4F1EA; --err-soft: #F9E5E3;
+  }
 }
 * { box-sizing: border-box; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
-  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 14px/1.45 var(--font-ui);
 }
 button {
-  background: var(--accent2); color: #fff; border: 0; border-radius: 6px;
-  padding: 7px 13px; cursor: pointer; font-size: 13px;
+  background: var(--accent); color: #fff; border: 0; border-radius: 9px;
+  padding: 7px 13px; cursor: pointer; font-size: 13px; font-weight: 700;
 }
-button:hover { background: var(--accent); }
+button:hover { background: var(--accent2); }
 button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
 button.ghost:hover { background: var(--panel2); }
-button.danger { background: #7a2a2a; }
-button.danger:hover { background: var(--err); }
+button.danger { background: var(--err); }
+button.danger:hover { opacity: .85; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 input, select, textarea {
   background: var(--panel2); color: var(--text); border: 1px solid var(--border);
@@ -25,7 +37,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); }
 label { color: var(--muted); font-size: 12px; }
 a { color: var(--accent); }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mono { font-family: var(--font-mono); }
 
 /* Layout */
 .topbar {
@@ -65,8 +77,8 @@ a { color: var(--accent); }
 .field input, .field select, .field textarea { width: 100%; }
 .chip { background: var(--chip); border-radius: 10px; padding: 1px 8px; font-size: 11px;
   color: var(--muted); }
-.chip.ref { background: #1c3a2c; color: var(--ok); }
-.chip.missing { background: #3a1c1c; color: var(--err); }
+.chip.ref { background: var(--ok-soft); color: var(--ok); }
+.chip.missing { background: var(--err-soft); color: var(--err); }
 .muted { color: var(--muted); }
 .err { color: var(--err); }
 .ok { color: var(--ok); }
@@ -238,12 +250,12 @@ table.matrix td { border: 1px solid var(--border); padding: 3px 8px; text-align:
   border: 1px solid var(--border); background: #fff; }
 .saved-thumb span { font-size: 11px; color: var(--muted); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
-.logbox { background: #0b0f18; border: 1px solid var(--border); border-radius: 6px;
+.logbox { background: var(--bg); font-family: var(--font-mono); border: 1px solid var(--border); border-radius: 6px;
   padding: 8px 10px; height: 200px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
 .status-badge { padding: 2px 9px; border-radius: 10px; font-size: 12px; }
-.s-running { background: #1c2c45; color: var(--accent); }
-.s-done { background: #1c3a2c; color: var(--ok); }
-.s-error, .s-stopped { background: #3a1c1c; color: var(--err); }
+.s-running { background: var(--accent-soft); color: var(--accent); }
+.s-done { background: var(--ok-soft); color: var(--ok); }
+.s-error, .s-stopped { background: var(--err-soft); color: var(--err); }
 .toast { position: fixed; bottom: 18px; right: 18px; background: var(--panel);
   border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 10px 14px;
   border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.4); }

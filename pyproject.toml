@@ -7,7 +7,7 @@ dependencies = [
     # web app
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
-    "passlib>=1.7.4",
+    "labportal-client",   # portal-only auth (webapp/auth.py)
     "itsdangerous>=2.0",
     "python-multipart>=0.0.6",
     "psutil>=5.9",
@@ -22,6 +22,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "jupyter>=1.0", "matplotlib>=3.3", "ipykernel>=6.0"]
+
+[tool.uv.sources]
+labportal-client = { path = "../LabPortal/labportal-client", editable = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["webapp", "mewtwo"]

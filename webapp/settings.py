@@ -85,6 +85,12 @@ def _flag(env_name: str, yaml_key: str, default: bool) -> bool:
     return str(v).strip().lower() in ("1", "true", "yes", "on")
 
 
+# ---- Lab portal SSO (the only sign-in path) -------------------------------
+# The lab portal is the account system: browsers with a valid portal session
+# are signed in automatically; without PORTAL_URL configured nobody can log
+# in. There is no local registration or password login.
+PORTAL_URL = str(_value("MEWTWO_PORTAL", "portal_url", "") or "").rstrip("/")
+
 # ---- Email (optional): completion reports for long-running jobs ----------
 # If SMTP_HOST + MAIL_FROM are set, users who registered an address get a short
 # report when a job that ran longer than EMAIL_MIN_SECONDS finishes. Unset = off.
