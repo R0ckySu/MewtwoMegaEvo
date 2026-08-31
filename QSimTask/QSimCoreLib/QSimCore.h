@@ -13,5 +13,6 @@
 #include "Measurement.h"
 #include "VonNeumannSolver.h"
 #include "Utils.h"
+#include "MatrixExp.h"
 
 #endif //MEWTWOMEGAEVO_QSIMCORE_H

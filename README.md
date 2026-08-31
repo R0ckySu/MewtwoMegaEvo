@@ -370,6 +370,7 @@ sim_config.json provides all the general configurations of the simulation.
 | repeat             | Defines the num of repeat. (Same num of the noise realisations will be load to simulation, see also: Noise Hamiltonian)                                                                            |
 | step_size          | Time resolution of the simulation in second.                                                                                                                                                       |
 | sequence           | Symbolic sequence string. (See also: [Symbolic Sequence definitions](#symbolic-sequence-definations))                                                                                              |
+| matrix_exp_method  | (Optional) Solver algorithm for the per-step propagator exp(iHΔt): "taylor_legacy" (default, original scaled Taylor series), "pade" ([13/13] Padé scaling-and-squaring), "chebyshev" (Chebyshev expansion for Hermitian H), "diagonalization" (exact eigendecomposition). All agree to machine precision; pade/diagonalization are typically fastest for small systems. |
 | sweep_param_info   | All the numeric fields in the gate and hamiltonian config files could be charged with parametric sweeping. Limited string fields can also be swept. See [parametric sweeping](#Parametric-Sweeping) |
 
 #### gate_config.json

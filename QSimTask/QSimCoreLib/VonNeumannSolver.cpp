@@ -45,9 +45,8 @@ void VonNeumannSolver::calculate_evolution() {
 //    std::cout << "VonNeumannSolver "<< std::to_string(solver_id) <<  ": Cal propagator..." << std::endl;
 
     arma::cx_cube exp_hamiltonians = arma::cx_cube(h_size,h_size,num_steps).fill(0);
-    std::complex<double> ii = std::complex<double>(0,1);
     for (int i = 0; i < hamiltonian_all.n_slices; ++i) {
-        exp_hamiltonians.slice(i) = qmt::custom_matrix_exp(ii * hamiltonian_all.slice(i));
+        exp_hamiltonians.slice(i) = qmt::unitary_exp(hamiltonian_all.slice(i), exp_method);
         if (will_record_propagator) {
             propagator.slice(i+1) = exp_hamiltonians.slice(i) * propagator.slice(i);
             propagator_dagger.slice(i+1) = propagator_dagger.slice(i)*exp_hamiltonians.slice(i).t();

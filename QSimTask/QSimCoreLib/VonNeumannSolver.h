@@ -5,6 +5,7 @@
 #include <armadillo>
 #include <iostream>
 #include "Utils.h"
+#include "MatrixExp.h"
 
 /*
  * VonNeumannSolver
@@ -31,6 +32,7 @@ public:
     int solver_id = 0;
     bool will_record_propagator = false;
     int total_repeat_num = 1; //Do not use it for iteration control!!!
+    qmt::ExpMethod exp_method = qmt::ExpMethod::TaylorLegacy;
 
     arma::cx_cube propagator;
     arma::cx_cube propagator_dagger;

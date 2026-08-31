@@ -37,6 +37,7 @@ public:
     nlohmann::json hamiltonian_configs;
 
     bool enable_param_parallel_mode = false;
+    qmt::ExpMethod matrix_exp_method = qmt::ExpMethod::TaylorLegacy;
     bool will_record_propagator;
     bool will_record_all_measurement;
     bool will_record_density_mat;

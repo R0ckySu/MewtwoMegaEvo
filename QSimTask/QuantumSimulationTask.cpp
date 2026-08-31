@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <cstring>
 #include "QSimCoreLib/Utils.h"
-#include <format>
 
 RTTR_REGISTRATION{
     rttr::registration::class_<QSimTask>("QSimTask").constructor<>()
@@ -125,6 +124,7 @@ void QSimTask::sweeping_repeat_parallel() {
             //Load all prepared info to solver
             solver_obj.solver_id =  noise_idx;
             solver_obj.will_record_propagator = will_record_propagator;
+            solver_obj.exp_method = matrix_exp_method;
             solver_obj.rho_t_multi = &rho_multi_temp;
             solver_obj.rho0_multi = &rho_inits;
             solver_obj.total_repeat_num = iterations;
@@ -211,6 +211,7 @@ void QSimTask::sweeping_param_parallel() {
         VonNeumannSolver solver_obj = VonNeumannSolver();
         solver_obj.will_record_propagator = will_record_propagator;
         solver_obj.solver_id =  i;
+        solver_obj.exp_method = matrix_exp_method;
         for (int noise_idx = 0; noise_idx < iterations; ++noise_idx) {
             //Load Noise Hamiltonian
             arma::cx_cube *noise_hamiltonian_time_dep = compile_time_dep_noise_hamiltonian(reloaded_prototype->noise_hamiltonian_prototype_map,noise_idx,randomstartlist,total_num_steps);
@@ -290,6 +291,10 @@ void QSimTask::process_sim_configs() {
     will_reset_rotating_frame = sim_configs["reset_rotating_frame"];
     enable_param_parallel_mode = sim_configs["enable_param_parallel_mode"];
     system_dimension = sim_configs["system_dim"];
+    if (sim_configs.contains("matrix_exp_method")) {
+        matrix_exp_method = qmt::exp_method_from_string(sim_configs["matrix_exp_method"]);
+        task_log(std::string("Matrix exp method:").append(sim_configs["matrix_exp_method"]),1);
+    }
 
     // Create new folder for result storage. & Backup the config files to the new path.
     DIR *resultDir;

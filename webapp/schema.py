@@ -35,6 +35,9 @@ SIM_FIELDS: List[Dict[str, Any]] = [
     {"name": "repeat", "label": "Repeat", "type": "int"},
     {"name": "step_size", "label": "Step size", "type": "float"},
     {"name": "sequence", "label": "Sequence", "type": "string"},
+    {"name": "matrix_exp_method", "label": "Matrix exp method", "type": "enum",
+     "options": ["taylor_legacy", "pade", "chebyshev", "diagonalization"],
+     "optional": True},
 ]
 
 # One row of sim_config.sweep_param_info
@@ -208,6 +211,11 @@ FIELD_HELP: Dict[str, str] = {
     "step_size": "Time-integration step Δt, in seconds.",
     "sequence": "Pulse-sequence string: gate tags joined by '-', 'M' = measurement marker, "
                 "[ … ]^n repeats a block, $X is a sequence alias. E.g. [Xpi(T/20)-M]^80.",
+    "matrix_exp_method": "Solver algorithm for the per-step propagator exp(iHΔt). "
+        "taylor_legacy = original scaled Taylor series (default); pade = [13/13] Padé "
+        "scaling-and-squaring; chebyshev = Chebyshev expansion for Hermitian H; "
+        "diagonalization = exact eigendecomposition. All agree to machine precision; "
+        "pade/diagonalization are typically fastest for small systems.",
     # sweep rows
     "class": "What is swept — Sequence (a list of sequence strings), Gate (a gate "
              "property), or Hamiltonian (a Hamiltonian property).",

@@ -11,6 +11,7 @@ add_library(
         Sequence.cpp
         TimingBasic.cpp TimingBasic.h
         Utils.cpp
+        MatrixExp.cpp MatrixExp.h
         Measurement.cpp
         ExtSigCache.cpp
 )

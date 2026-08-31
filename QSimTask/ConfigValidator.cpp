@@ -182,6 +182,19 @@ bool ConfigValidator::validate_sim_config(const nlohmann::json& json) {
         }
     }
 
+    // ── 8. Optional solver settings ─────────────────────────────────
+    if (json.contains("matrix_exp_method")) {
+        const bool is_known = json["matrix_exp_method"].is_string() &&
+            (json["matrix_exp_method"] == "taylor_legacy" ||
+             json["matrix_exp_method"] == "pade" ||
+             json["matrix_exp_method"] == "chebyshev" ||
+             json["matrix_exp_method"] == "diagonalization");
+        if (!is_known) {
+            errors_.push_back("sim_config.json: 'matrix_exp_method' must be one of: "
+                "taylor_legacy, pade, chebyshev, diagonalization");
+        }
+    }
+
     return ok;
 }
 
